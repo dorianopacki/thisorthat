@@ -7,6 +7,8 @@ export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
     return null;
   }
   return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+    // Defaults already give path "/" and sameSite "lax"; production is HTTPS-only
+    cookieOptions: { secure: !import.meta.env.DEV },
     cookies: {
       getAll() {
         return parseCookieHeader(requestHeaders.get("Cookie") ?? "");

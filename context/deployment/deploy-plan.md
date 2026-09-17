@@ -120,10 +120,10 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 
 - [x] 🤖 Create `.dev.vars.example` and `.env.example` with placeholder values, committed as the secrets checklist. (2026-09-17: `.env.example` documented. No `.dev.vars` is needed, because `astro dev` reads `.env`.)
 - [x] 👤 Fill in `.dev.vars` and `.env` locally (gitignored). (`.env` has `SUPABASE_URL` and `SUPABASE_KEY`, filled in by the user on 2026-09-17.)
-- [ ] 👤 Set the runtime secrets: `npx wrangler secret put SUPABASE_KEY` (the Worker name `thisorthat` comes from `wrangler.jsonc`).
+- [x] 👤 Set the runtime secrets: `npx wrangler secret put SUPABASE_KEY` (the Worker name `thisorthat` comes from `wrangler.jsonc`). (Done 2026-09-17.)
   - ⚠️ `wrangler secret put` before the first deploy creates an empty Worker. That's fine, but see Edge cases E5 if a name mismatch shows up.
-- [ ] 👤 Set the GitHub secrets: ~~`gh secret set CLOUDFLARE_API_TOKEN`~~ (done 2026-09-17), `gh secret set CLOUDFLARE_ACCOUNT_ID -R dorianopacki/thisorthat`. (The Supabase GitHub secrets aren't needed, see the note above.)
-- [ ] 🤖 Verify: `npx wrangler secret list` shows `SUPABASE_KEY`, and `gh secret list` shows `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+- [x] 👤 Set the GitHub secrets: ~~`gh secret set CLOUDFLARE_API_TOKEN`~~ (done 2026-09-17), `gh secret set CLOUDFLARE_ACCOUNT_ID -R dorianopacki/thisorthat`. (The Supabase GitHub secrets aren't needed, see the note above.)
+- [x] 🤖 Verify: `npx wrangler secret list` shows `SUPABASE_KEY`, and `gh secret list` shows `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. (Verified 2026-09-17.)
 
 ## Phase 5 — Supabase ↔ Cloudflare integration
 
@@ -131,11 +131,11 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
   - Site URL: `https://thisorthat.dorianwew.workers.dev` (switch to the custom domain in Phase 7).
   - Redirect URLs: `http://localhost:4321/**`, `https://thisorthat.dorianwew.workers.dev/**`.
 - [ ] 👤 Email: the built-in SMTP is **heavily rate-limited (a few emails per hour)** and meant for testing only. For launch, configure custom SMTP (Resend, Postmark, etc.) or turn off email confirmation for the MVP (a deliberate decision).
-- [ ] 🤖 Server Supabase client uses `@supabase/ssr` `createServerClient` with `cookies.getAll/setAll` mapped to `Astro.cookies`. Cookies must be `secure`, `sameSite: "lax"`, `path: "/"`.
-- [ ] 🤖 Middleware refreshes the session on each SSR request, and skips static assets so you don't burn CPU time.
-- [ ] 🤖 Realtime results page: the subscription runs **in the browser island** (not SSR), per FR-013 and the CPU-limit mitigation.
-- [ ] 🤖 Images: resize and compress in the browser before uploading to Storage (the `passthrough` decision from Phase 1).
-- [ ] 👤 Storage CORS/policies: uploads from the production origin work (tested in Phase 6).
+- [x] 🤖 Server Supabase client uses `@supabase/ssr` `createServerClient` with `cookies.getAll/setAll` mapped to `Astro.cookies`. Cookies must be `secure`, `sameSite: "lax"`, `path: "/"`. (2026-09-17: `src/lib/supabase.ts` was already correct. `path` and `sameSite` come from the library defaults; `cookieOptions: { secure: !import.meta.env.DEV }` was added. `signUp` sets no `emailRedirectTo`, so confirmation links use the Supabase **Site URL**, which makes the step above essential.)
+- [x] 🤖 Middleware refreshes the session on each SSR request, and skips static assets so you don't burn CPU time. (`src/middleware.ts` calls `auth.getUser()` per request. Static assets are served by the `ASSETS` layer before the Worker runs, so the middleware never sees `/_astro/*`. `getUser()` is network I/O, not CPU time; watch it in Phase 7.)
+- [ ] ⏸️ Deferred (feature not built yet): Realtime results page: the subscription runs **in the browser island** (not SSR), per FR-013 and the CPU-limit mitigation.
+- [ ] ⏸️ Deferred (feature not built yet): Images: resize and compress in the browser before uploading to Storage (the `passthrough` decision from Phase 1).
+- [ ] ⏸️ Deferred (no bucket yet, see 0.4): Storage CORS/policies: uploads from the production origin work (tested in Phase 6).
 
 ## Phase 6 — Local production-parity check (🤖)
 
