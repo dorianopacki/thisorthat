@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "skills": {
+    "10x-cli-guide": {
+      "source": "przeprogramowani/10x-cli",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/przeprogramowani/10x-cli.git",
+      "skillPath": "skills/10x-cli-guide/SKILL.md",
+      "skillFolderHash": "46b256b5c152efe6d1fb87c0c489f4a3d8546f62",
+      "installedAt": "2026-09-14T13:27:24.564Z",
+      "updatedAt": "2026-09-14T13:27:24.564Z"
+    },
+    "10x-cli-setup": {
+      "source": "przeprogramowani/10x-cli",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/przeprogramowani/10x-cli.git",
+      "skillPath": "skills/10x-cli-setup/SKILL.md",
+      "skillFolderHash": "bf3faaa0154980c499106ec38c3589a8c7f6fbc8",
+      "installedAt": "2026-09-14T13:27:24.580Z",
+      "updatedAt": "2026-09-14T13:27:24.580Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
+      "installedAt": "2026-09-14T13:27:28.018Z",
+      "updatedAt": "2026-09-14T13:27:28.018Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "antigravity-cli",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-code-cli",
+    "opencode",
+    "warp",
+    "zed"
+  ]
+}
