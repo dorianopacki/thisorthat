@@ -109,20 +109,21 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 
 The split matters here: `PUBLIC_*` values get **inlined into the client bundle at build time**, while runtime secrets are read by the Worker per request.
 
+> **Updated 2026-09-17 to match the code.** The app reads only `SUPABASE_URL` / `SUPABASE_KEY` through `astro:env/server` (server context, `access: "secret"`), in `src/lib/supabase.ts` and `src/lib/config-status.ts`. No `PUBLIC_*` variables are used, so **nothing is inlined at build time and CI needs no Supabase values** (E9 doesn't apply for now). If a browser island later needs Supabase for FR-013 Realtime, add `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` then, as GitHub Actions build env.
+
 | Name | Where | Why |
 |---|---|---|
-| `PUBLIC_SUPABASE_URL` | `.env` (local build), GitHub Actions **variable**, `wrangler.jsonc` `vars` | Browser client and Realtime, inlined at build time |
-| `PUBLIC_SUPABASE_ANON_KEY` (publishable) | `.env`, GitHub Actions **secret**, Workers secret | Browser client (public by design, protected by RLS) |
-| `SUPABASE_SERVICE_ROLE_KEY` (only if needed) | `.dev.vars`, Workers secret **only** | Server-only. Never `PUBLIC_`, never in GitHub Actions |
-| `CLOUDFLARE_API_TOKEN` | GitHub Actions secret | CI deploy (the scoped token from 0.5) |
+| `SUPABASE_URL` | `.env` (local), `wrangler.jsonc` `vars` (committed, public) | Server Supabase client |
+| `SUPABASE_KEY` (publishable/anon key) | `.env` (local), **Workers secret** | Server Supabase client. Use the publishable key, not service_role. |
+| `CLOUDFLARE_API_TOKEN` | GitHub Actions secret (✅ set 2026-09-17) | CI deploy (the scoped token from 0.5) |
 | `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions secret | CI deploy |
 
-- [ ] 🤖 Create `.dev.vars.example` and `.env.example` with placeholder values, committed as the secrets checklist.
-- [ ] 👤 Fill in `.dev.vars` and `.env` locally (gitignored).
-- [ ] 👤 Set the runtime secrets: `npx wrangler secret put PUBLIC_SUPABASE_ANON_KEY` (plus `SUPABASE_SERVICE_ROLE_KEY` if used).
+- [x] 🤖 Create `.dev.vars.example` and `.env.example` with placeholder values, committed as the secrets checklist. (2026-09-17: `.env.example` documented. No `.dev.vars` is needed, because `astro dev` reads `.env`.)
+- [x] 👤 Fill in `.dev.vars` and `.env` locally (gitignored). (`.env` has `SUPABASE_URL` and `SUPABASE_KEY`, filled in by the user on 2026-09-17.)
+- [ ] 👤 Set the runtime secrets: `npx wrangler secret put SUPABASE_KEY` (the Worker name `thisorthat` comes from `wrangler.jsonc`).
   - ⚠️ `wrangler secret put` before the first deploy creates an empty Worker. That's fine, but see Edge cases E5 if a name mismatch shows up.
-- [ ] 👤 Set the GitHub secrets: ~~`gh secret set CLOUDFLARE_API_TOKEN`~~ (done 2026-09-17), `gh secret set CLOUDFLARE_ACCOUNT_ID`, `gh secret set PUBLIC_SUPABASE_ANON_KEY`, `gh variable set PUBLIC_SUPABASE_URL`.
-- [ ] 🤖 Verify: `npx wrangler secret list` and `gh secret list` show matching names.
+- [ ] 👤 Set the GitHub secrets: ~~`gh secret set CLOUDFLARE_API_TOKEN`~~ (done 2026-09-17), `gh secret set CLOUDFLARE_ACCOUNT_ID -R dorianopacki/thisorthat`. (The Supabase GitHub secrets aren't needed, see the note above.)
+- [ ] 🤖 Verify: `npx wrangler secret list` shows `SUPABASE_KEY`, and `gh secret list` shows `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
 ## Phase 5 — Supabase ↔ Cloudflare integration
 
