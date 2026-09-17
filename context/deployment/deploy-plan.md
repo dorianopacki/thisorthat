@@ -156,7 +156,7 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 
 ## Phase 8 — CI/CD with GitHub Actions (🤖 writes, 👤 merges)
 
-- [ ] 🤖 `.github/workflows/deploy.yml`:
+- [x] 🤖 `.github/workflows/deploy.yml`: (Written 2026-09-17 on branch `ci/deploy-workflow`, PR #1. Jobs: `verify` (npm ci, astro sync, lint, astro check, build; no Supabase env needed) → `deploy-production` (push to `main`) / `preview-upload` (same-repo PRs). The existing `ci.yml` triggered on `master`, so it had never run; it now targets `main` and keeps only its local-Supabase `smoke` job, and its duplicate build job, which referenced unset Supabase secrets, was removed. Local `npm run lint` fails on Windows only because of CRLF (`core.autocrlf=true` vs prettier); CI on Linux is clean. ⚠️ wrangler-action treats `#` in `command` as a comment, so `--message "PR #1"` was cut to `PR`; changed to `PR-<n>`.)
   - Triggers: `push` to `main` (production), `pull_request` (build + preview upload).
   - Steps: checkout → `actions/setup-node@v4` (node 22, npm cache) → `npm ci` → `npm run lint` / `npm test` if present → `npm run build` with `PUBLIC_*` env from secrets/vars.
   - `main`: `cloudflare/wrangler-action@v3` with `command: deploy`, `apiToken`, `accountId`, and `wranglerVersion` pinned to the version in `package.json`.
@@ -164,7 +164,7 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
   - `concurrency: { group: deploy-production, cancel-in-progress: false }` so two merges can't race each other.
 - [ ] 👤 Branch protection on `main`: require the PR plus a passing build check.
 - [ ] 👤 GitHub notifications for failed workflow runs are turned on. The pre-mortem found that CI failures went unnoticed.
-- [ ] 🤖 Open a test PR. The build passes and a preview version is uploaded.
+- [x] 🤖 Open a test PR. The build passes and a preview version is uploaded. (PR #1, 2026-09-17: `verify` pass 1m24s, `smoke` pass 2m51s, `preview-upload` pass 44s, `deploy-production` skipped as expected. Version `264d49a8…` uploaded; production stayed at 100% on `71d3d4fb…`.)
 - [ ] 👤 Merge. The production deploy succeeds and `wrangler deployments list` shows the new version.
 - [ ] ⚠️ If the dashboard's **Workers Builds** (Cloudflare Git integration) was also connected, disconnect it. Two deploy pipelines racing each other is a classic drift problem.
 
