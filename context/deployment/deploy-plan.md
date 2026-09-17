@@ -36,24 +36,24 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 - [x] 👤 GitHub CLI is logged in: `gh auth login`, then `gh auth status`. (Logged in as `dorianopacki`, verified 2026-09-17.)
 
 ### 0.2 Source code
-- [x] 👤 The GitHub repository exists (confirmed by user 2026-09-17). Record its URL here: `__________`
-- [ ] The repo is cloned locally and contains the bootstrapped **10x Astro Starter**, with `package.json` and `astro.config.mjs` present. If it hasn't been bootstrapped, run `/10x-bootstrapper` first. ✅ The app code is in `C:\10xdevs` (verified 2026-09-17). ⚠️ There's still **no `.git`**, and no matching repo was found under `gh repo list` for `dorianopacki`.
+- [x] 👤 The GitHub repository exists (confirmed by user 2026-09-17). Record its URL here: `https://github.com/dorianopacki/thisorthat` (private, created 2026-09-17).
+- [x] The repo is cloned locally and contains the bootstrapped **10x Astro Starter**, with `package.json` and `astro.config.mjs` present. If it hasn't been bootstrapped, run `/10x-bootstrapper` first. ✅ The app code is in `C:\10xdevs` (verified 2026-09-17). `git init` on `main` and initial commit `8983d62` done 2026-09-17, with `origin` set. ✅ Pushed to `origin/main` on 2026-09-17, after adding the `workflow` scope to `gh`. ⚠️ Git's global Windows credential manager signs in as a different GitHub account (`Dorian210598`), so this repo uses `gh auth git-credential` through **local** git config only. `.gitignore` was hardened to cover `.env.*`, `.dev.vars.*` and `.claude.json`.
 - [x] `npm ci && npm run build` succeeds locally **before** any Cloudflare work. (Passed 2026-09-17, after `npm ci` restored the missing `@rolldown/binding-win32-x64-msvc`. npm 11 blocked the `workerd` and `esbuild` postinstall scripts; revisit in Phase 6 if `astro preview` fails.)
 - [x] `.gitignore` includes `.dev.vars*`, `.env*`, `.wrangler/`, `dist/` and `node_modules/`.
 
 ### 0.3 Cloudflare account
 - [x] 👤 You have a Cloudflare account (confirmed by user 2026-09-17). `npx wrangler whoami` shows OAuth for account `9224026f20909f037d51f92e7d6b90e3`.
 - [x] 👤 Record the Account ID for CI: `9224026f20909f037d51f92e7d6b90e3`.
-- [ ] 👤 Choose and register your `*.workers.dev` subdomain: Dashboard → Workers & Pages → it's shown on the overview page. The first deploy fails if none is registered.
-- [ ] 👤 Decide whether you'll use a custom domain for the MVP (yes/no). If yes, the zone must already be on Cloudflare DNS (that's Phase 7).
+- [x] 👤 Choose and register your `*.workers.dev` subdomain: Dashboard → Workers & Pages → it's shown on the overview page. The first deploy fails if none is registered. (**`dorianwew.workers.dev`**, registered 2026-09-17.)
+- [x] 👤 Decide whether you'll use a custom domain for the MVP (yes/no). **Decision 2026-09-17: no.** The MVP runs on `*.workers.dev`; skip the custom-domain step in Phase 7. If yes, the zone must already be on Cloudflare DNS (that's Phase 7).
 
 ### 0.4 Supabase cloud project
 - [x] 👤 You have a Supabase project (confirmed by user 2026-09-17). Record the project ref: `ykszrmagqyituwiqcsvk`, and the region, ideally an EU one: `eu-west-1`.
-- [ ] 👤 Collect: Project URL (`https://ykszrmagqyituwiqcsvk.supabase.co`), publishable/anon key, and the service_role/secret key **only if** server code needs it (it should be rare).
-- [ ] 👤 The database schema and migrations are applied to the cloud project: `supabase db push` or `supabase migration list` shows local and remote in sync. ⚠️ As of 2026-09-17 there are **no migrations locally or remotely, no `public` tables and no storage buckets**. The same applies to the RLS, Realtime and Storage items below, since the schema doesn't exist yet.
-- [ ] RLS is enabled on every table exposed through the API. Check with Supabase advisors: `get_advisors` → security.
-- [ ] Realtime (FR-013): the result tables are added to the `supabase_realtime` publication, and RLS allows anonymous voters to read the rows they should see.
-- [ ] Storage: the image bucket exists, with policies for authenticated upload and public or signed read.
+- [x] 👤 Collect: Project URL (`https://ykszrmagqyituwiqcsvk.supabase.co`), publishable/anon key, and the service_role/secret key **only if** server code needs it (it should be rare). (Stored in the local `.env` as `SUPABASE_URL` / `SUPABASE_KEY` by the user on 2026-09-17; the names get aligned with Phase 4.)
+- [ ] 👤 The database schema and migrations are applied to the cloud project: `supabase db push` or `supabase migration list` shows local and remote in sync. ⚠️ As of 2026-09-17 there are **no migrations locally or remotely, no `public` tables and no storage buckets**. The same applies to the RLS, Realtime and Storage items below, since the schema doesn't exist yet. **Decision 2026-09-17: the first deploy ships the starter without a schema. This item and the three below are deferred to feature work and must be done before any feature that uses them goes to production.**
+- [ ] ⏸️ Deferred: RLS is enabled on every table exposed through the API. Check with Supabase advisors: `get_advisors` → security.
+- [ ] ⏸️ Deferred: Realtime (FR-013): the result tables are added to the `supabase_realtime` publication, and RLS allows anonymous voters to read the rows they should see.
+- [ ] ⏸️ Deferred: Storage: the image bucket exists, with policies for authenticated upload and public or signed read.
 - [ ] ⚠️ **Free projects pause after about 7 days without activity.** Note this in your calendar, or plan to upgrade before a public launch (see Edge cases E6).
 
 ### 0.5 Access boundary (least privilege)
@@ -127,8 +127,8 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 ## Phase 5 — Supabase ↔ Cloudflare integration
 
 - [ ] 👤 Supabase → Authentication → URL Configuration:
-  - Site URL: `https://thisorthat.<subdomain>.workers.dev` (switch to the custom domain in Phase 7).
-  - Redirect URLs: `http://localhost:4321/**`, `https://thisorthat.<subdomain>.workers.dev/**`.
+  - Site URL: `https://thisorthat.dorianwew.workers.dev` (switch to the custom domain in Phase 7).
+  - Redirect URLs: `http://localhost:4321/**`, `https://thisorthat.dorianwew.workers.dev/**`.
 - [ ] 👤 Email: the built-in SMTP is **heavily rate-limited (a few emails per hour)** and meant for testing only. For launch, configure custom SMTP (Resend, Postmark, etc.) or turn off email confirmation for the MVP (a deliberate decision).
 - [ ] 🤖 Server Supabase client uses `@supabase/ssr` `createServerClient` with `cookies.getAll/setAll` mapped to `Astro.cookies`. Cookies must be `secure`, `sameSite: "lax"`, `path: "/"`.
 - [ ] 🤖 Middleware refreshes the session on each SSR request, and skips static assets so you don't burn CPU time.
@@ -147,7 +147,7 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 - [ ] 👤 **Gate:** Phases 0–6 are all ticked. Approve the deploy.
 - [ ] 🤖 `npm run build && npx wrangler deploy`. Record the version ID: `__________`.
 - [ ] 🤖 `npx wrangler deployments list` shows exactly one active version.
-- [ ] 🤖 In a separate terminal, run `npx wrangler tail --format pretty` while repeating the Phase 6 smoke test against `https://thisorthat.<subdomain>.workers.dev`.
+- [ ] 🤖 In a separate terminal, run `npx wrangler tail --format pretty` while repeating the Phase 6 smoke test against `https://thisorthat.dorianwew.workers.dev`.
 - [ ] 🤖 Check response headers and the pages: no 1102 (CPU exceeded), no 500s, and static assets served with cache headers.
 - [ ] 👤 (Optional) Custom domain: add `"routes": [{ "pattern": "example.com", "custom_domain": true }]`, redeploy, update the Supabase Site URL and Redirect URLs, then set `workers_dev: false` and redeploy.
 - [ ] 🤖 Rollback dry run: `npx wrangler versions list` shows the rollback target. **Don't actually roll back** unless something is broken.
