@@ -145,13 +145,14 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 
 ## Phase 7 — First production deploy (👤 approves, 🤖 runs)
 
-- [ ] 👤 **Gate:** Phases 0–6 are all ticked. Approve the deploy.
-- [ ] 🤖 `npm run build && npx wrangler deploy`. Record the version ID: `__________`.
-- [ ] 🤖 `npx wrangler deployments list` shows exactly one active version.
-- [ ] 🤖 In a separate terminal, run `npx wrangler tail --format pretty` while repeating the Phase 6 smoke test against `https://thisorthat.dorianwew.workers.dev`.
-- [ ] 🤖 Check response headers and the pages: no 1102 (CPU exceeded), no 500s, and static assets served with cache headers.
-- [ ] 👤 (Optional) Custom domain: add `"routes": [{ "pattern": "example.com", "custom_domain": true }]`, redeploy, update the Supabase Site URL and Redirect URLs, then set `workers_dev: false` and redeploy.
-- [ ] 🤖 Rollback dry run: `npx wrangler versions list` shows the rollback target. **Don't actually roll back** unless something is broken.
+- [x] 👤 **Gate:** Phases 0–6 are all ticked. Approve the deploy. (User approved 2026-09-17, with the deferred items in 0.4/5/6 and the open Supabase URL Configuration step in Phase 5 accepted as known gaps.)
+- [x] 🤖 `npm run build && npx wrangler deploy`. Record the version ID: `71d3d4fb-a881-4ed4-83c5-d128eeade3a5` (deployed 2026-09-17T11:12Z; 2063.61 KiB raw / 456.59 KiB gzip, startup 22 ms).
+- [x] 🤖 `npx wrangler deployments list` shows exactly one active version. (`71d3d4fb…` at 100%.)
+- [x] 🤖 In a separate terminal, run `npx wrangler tail --format pretty` while repeating the Phase 6 smoke test against `https://thisorthat.dorianwew.workers.dev`. (2026-09-17: `/`, `/auth/signin`, `/auth/signup` → 200; unknown path → 404; `/dashboard` anonymous → 302 `/auth/signin`; `POST /api/auth/signin` with a non-existent account → 302 `?error=Invalid login credentials`, so production reaches cloud Supabase. Tail: `outcome: ok`, no exceptions, **cpuTime 9 ms** on the signin request.)
+  - ⚠️ 9 ms CPU is close to the Free plan's 10 ms limit (E7). Watch the CPU-time metric in Phase 9; the first request after deploy includes isolate warm-up, so this may be a worst case.
+- [x] 🤖 Check response headers and the pages: no 1102 (CPU exceeded), no 500s, and static assets served with cache headers. (`/_astro/Layout.Cmw-cuza.css` → `public, max-age=31536000, immutable`.)
+- [ ] ⏭️ Skipped (decision 0.3: no custom domain for MVP). (Optional) Custom domain: add `"routes": [{ "pattern": "example.com", "custom_domain": true }]`, redeploy, update the Supabase Site URL and Redirect URLs, then set `workers_dev: false` and redeploy.
+- [x] 🤖 Rollback dry run: `npx wrangler versions list` shows the rollback target. **Don't actually roll back** unless something is broken. (2026-09-17: the only earlier version is `24f4e97a…`, the empty Worker created by `wrangler secret put` (source "Secret Change"). ⚠️ **There is no useful rollback target yet**; rolling back now would take the site down. The first real rollback target appears after the next deploy.)
 
 ## Phase 8 — CI/CD with GitHub Actions (🤖 writes, 👤 merges)
 
