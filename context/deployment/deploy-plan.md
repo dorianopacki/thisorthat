@@ -57,7 +57,7 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 - [ ] ⚠️ **Free projects pause after about 7 days without activity.** Note this in your calendar, or plan to upgrade before a public launch (see Edge cases E6).
 
 ### 0.5 Access boundary (least privilege)
-- [ ] 👤 Create a **scoped Cloudflare API token** for CI. Dashboard → My Profile → API Tokens → template **"Edit Cloudflare Workers"**, limited to **this account only** (plus a zone, only if a custom domain is used). No DNS edit, no billing.
+- [x] 👤 Create a **scoped Cloudflare API token** for CI. (Created and stored as the GitHub secret `CLOUDFLARE_API_TOKEN` on 2026-09-17; the Phase 4 `gh secret set` for this token is already done.) Dashboard → My Profile → API Tokens → template **"Edit Cloudflare Workers"**, limited to **this account only** (plus a zone, only if a custom domain is used). No DNS edit, no billing.
 - [ ] 👤 Keep the broad OAuth login (`wrangler login`) for local use only. It has write access to D1, KV, secrets_store, containers, email and more. Consider `wrangler logout` once CI is working and using a scoped token locally through the `CLOUDFLARE_API_TOKEN` env var instead.
 
 ---
@@ -121,7 +121,7 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 - [ ] 👤 Fill in `.dev.vars` and `.env` locally (gitignored).
 - [ ] 👤 Set the runtime secrets: `npx wrangler secret put PUBLIC_SUPABASE_ANON_KEY` (plus `SUPABASE_SERVICE_ROLE_KEY` if used).
   - ⚠️ `wrangler secret put` before the first deploy creates an empty Worker. That's fine, but see Edge cases E5 if a name mismatch shows up.
-- [ ] 👤 Set the GitHub secrets: `gh secret set CLOUDFLARE_API_TOKEN`, `gh secret set CLOUDFLARE_ACCOUNT_ID`, `gh secret set PUBLIC_SUPABASE_ANON_KEY`, `gh variable set PUBLIC_SUPABASE_URL`.
+- [ ] 👤 Set the GitHub secrets: ~~`gh secret set CLOUDFLARE_API_TOKEN`~~ (done 2026-09-17), `gh secret set CLOUDFLARE_ACCOUNT_ID`, `gh secret set PUBLIC_SUPABASE_ANON_KEY`, `gh variable set PUBLIC_SUPABASE_URL`.
 - [ ] 🤖 Verify: `npx wrangler secret list` and `gh secret list` show matching names.
 
 ## Phase 5 — Supabase ↔ Cloudflare integration
