@@ -17,6 +17,13 @@
   "workers_dev": true,
   // Public version-preview URLs stay off until Cloudflare Access protects them
   "preview_urls": false,
+  // Astro sessions (the adapter enables them by default)
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "9ce77ff9998d44d8a7d9d39f351b6e37",
+    },
+  ],
   "vars": {
     // Public project URL; SUPABASE_KEY is set as a Workers secret (Phase 4)
     "SUPABASE_URL": "https://ykszrmagqyituwiqcsvk.supabase.co",

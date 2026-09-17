@@ -101,9 +101,9 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 
 ## Phase 3 — Cloudflare resources (🤖 creates, 👤 approves)
 
-- [ ] **Sessions KV:** the adapter turns on Astro sessions with KV binding `SESSION` by default. Run `npx wrangler kv namespace create SESSION` and paste the `id` into `wrangler.jsonc`.
+- [x] **Sessions KV:** the adapter turns on Astro sessions with KV binding `SESSION` by default. Run `npx wrangler kv namespace create SESSION` and paste the `id` into `wrangler.jsonc`. (Created 2026-09-17 with id `9ce77ff9998d44d8a7d9d39f351b6e37` and added to `wrangler.jsonc`; the dry run shows the binding with that id. It was created even though `Astro.session` isn't used yet, because the adapter always injects the binding, and an explicit id avoids auto-provisioning in CI.)
   - ⚠️ If the app uses **only Supabase cookie auth** and never calls `Astro.session`, you can skip this, but check that the deploy doesn't complain about a missing `SESSION` binding (see Edge cases E4).
-- [ ] Don't add D1, R2 or Hyperdrive. Data stays in Supabase, and D1 free-tier limits have been enforced since 2026-09-01.
+- [x] Don't add D1, R2 or Hyperdrive. Data stays in Supabase, and D1 free-tier limits have been enforced since 2026-09-01. (Confirmed 2026-09-17: the only bindings are `SESSION`, `ASSETS` and `SUPABASE_URL`.)
 
 ## Phase 4 — Secrets and environment variables
 
