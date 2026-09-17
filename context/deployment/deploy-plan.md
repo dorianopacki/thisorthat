@@ -73,7 +73,7 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 
 ## Phase 2 — `wrangler.jsonc` (🤖, reviewed by 👤)
 
-- [ ] Create or adjust `wrangler.jsonc`:
+- [x] Create or adjust `wrangler.jsonc`: (Done 2026-09-17 with Worker name **`thisorthat`**. It keeps the starter's `not_found_handling: "404-page"`. `vars` holds `SUPABASE_URL`, the name the app reads through `astro:env`, not `PUBLIC_SUPABASE_URL`. `kv_namespaces` is left out: the adapter injects the `SESSION` binding itself, see Phase 3.)
 
 ```jsonc
 {
@@ -95,9 +95,9 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 }
 ```
 
-- [ ] Compare the `main` and `assets` values with what the installed adapter version generates. Run `npx astro build` and look at `dist/_worker.js` / `dist/server/wrangler.json`. **If they differ, the adapter's values win.**
-- [ ] `npx wrangler types` generates `worker-configuration.d.ts`, which gives typed `env` access.
-- [ ] `npx wrangler check startup` (or `npx wrangler deploy --dry-run --outdir .wrangler/dry`) passes, and the bundle is **under 3 MiB gzipped** (the Free plan limit).
+- [x] Compare the `main` and `assets` values with what the installed adapter version generates. Run `npx astro build` and look at `dist/_worker.js` / `dist/server/wrangler.json`. **If they differ, the adapter's values win.** (2026-09-17: the adapter writes `dist/server/wrangler.json` with `main: entry.mjs` and `assets.directory: ../client`, derived from `wrangler.jsonc`, and `wrangler deploy` uses that generated file. Nothing to reconcile.)
+- [x] `npx wrangler types` generates `worker-configuration.d.ts`, which gives typed `env` access. ⚠️ It also reads key names from `.env`, so `CLOUDFLARE_API_TOKEN` shows up in `Env`: only the name, no value.
+- [x] `npx wrangler check startup` (or `npx wrangler deploy --dry-run --outdir .wrangler/dry`) passes, and the bundle is **under 3 MiB gzipped** (the Free plan limit). (`--dry-run` passed 2026-09-17: 29 modules, 2065 KiB raw / **456 KiB gzip**. Bindings: `SESSION` (KV, injected by the adapter), `ASSETS`, `SUPABASE_URL`.)
 
 ## Phase 3 — Cloudflare resources (🤖 creates, 👤 approves)
 

@@ -1,8 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "this-or-that",
+  "name": "thisorthat",
   "main": "@astrojs/cloudflare/entrypoints/server",
-  "compatibility_date": "2026-05-08",
+  // >= 2026-08-04 enables nodejs_compat by default; the flag stays explicit for @supabase/ssr
+  "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "ASSETS",
@@ -11,5 +12,13 @@
   },
   "observability": {
     "enabled": true,
+  },
+  // No custom domain for the MVP: served at thisorthat.dorianwew.workers.dev
+  "workers_dev": true,
+  // Public version-preview URLs stay off until Cloudflare Access protects them
+  "preview_urls": false,
+  "vars": {
+    // Public project URL; SUPABASE_KEY is set as a Workers secret (Phase 4)
+    "SUPABASE_URL": "https://ykszrmagqyituwiqcsvk.supabase.co",
   },
 }
