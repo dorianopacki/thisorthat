@@ -130,7 +130,7 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 - [ ] 👤 Supabase → Authentication → URL Configuration:
   - Site URL: `https://thisorthat.dorianwew.workers.dev` (switch to the custom domain in Phase 7).
   - Redirect URLs: `http://localhost:4321/**`, `https://thisorthat.dorianwew.workers.dev/**`.
-- [ ] 👤 Email: the built-in SMTP is **heavily rate-limited (a few emails per hour)** and meant for testing only. For launch, configure custom SMTP (Resend, Postmark, etc.) or turn off email confirmation for the MVP (a deliberate decision).
+- [ ] 👤 Email: the built-in SMTP is **heavily rate-limited (a few emails per hour)** and meant for testing only. For launch, configure custom SMTP (Resend, Postmark, etc.) or turn off email confirmation for the MVP (a deliberate decision). **Decision 2026-09-17: option B.** Email confirmation stays on; custom SMTP (e.g. Resend) must be configured **before a public launch**. Until then signups are limited to a few confirmation emails per hour. Leave this box open until SMTP is live.
 - [x] 🤖 Server Supabase client uses `@supabase/ssr` `createServerClient` with `cookies.getAll/setAll` mapped to `Astro.cookies`. Cookies must be `secure`, `sameSite: "lax"`, `path: "/"`. (2026-09-17: `src/lib/supabase.ts` was already correct. `path` and `sameSite` come from the library defaults; `cookieOptions: { secure: !import.meta.env.DEV }` was added. `signUp` sets no `emailRedirectTo`, so confirmation links use the Supabase **Site URL**, which makes the step above essential.)
 - [x] 🤖 Middleware refreshes the session on each SSR request, and skips static assets so you don't burn CPU time. (`src/middleware.ts` calls `auth.getUser()` per request. Static assets are served by the `ASSETS` layer before the Worker runs, so the middleware never sees `/_astro/*`. `getUser()` is network I/O, not CPU time; watch it in Phase 7.)
 - [ ] ⏸️ Deferred (feature not built yet): Realtime results page: the subscription runs **in the browser island** (not SSR), per FR-013 and the CPU-limit mitigation.
@@ -139,9 +139,9 @@ The split matters here: `PUBLIC_*` values get **inlined into the client bundle a
 
 ## Phase 6 — Local production-parity check (🤖)
 
-- [ ] `npm run build` succeeds.
-- [ ] `npx astro preview` (runs on workerd) passes a smoke test: sign up/log in, create a study, upload an image, open the vote link in a private window, vote, and watch results update live.
-- [ ] No `Dynamic require of "stream"`, `require is not defined` or `MessageChannel is not defined` errors in the console (see Edge cases E1 and E2).
+- [x] `npm run build` succeeds. (2026-09-17)
+- [ ] `npx astro preview` (runs on workerd) passes a smoke test: sign up/log in, create a study, upload an image, open the vote link in a private window, vote, and watch results update live. **Partial pass 2026-09-17:** home, signin, signup and 404 pages render; `/dashboard` redirects anonymous users to `/auth/signin`; signin with a non-existent account reaches cloud Supabase and returns `Invalid login credentials`; `/_astro/*` assets are served with `public, max-age=31536000, immutable`. **Not run:** `npm run smoke` signs up a throwaway `@example.com` account in the **production** Supabase project, which with email confirmation on (option B) uses the SMTP quota and leaves junk users. Study, upload, vote and live-results steps are deferred until those features exist. Run the full signup flow manually with a real inbox.
+- [x] No `Dynamic require of "stream"`, `require is not defined` or `MessageChannel is not defined` errors in the console (see Edge cases E1 and E2). (None in the `astro preview logs` output on 2026-09-17.)
 
 ## Phase 7 — First production deploy (👤 approves, 🤖 runs)
 
