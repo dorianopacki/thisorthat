@@ -64,12 +64,12 @@ This plan covers connecting Cloudflare and deploying for the first time, based o
 
 ## Phase 1 — Verify versions and project config (🤖)
 
-- [ ] Check the installed versions: `npm ls astro @astrojs/cloudflare @astrojs/react wrangler @supabase/supabase-js @supabase/ssr`.
-- [ ] Confirm the pairing matches the adapter CHANGELOG: Astro 6 ↔ adapter v13, Astro 7 ↔ adapter v14. If they don't match, run `npx @astrojs/upgrade` rather than bumping packages one at a time.
-- [ ] Pin exact versions (no `^`) for `astro`, `@astrojs/cloudflare` and `wrangler` in `package.json`. The pre-mortem traced a failed build to an unpinned adapter bump.
-- [ ] `astro.config.mjs` has `output: "server"` (or static with per-route `prerender = false`) and `adapter: cloudflare({ imageService: "passthrough" })`. Using `passthrough` is a decision taken in the risk register: `sharp` doesn't run in workerd, and `cloudflare-binding` would need a paid Images binding.
-- [ ] Remove any Pages-era leftovers: `_routes.json`, `functions/`, `pages_build_output_dir`, and uses of `Astro.locals.runtime`. Check with `grep -rn "locals.runtime\|pages_build_output_dir" src/ wrangler.*`.
-- [ ] Keep path aliases in `tsconfig.json` only, not duplicated in `astro.config.mjs` (see Edge cases E3).
+- [x] Check the installed versions: `npm ls astro @astrojs/cloudflare @astrojs/react wrangler @supabase/supabase-js @supabase/ssr`. (2026-09-17: astro 7.3.2, @astrojs/cloudflare 14.3.1, @astrojs/react 6.0.5, wrangler 4.131.1, @supabase/supabase-js 2.116.0, @supabase/ssr 0.12.7)
+- [x] Confirm the pairing matches the adapter CHANGELOG: Astro 6 ↔ adapter v13, Astro 7 ↔ adapter v14. If they don't match, run `npx @astrojs/upgrade` rather than bumping packages one at a time. (Astro 7 ↔ adapter v14: OK.)
+- [x] Pin exact versions (no `^`) for `astro`, `@astrojs/cloudflare` and `wrangler` in `package.json`. (Pinned to 7.3.2 / 14.3.1 / 4.131.1 on 2026-09-17.) The pre-mortem traced a failed build to an unpinned adapter bump.
+- [x] `astro.config.mjs` has `output: "server"` (or static with per-route `prerender = false`) and `adapter: cloudflare({ imageService: "passthrough" })`. Using `passthrough` is a decision taken in the risk register: `sharp` doesn't run in workerd, and `cloudflare-binding` would need a paid Images binding. (`output: "server"` was already set; `imageService: "passthrough"` added 2026-09-17 and the build passes. Env is read through `astro:env` server secrets `SUPABASE_URL` / `SUPABASE_KEY`, which matches the hard rules.)
+- [x] Remove any Pages-era leftovers: `_routes.json`, `functions/`, `pages_build_output_dir`, and uses of `Astro.locals.runtime`. Check with `grep -rn "locals.runtime\|pages_build_output_dir" src/ wrangler.*`. (None found on 2026-09-17. `Astro.session` isn't used anywhere either, which matters for Phase 3.)
+- [x] Keep path aliases in `tsconfig.json` only, not duplicated in `astro.config.mjs` (see Edge cases E3).
 
 ## Phase 2 — `wrangler.jsonc` (🤖, reviewed by 👤)
 
