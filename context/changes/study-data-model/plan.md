@@ -289,13 +289,13 @@ Purely additive — no existing data or tables. Rollback of app code (`wrangler 
 
 #### Automated
 
-- [x] 1.1 Migration applies on a fresh local database: `npx supabase db reset`
-- [x] 1.2 Database lint reports no errors: `npx supabase db lint`
-- [x] 1.3 App gate still passes: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 1.1 Migration applies on a fresh local database: `npx supabase db reset` — 8ea1525
+- [x] 1.2 Database lint reports no errors: `npx supabase db lint` — 8ea1525
+- [x] 1.3 App gate still passes: `npm run lint`, `npx astro check`, `npm run build` — 8ea1525
 
 #### Manual
 
-- [x] 1.4 In local Studio the five tables show RLS enabled and `votes`/`comments` have no link or timestamp columns
+- [x] 1.4 In local Studio the five tables show RLS enabled and `votes`/`comments` have no link or timestamp columns — 8ea1525
 
 ### Phase 2: Tests and contract
 
