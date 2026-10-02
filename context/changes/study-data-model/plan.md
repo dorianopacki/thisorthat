@@ -301,22 +301,22 @@ Purely additive — no existing data or tables. Rollback of app code (`wrangler 
 
 #### Automated
 
-- [x] 2.1 All database tests pass locally: `npx supabase test db`
-- [x] 2.2 App gate passes with typed client: `npm run lint`, `npx astro check`, `npm run build`
-- [ ] 2.3 CI workflow runs `supabase test db` green on the PR
+- [x] 2.1 All database tests pass locally: `npx supabase test db` — a4e88e4
+- [x] 2.2 App gate passes with typed client: `npm run lint`, `npx astro check`, `npm run build` — a4e88e4
+- [x] 2.3 CI workflow runs `supabase test db` green on the PR — a4e88e4
 
 #### Manual
 
-- [x] 2.4 Temporarily adding a `created_at` column to `votes` in a scratch migration makes the anonymity suite fail
+- [x] 2.4 Temporarily adding a `created_at` column to `votes` in a scratch migration makes the anonymity suite fail — a4e88e4
 
 ### Phase 3: Production rollout
 
 #### Automated
 
-- [ ] 3.1 Local and remote migrations are in sync: `npx supabase migration list`
-- [ ] 3.2 Security advisors report no errors for `studies`, `variants`, `study_links`, `votes`, `comments`
+- [x] 3.1 Local and remote migrations are in sync: `npx supabase migration list`
+- [x] 3.2 Security advisors report no errors for `studies`, `variants`, `study_links`, `votes`, `comments`
 
 #### Manual
 
-- [ ] 3.3 User approves the production push before it runs
-- [ ] 3.4 Production site still serves `/` and signin after the push
+- [x] 3.3 User approves the production push before it runs
+- [x] 3.4 Production site still serves `/` and signin after the push
