@@ -24,6 +24,8 @@ ThisOrThat is a preference-testing MVP (A/B studies with per-voter invite links)
 - `npx astro check` — type-check `.astro` files.
 - `npm run build` — production build.
 - `npx supabase start` — local Supabase stack (Docker).
+- `npx supabase test db` — pgTAP database tests in `supabase/tests/` (Docker; stack must be running).
+- `npx supabase migration new <name>` — new migration in `supabase/migrations/`; forward-fix only, never edit a committed migration. Then regenerate types: `npx supabase gen types typescript --local > src/lib/database.types.ts` (run from Git Bash so the file is UTF-8) and `npx prettier --write` it.
 - `npm run smoke` — auth-flow check against a running server (`BASE_URL`).
 
 ## Coding Style
@@ -35,7 +37,7 @@ ThisOrThat is a preference-testing MVP (A/B studies with per-voter invite links)
 
 ## Testing
 
-There is no unit or e2e suite. Before finishing a change, run `npm run lint`, `npx astro check` and `npm run build`, the same gate as @.github/workflows/ci.yml. Run `npm run smoke` after touching auth or dependencies.
+Database guarantees (author isolation, vote anonymity, `cast_vote` behaviour) are pgTAP suites in `supabase/tests/`, run with `npx supabase test db` (Docker required); CI runs them in @.github/workflows/ci.yml. Any schema change ships as a new forward-fix migration (`npx supabase migration new`) with matching tests and an update to @docs/reference/contract-surfaces.md. There is no unit or e2e suite for app code. Before finishing a change, run `npm run lint`, `npx astro check` and `npm run build`. Run `npm run smoke` after touching auth or dependencies.
 
 ## Commits & Pull Requests
 
