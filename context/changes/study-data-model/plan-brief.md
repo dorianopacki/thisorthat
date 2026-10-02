@@ -59,6 +59,7 @@ Authors (`authenticated`) reach `studies`/`variants`/`study_links(token)` throug
 ## Open Risks & Assumptions
 
 - Out-of-band leaks remain: an author can open their own link to see "already voted", or watch the live count tick right after asking someone to vote. The model can't stop this; it is accepted.
+- Same root cause, at scale (found in final review, accepted 2026-10-02): an author can call `cast_vote` on every token they hold. Used links answer `link_used`; unused ones are consumed with fake votes. The leak is destructive and visible, not silent. Fully closing it means authors never hold raw tokens: S-01 should decide token custody (e.g. reveal links once at generation).
 - S-03 must not stream row-level vote/comment inserts via Realtime to the author in a way that brings back timing correlation. It should signal "changed" and refetch `get_study_results`.
 - S-02/S-04 may need follow-up migrations to extend `cast_vote`. That's expected, and done forward-only once Phase 3 has run.
 

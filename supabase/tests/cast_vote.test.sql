@@ -2,7 +2,7 @@
 -- input validation before the link is consumed, comment handling).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(22);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -188,6 +188,17 @@ select throws_ok(
   '22023',
   null,
   'comment on a variant of another study raises'
+);
+
+select throws_ok(
+  $$ select public.cast_vote(
+       'cv-token-2',
+       'b0000000-0000-0000-0000-000000000001',
+       jsonb_build_array(jsonb_build_object('variant_id', 'not-a-uuid', 'body', 'malformed'))
+     ) $$,
+  '22023',
+  null,
+  'comment with a malformed variant_id raises 22023'
 );
 
 reset role;
