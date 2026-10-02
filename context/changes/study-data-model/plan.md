@@ -313,10 +313,10 @@ Purely additive — no existing data or tables. Rollback of app code (`wrangler 
 
 #### Automated
 
-- [x] 3.1 Local and remote migrations are in sync: `npx supabase migration list`
-- [x] 3.2 Security advisors report no errors for `studies`, `variants`, `study_links`, `votes`, `comments`
+- [x] 3.1 Local and remote migrations are in sync: `npx supabase migration list` — 81ae35a
+- [x] 3.2 Security advisors report no errors for `studies`, `variants`, `study_links`, `votes`, `comments` — 81ae35a
 
 #### Manual
 
-- [x] 3.3 User approves the production push before it runs
-- [x] 3.4 Production site still serves `/` and signin after the push
+- [x] 3.3 User approves the production push before it runs — 81ae35a
+- [x] 3.4 Production site still serves `/` and signin after the push — 81ae35a
