@@ -301,13 +301,13 @@ Purely additive — no existing data or tables. Rollback of app code (`wrangler 
 
 #### Automated
 
-- [ ] 2.1 All database tests pass locally: `npx supabase test db`
-- [ ] 2.2 App gate passes with typed client: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 2.1 All database tests pass locally: `npx supabase test db`
+- [x] 2.2 App gate passes with typed client: `npm run lint`, `npx astro check`, `npm run build`
 - [ ] 2.3 CI workflow runs `supabase test db` green on the PR
 
 #### Manual
 
-- [ ] 2.4 Temporarily adding a `created_at` column to `votes` in a scratch migration makes the anonymity suite fail
+- [x] 2.4 Temporarily adding a `created_at` column to `votes` in a scratch migration makes the anonymity suite fail
 
 ### Phase 3: Production rollout
 
