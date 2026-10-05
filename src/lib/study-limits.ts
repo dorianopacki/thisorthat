@@ -9,6 +9,9 @@ export const MIN_PARTICIPANTS = 1;
 export const MAX_PARTICIPANTS = 100;
 export const MAX_TITLE_LENGTH = 200;
 export const MAX_VARIANT_LENGTH = 2000;
+// Comment body limit enforced by cast_vote
+// (supabase/migrations/20261002124043_cast_vote_comment_uuid_errcode.sql).
+export const MAX_COMMENT_LENGTH = 2000;
 
 /** Character count as Postgres `char_length` sees it (code points, not UTF-16 units). */
 export function charLength(value: string): number {

@@ -188,6 +188,7 @@ export type Database = {
         };
         Returns: string;
       };
+      get_ballot: { Args: { p_token: string }; Returns: Json };
       get_study_results: { Args: { p_study_id: string }; Returns: Json };
       start_study: { Args: { p_study_id: string }; Returns: undefined };
     };

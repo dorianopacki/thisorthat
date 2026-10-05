@@ -1,10 +1,10 @@
 ---
 change_id: create-and-start-study
 title: Author creates a text study, sets N, starts it and copies N one-time links
-status: implemented
+status: archived
 created: 2026-10-05
 updated: 2026-10-05
-archived_at: null
+archived_at: 2026-10-05T10:06:02Z
 ---
 
 ## Notes
