@@ -1,6 +1,10 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
+import { voteUrl } from "@/lib/study-links";
+import { ServerError } from "@/components/auth/ServerError";
+import StartStudyButton from "@/components/studies/StartStudyButton";
+import LinkList from "@/components/studies/LinkList";
 
 // No top-level `return` here: typescript-eslint's no-misused-promises crashes on a return
 // outside a function, so a missing study sets the 404 status and renders a short message.
@@ -10,6 +14,7 @@ if (!supabase) {
 }
 
 const id = Astro.params.id ?? "";
+const error = Astro.url.searchParams.get("error");
 
 // RLS returns nothing for someone else's study; an id that is not a uuid makes PostgREST
 // answer 22P02. Both are a 404 for the author.
@@ -24,6 +29,7 @@ if (studyError && studyError.code !== "22P02") {
 }
 
 let variants: { id: string; position: number; content: string }[] = [];
+let urls: string[] = [];
 if (study) {
   const { data, error: variantsError } = await supabase
     .from("variants")
@@ -35,6 +41,20 @@ if (study) {
     throw new Error("Nie udało się wczytać wariantów badania.");
   }
   variants = data;
+
+  // Links exist once the study has started. Select only `id, token` — authors never read `used`.
+  if (study.status !== "draft") {
+    const { data: links, error: linksError } = await supabase
+      .from("study_links")
+      .select("id, token")
+      .eq("study_id", study.id)
+      .order("id", { ascending: true });
+
+    if (linksError) {
+      throw new Error("Nie udało się wczytać linków badania.");
+    }
+    urls = links.map((link) => voteUrl(Astro.url.origin, link.token));
+  }
 } else {
   Astro.response.status = 404;
 }
@@ -72,6 +92,21 @@ const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } 
               </li>
             ))}
           </ol>
+          {error && (
+            <div class="mt-6">
+              <ServerError message={error} />
+            </div>
+          )}
+          {study.status === "draft" ? (
+            <div class="mt-6">
+              <StartStudyButton studyId={study.id} participantTarget={study.participant_target} client:load />
+            </div>
+          ) : (
+            <>
+              <h2 class="mt-6 mb-2 text-sm text-blue-100/80">Linki do głosowania ({urls.length})</h2>
+              <LinkList urls={urls} client:load />
+            </>
+          )}
           <p class="mt-6 text-center text-sm text-blue-100/60">
             <a href="/dashboard" class="text-purple-300 hover:underline">
               Wróć do panelu

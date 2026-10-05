@@ -353,27 +353,27 @@ Forward-only migration; F-01 migrations stay untouched. Tightened checks are saf
 
 #### Automated
 
-- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — 79ab79a
 
 #### Manual
 
-- [x] 2.2 Creating a study with a title, N = 3 and 2 variants lands on `/studies/<id>` showing the draft with variants in order
-- [x] 2.3 The wizard blocks fewer than 2 or more than 6 variants, N outside 1–100 and blank fields, with Polish messages
-- [x] 2.4 The dashboard shows „Nowe badanie” and the author's studies; signed out, `/studies/new` redirects to sign-in
-- [x] 2.5 Opening another author's study id shows 404
+- [x] 2.2 Creating a study with a title, N = 3 and 2 variants lands on `/studies/<id>` showing the draft with variants in order — 79ab79a
+- [x] 2.3 The wizard blocks fewer than 2 or more than 6 variants, N outside 1–100 and blank fields, with Polish messages — 79ab79a
+- [x] 2.4 The dashboard shows „Nowe badanie” and the author's studies; signed out, `/studies/new` redirects to sign-in — 79ab79a
+- [x] 2.5 Opening another author's study id shows 404 — 79ab79a
 
 ### Phase 3: Start the study and copy links
 
 #### Automated
 
-- [ ] 3.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [ ] 3.2 Database tests still pass: `npx supabase test db`
+- [x] 3.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 3.2 Database tests still pass: `npx supabase test db`
 
 #### Manual
 
-- [ ] 3.3 „Rozpocznij” asks for confirmation; after confirming, the study is active and exactly N links are listed as `<origin>/v/<token>`
-- [ ] 3.4 „Kopiuj wszystkie” puts N lines in the clipboard, a row's copy button puts one URL, and „Skopiowano” appears
-- [ ] 3.5 Returning to the study via the dashboard shows the same links; the start button is gone and no extra links appear after a double click
+- [x] 3.3 „Rozpocznij” asks for confirmation; after confirming, the study is active and exactly N links are listed as `<origin>/v/<token>`
+- [x] 3.4 „Kopiuj wszystkie” puts N lines in the clipboard, a row's copy button puts one URL, and „Skopiowano” appears
+- [x] 3.5 Returning to the study via the dashboard shows the same links; the start button is gone and no extra links appear after a double click
 
 ### Phase 4: Production rollout
 
