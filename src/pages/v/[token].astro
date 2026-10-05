@@ -1,0 +1,111 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+import { VOTED_COOKIE } from "@/lib/study-links";
+import { orderForToken } from "@/lib/ballot-order";
+import { ServerError } from "@/components/auth/ServerError";
+import BallotForm from "@/components/voting/BallotForm";
+
+interface Ballot {
+  title: string;
+  variants: { variant_id: string; content: string }[];
+}
+
+/** Narrows get_ballot's jsonb to the contract shape (docs/reference/contract-surfaces.md#get_ballot). */
+function parseBallot(value: unknown): Ballot | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const { title, variants } = value as Record<string, unknown>;
+  if (typeof title !== "string" || !Array.isArray(variants)) return null;
+  const parsed: Ballot["variants"] = [];
+  for (const item of variants as unknown[]) {
+    if (typeof item !== "object" || item === null) return null;
+    const { variant_id, content } = item as Record<string, unknown>;
+    if (typeof variant_id !== "string" || typeof content !== "string") return null;
+    parsed.push({ variant_id, content });
+  }
+  return { title, variants: parsed };
+}
+
+// The token is the participant's credential: keep it out of cross-site Referer, caches and indexes.
+// "same-origin", not "no-referrer": with no-referrer the browser sends `Origin: null` on the vote POST
+// and Astro's checkOrigin rejects it as a cross-site form submission.
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Referrer-Policy", "same-origin");
+Astro.response.headers.set("X-Robots-Tag", "noindex");
+
+const token = Astro.params.token ?? "";
+const status = Astro.url.searchParams.get("status");
+const error = Astro.url.searchParams.get("error");
+
+// Screen precedence (docs/reference/contract-surfaces.md#vote-url): thank-you first, without a database
+// call, so the last voter still sees it after S-04 auto-closes the study.
+type Screen = "thanks" | "ended" | "used" | "ballot" | "error";
+let screen: Screen;
+let ballot: Ballot | null = null;
+let loadError: string | null = null;
+
+if (status === "accepted") {
+  screen = "thanks";
+} else {
+  const supabase = createClient(Astro.request.headers, Astro.cookies);
+  if (!supabase) {
+    screen = "ended";
+    loadError = "Nie udało się wczytać badania. Spróbuj ponownie później.";
+  } else {
+    const { data, error: rpcError } = await supabase.rpc("get_ballot", { p_token: token });
+    if (rpcError) {
+      screen = "error";
+    } else if (data === null) {
+      screen = "ended";
+    } else {
+      ballot = parseBallot(data);
+      if (!ballot) {
+        screen = "error";
+      } else if (Astro.cookies.has(VOTED_COOKIE) || status === "used") {
+        // The cookie is only a same-browser hint; cast_vote is the guard.
+        screen = "used";
+      } else {
+        screen = "ballot";
+      }
+    }
+  }
+}
+
+const TITLES: Record<Screen, string> = {
+  thanks: "Dziękujemy za udział w badaniu",
+  ended: "Badanie jest zakończone",
+  used: "Twój głos został już oddany",
+  ballot: ballot?.title ?? "Głosowanie",
+  error: "Coś poszło nie tak",
+};
+---
+
+<Layout title={TITLES[screen]}>
+  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-5 text-white backdrop-blur-xl sm:p-8">
+      {screen === "ballot" && ballot ? (
+        <>
+          <h1 class="mb-2 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold break-words text-transparent">
+            {ballot.title}
+          </h1>
+          <p class="mb-6 text-center text-sm text-blue-100/80">Wybierz jeden wariant. Komentarze są opcjonalne.</p>
+          <BallotForm token={token} variants={orderForToken(ballot.variants, token)} serverError={error} client:load />
+        </>
+      ) : (
+        <>
+          <h1 class="text-center text-2xl font-bold break-words">{TITLES[screen]}</h1>
+          {screen === "error" && (
+            <p class="mt-4 text-center text-sm text-blue-100/80">
+              Nie udało się wczytać badania. Odśwież stronę i spróbuj ponownie.
+            </p>
+          )}
+          {loadError && (
+            <div class="mt-6">
+              <ServerError message={loadError} />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  </div>
+</Layout>
