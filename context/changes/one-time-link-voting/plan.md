@@ -296,26 +296,26 @@ Forward-only, additive (one new function); existing migrations untouched. Rollba
 
 #### Automated
 
-- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [x] 2.2 Database tests still pass: `npx supabase test db`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — d2205dd
+- [x] 2.2 Database tests still pass: `npx supabase test db` — d2205dd
 
 #### Manual
 
-- [x] 2.3 Signed out, at 360 px width, a fresh link shows the title and variants with no horizontal scroll; „Wyślij głos” is disabled until a variant is tapped
-- [x] 2.4 Two different links of the same study show the variants in different orders (for a 3+ variant study), and each link keeps its order on reload
-- [x] 2.5 Sending with a choice and one comment shows „Dziękujemy za udział w badaniu”; `get_study_results` (as the author, via SQL in Studio) shows `responded` = 1, the vote and the comment
-- [x] 2.6 Reopening the same link in the same browser shows „Twój głos został już oddany”; opening it in a private window shows the ballot, and sending shows the same message with no second vote recorded
-- [x] 2.7 A double tap on „Wyślij głos” records one vote; collapsing a comment keeps its text; a 2001-character comment is blocked with a Polish message
-- [x] 2.8 An unknown token and a token of a study set to `closed` in Studio show „Badanie jest zakończone”; the response headers include `no-store` and `no-referrer`
+- [x] 2.3 Signed out, at 360 px width, a fresh link shows the title and variants with no horizontal scroll; „Wyślij głos” is disabled until a variant is tapped — d2205dd
+- [x] 2.4 Two different links of the same study show the variants in different orders (for a 3+ variant study), and each link keeps its order on reload — d2205dd
+- [x] 2.5 Sending with a choice and one comment shows „Dziękujemy za udział w badaniu”; `get_study_results` (as the author, via SQL in Studio) shows `responded` = 1, the vote and the comment — d2205dd
+- [x] 2.6 Reopening the same link in the same browser shows „Twój głos został już oddany”; opening it in a private window shows the ballot, and sending shows the same message with no second vote recorded — d2205dd
+- [x] 2.7 A double tap on „Wyślij głos” records one vote; collapsing a comment keeps its text; a 2001-character comment is blocked with a Polish message — d2205dd
+- [x] 2.8 An unknown token and a token of a study set to `closed` in Studio show „Badanie jest zakończone”; the response headers include `no-store` and `no-referrer` — d2205dd
 
 ### Phase 3: Production rollout
 
 #### Automated
 
-- [ ] 3.1 CI is green on the PR, including `supabase test db`
+- [x] 3.1 CI is green on the PR, including `supabase test db`
 
 #### Manual
 
-- [ ] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
-- [ ] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`)
-- [ ] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany”
+- [x] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
+- [x] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`)
+- [x] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany”
