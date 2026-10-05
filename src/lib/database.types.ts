@@ -180,7 +180,16 @@ export type Database = {
         Args: { p_comments?: Json; p_token: string; p_variant_id: string };
         Returns: string;
       };
+      create_study: {
+        Args: {
+          p_participant_target: number;
+          p_title: string;
+          p_variants: string[];
+        };
+        Returns: string;
+      };
       get_study_results: { Args: { p_study_id: string }; Returns: Json };
+      start_study: { Args: { p_study_id: string }; Returns: undefined };
     };
     Enums: {
       study_status: "draft" | "active" | "closed";

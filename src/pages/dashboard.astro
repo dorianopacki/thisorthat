@@ -1,12 +1,20 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
 
 const { user } = Astro.locals;
+
+const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } as const;
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const { data: studies, error: studiesError } = supabase
+  ? await supabase.from("studies").select("id, title, status, created_at").order("created_at", { ascending: false })
+  : { data: [], error: null };
 ---
 
 <Layout title="Dashboard">
   <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
+    <div class="w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
       <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
         Dashboard
       </h1>
@@ -14,6 +22,37 @@ const { user } = Astro.locals;
         Welcome, <span class="font-semibold text-white">{user?.email}</span>
       </p>
       <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
+
+      <a
+        href="/studies/new"
+        class="mt-6 inline-block rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+      >
+        Nowe badanie
+      </a>
+
+      <section class="mt-6 text-left">
+        <h2 class="mb-2 text-sm text-blue-100/80">Twoje badania</h2>
+        {studiesError ? (
+          <p class="text-sm text-red-300">Nie udało się wczytać badań.</p>
+        ) : studies.length > 0 ? (
+          <ul class="space-y-2">
+            {studies.map((study) => (
+              <li>
+                <a
+                  href={`/studies/${study.id}`}
+                  class="flex items-center justify-between gap-4 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                >
+                  <span class="truncate">{study.title}</span>
+                  <span class="shrink-0 text-xs text-blue-100/60">{STATUS_LABELS[study.status]}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="text-sm text-blue-100/50">Nie masz jeszcze żadnych badań.</p>
+        )}
+      </section>
+
       <form method="POST" action="/api/auth/signout" class="mt-6">
         <button
           type="submit"
