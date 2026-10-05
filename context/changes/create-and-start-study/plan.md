@@ -381,10 +381,10 @@ Forward-only migration; F-01 migrations stay untouched. Tightened checks are saf
 
 #### Automated
 
-- [x] 4.1 CI is green on the PR, including `supabase test db`
+- [x] 4.1 CI is green on the PR, including `supabase test db` — 835188d
 
 #### Manual
 
-- [x] 4.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
-- [x] 4.3 Security advisors show no new ERROR (expected WARN for definer `start_study`)
-- [ ] 4.4 In production, an author creates a study, starts it and copies the links
+- [x] 4.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync — 835188d
+- [x] 4.3 Security advisors show no new ERROR (expected WARN for definer `start_study`) — 835188d
+- [x] 4.4 In production, an author creates a study, starts it and copies the links — 835188d
