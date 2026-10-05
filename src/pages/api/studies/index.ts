@@ -45,9 +45,12 @@ export const POST: APIRoute = async (context) => {
   const fail = (message: string) => context.redirect(`/studies/new?error=${encodeURIComponent(message)}`);
 
   const form = await context.request.formData();
-  const title = asString(form.get("title")).trim();
+  // A native form POST sends textarea line breaks as CRLF; the wizard validated LF, so normalize
+  // before measuring and storing.
+  const normalize = (value: string) => value.replace(/\r\n?/g, "\n").trim();
+  const title = normalize(asString(form.get("title")));
   const participantTarget = asString(form.get("participant_target")).trim();
-  const variants = form.getAll("variant").map((v) => asString(v).trim());
+  const variants = form.getAll("variant").map((v) => normalize(asString(v)));
 
   const validationError = validate(title, participantTarget, variants);
   if (validationError) return fail(validationError);

@@ -3,7 +3,7 @@
 -- Fixtures are inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(32);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -118,6 +118,34 @@ select throws_ok(
   '23514',
   null,
   'create_study with N = 101 raises 23514'
+);
+
+select throws_ok(
+  $$ select public.create_study('   ', 3, array['Left', 'Right']) $$,
+  '23514',
+  null,
+  'create_study with a blank title raises 23514'
+);
+
+select throws_ok(
+  $$ select public.create_study(repeat('t', 201), 3, array['Left', 'Right']) $$,
+  '23514',
+  null,
+  'create_study with a 201-character title raises 23514'
+);
+
+select throws_ok(
+  $$ select public.create_study('Long variant', 3, array['Left', repeat('v', 2001)]) $$,
+  '23514',
+  null,
+  'create_study with a 2001-character variant raises 23514'
+);
+
+select throws_ok(
+  $$ select public.create_study('No variants', 3, null) $$,
+  '22023',
+  null,
+  'create_study with null variants raises 22023'
 );
 
 reset role;

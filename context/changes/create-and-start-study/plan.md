@@ -210,6 +210,8 @@ The author can create a draft through the wizard, see it on its own page, and fi
 
 **Contract**: `POST`; handles the `null` client branch; success → redirect `/studies/<id>`. `55000` (already started, e.g. double submit) → redirect to `/studies/<id>` without an error. `P0002` → `new Response(null, { status: 404 })`. `22023` and other errors → `/studies/<id>?error=<Polish message>`.
 
+> Note (implementation review F2, 2026-10-05): `P0002` and `22P02` now redirect to `/studies/<id>`, which renders the 404 with a link back — a bare 404 left the author on a blank page and broke the form-endpoint redirect pattern. See `reviews/impl-review.md`.
+
 #### 2. Start button island
 
 **File**: `src/components/studies/StartStudyButton.tsx`
@@ -366,23 +368,23 @@ Forward-only migration; F-01 migrations stay untouched. Tightened checks are saf
 
 #### Automated
 
-- [x] 3.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [x] 3.2 Database tests still pass: `npx supabase test db`
+- [x] 3.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — 4368e92
+- [x] 3.2 Database tests still pass: `npx supabase test db` — 4368e92
 
 #### Manual
 
-- [x] 3.3 „Rozpocznij” asks for confirmation; after confirming, the study is active and exactly N links are listed as `<origin>/v/<token>`
-- [x] 3.4 „Kopiuj wszystkie” puts N lines in the clipboard, a row's copy button puts one URL, and „Skopiowano” appears
-- [x] 3.5 Returning to the study via the dashboard shows the same links; the start button is gone and no extra links appear after a double click
+- [x] 3.3 „Rozpocznij” asks for confirmation; after confirming, the study is active and exactly N links are listed as `<origin>/v/<token>` — 4368e92
+- [x] 3.4 „Kopiuj wszystkie” puts N lines in the clipboard, a row's copy button puts one URL, and „Skopiowano” appears — 4368e92
+- [x] 3.5 Returning to the study via the dashboard shows the same links; the start button is gone and no extra links appear after a double click — 4368e92
 
 ### Phase 4: Production rollout
 
 #### Automated
 
-- [ ] 4.1 CI is green on the PR, including `supabase test db`
+- [x] 4.1 CI is green on the PR, including `supabase test db`
 
 #### Manual
 
-- [ ] 4.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
-- [ ] 4.3 Security advisors show no new ERROR (expected WARN for definer `start_study`)
+- [x] 4.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
+- [x] 4.3 Security advisors show no new ERROR (expected WARN for definer `start_study`)
 - [ ] 4.4 In production, an author creates a study, starts it and copies the links

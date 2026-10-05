@@ -18,8 +18,9 @@ export const POST: APIRoute = async (context) => {
   if (error) {
     // Already started (e.g. a double submit): the study page shows the existing links.
     if (error.code === "55000") return context.redirect(studyUrl);
-    // Not the caller's study, or an id that is not a uuid (PostgREST answers 22P02).
-    if (error.code === "P0002" || error.code === "22P02") return new Response(null, { status: 404 });
+    // Not the caller's study, or an id that is not a uuid (PostgREST answers 22P02): the study page
+    // renders the 404 with a way back, so redirect there like every other form endpoint.
+    if (error.code === "P0002" || error.code === "22P02") return context.redirect(studyUrl);
     if (error.code === "22023") return fail(VARIANT_COUNT_MESSAGE);
     return fail(GENERIC_MESSAGE);
   }
