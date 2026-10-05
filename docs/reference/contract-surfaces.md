@@ -2,11 +2,13 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) and `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
 **Authors never read `votes`, `comments`, or `study_links.used`.** `anon` and `authenticated` have no privileges on `votes` and `comments`, and `authenticated` can select only `study_links (id, study_id, token)`. Authors see votes and comments only as aggregates through `get_study_results`. `votes` and `comments` never get a link reference, a timestamp or a serial/identity column. `supabase/tests/study_anonymity.test.sql` enforces this.
+
+**No participant-reachable read reveals `study_links.used`.** The only way to learn a link's state is `cast_vote`, which consumes an unused link. `get_ballot` never reads `used` and returns identical output for a used and an unused link; `supabase/tests/get_ballot.test.sql` enforces this. Any later participant-facing read (S-03, S-04, S-06) must keep this rule.
 
 ## Enum `public.study_status`
 
@@ -33,6 +35,17 @@ Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `
 ## Vote URL
 
 Each link is served at **`/v/<token>`** (S-02 must serve this path; the author copies these URLs after `start_study`).
+
+The page (`src/pages/v/[token].astro`, S-02) picks its screen in this order:
+
+1. `?status=accepted` → thank-you „Dziękujemy za udział w badaniu” (no database call).
+2. `get_ballot` returns `null` → „Badanie jest zakończone”.
+3. Voted cookie present or `?status=used` → „Twój głos został już oddany”.
+4. Otherwise the ballot (with `?error=` if present).
+
+- Thank-you comes before „ended” on purpose: S-04 will auto-close a study on its last link, and the last voter's redirect must still show the thank-you. S-04 must keep this order.
+- The voted cookie is scoped to path `/v/<token>` and set by the vote endpoint (`/api/v/<token>`) on `accepted` and `link_used`. It is a same-browser UI hint only: one vote per link is enforced solely by `cast_vote`. A missing cookie only means the ballot shows again (sending then returns `link_used`).
+- Variants are shown in an order shuffled per link, deterministic from the token (stable across reloads, nothing stored).
 
 ## `public.create_study(p_title text, p_participant_target integer, p_variants text[]) returns uuid`
 
@@ -61,6 +74,24 @@ Callable by `anon` and `authenticated`. The only write path for votes and commen
   - `study_ended` — unknown token, or the study is `draft`/`closed`/deleted; nothing recorded.
 - Raises SQLSTATE `22023` (link stays unused) when: `p_variant_id` is not a variant of the token's study; `p_comments` is not an array or an entry is not an object; a comment `variant_id` is missing, not a uuid, or not in the study; two comments share a `variant_id`; a body exceeds 2000 characters. Validation runs before the link is consumed, so errors never reveal whether a link is used.
 - **Known, accepted limit:** whoever holds a token can test it, and authors hold every token of their studies (they distribute them). An author can therefore call `cast_vote` on each token: used links answer `link_used`, unused ones get consumed with a fake vote. This reveals per-link usage only by destroying the remaining links (visible in `responded`), so it is not a silent oracle. Blocking `authenticated` would not help, because the author can call as `anon`. Decision (S-01, `create-and-start-study`): authors keep reading raw tokens, because they distribute the links themselves; since the probe is destructive and shows up in `responded`, the limit is accepted.
+
+## `public.get_ballot(p_token text) returns jsonb`
+
+Callable by `anon` and `authenticated` (`security definer`, `stable`). The participant read path, called by the `/v/<token>` page. Grants no table access.
+
+- Returns `null` for an unknown token, or when the token's study is deleted, `draft` or `closed`.
+- Never reads `study_links.used`: a used and an unused link of the same active study return identical output.
+- Returns no link id, token, `position`, study id, status or counts.
+
+```json
+{
+  "title": "text",
+  "variants": [{ "variant_id": "uuid", "content": "text" }]
+}
+```
+
+- `variants` ordered by `position` (the page reorders them per link).
+- Top-level keys are exactly `title, variants`; per-variant keys are exactly `variant_id, content`.
 
 ## `public.get_study_results(p_study_id uuid) returns jsonb`
 
