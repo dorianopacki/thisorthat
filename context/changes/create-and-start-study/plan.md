@@ -340,27 +340,27 @@ Forward-only migration; F-01 migrations stay untouched. Tightened checks are saf
 
 #### Automated
 
-- [x] 1.1 Migrations apply on a fresh local database: `npx supabase db reset`
-- [x] 1.2 All database tests pass, including the new suite: `npx supabase test db`
-- [x] 1.3 Database lint reports no errors: `npx supabase db lint`
-- [x] 1.4 App gate passes with regenerated types: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 1.1 Migrations apply on a fresh local database: `npx supabase db reset` — 4fec0a8
+- [x] 1.2 All database tests pass, including the new suite: `npx supabase test db` — 4fec0a8
+- [x] 1.3 Database lint reports no errors: `npx supabase db lint` — 4fec0a8
+- [x] 1.4 App gate passes with regenerated types: `npm run lint`, `npx astro check`, `npm run build` — 4fec0a8
 
 #### Manual
 
-- [x] 1.5 `contract-surfaces.md` lists `create_study`, `start_study`, the limits, `/v/<token>`, and the token note as an accepted limit
+- [x] 1.5 `contract-surfaces.md` lists `create_study`, `start_study`, the limits, `/v/<token>`, and the token note as an accepted limit — 4fec0a8
 
 ### Phase 2: Wizard and draft page
 
 #### Automated
 
-- [ ] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
 
 #### Manual
 
-- [ ] 2.2 Creating a study with a title, N = 3 and 2 variants lands on `/studies/<id>` showing the draft with variants in order
-- [ ] 2.3 The wizard blocks fewer than 2 or more than 6 variants, N outside 1–100 and blank fields, with Polish messages
-- [ ] 2.4 The dashboard shows „Nowe badanie” and the author's studies; signed out, `/studies/new` redirects to sign-in
-- [ ] 2.5 Opening another author's study id shows 404
+- [x] 2.2 Creating a study with a title, N = 3 and 2 variants lands on `/studies/<id>` showing the draft with variants in order
+- [x] 2.3 The wizard blocks fewer than 2 or more than 6 variants, N outside 1–100 and blank fields, with Polish messages
+- [x] 2.4 The dashboard shows „Nowe badanie” and the author's studies; signed out, `/studies/new` redirects to sign-in
+- [x] 2.5 Opening another author's study id shows 404
 
 ### Phase 3: Start the study and copy links
 

@@ -6,10 +6,13 @@ interface SubmitButtonProps {
   pendingText: string;
   icon: ReactNode;
   children: ReactNode;
+  /** Extra pending flag for native form POSTs, which `useFormStatus` does not track. */
+  pending?: boolean;
 }
 
-export function SubmitButton({ pendingText, icon, children }: SubmitButtonProps) {
-  const { pending } = useFormStatus();
+export function SubmitButton({ pendingText, icon, children, pending: externalPending = false }: SubmitButtonProps) {
+  const { pending: formPending } = useFormStatus();
+  const pending = formPending || externalPending;
 
   return (
     <Button
