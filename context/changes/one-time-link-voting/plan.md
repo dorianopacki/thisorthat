@@ -312,10 +312,10 @@ Forward-only, additive (one new function); existing migrations untouched. Rollba
 
 #### Automated
 
-- [x] 3.1 CI is green on the PR, including `supabase test db`
+- [x] 3.1 CI is green on the PR, including `supabase test db` — ee0d121
 
 #### Manual
 
-- [x] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
-- [x] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`)
-- [x] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany”
+- [x] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync — ee0d121
+- [x] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`) — ee0d121
+- [x] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany” — ee0d121
