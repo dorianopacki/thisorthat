@@ -1,10 +1,10 @@
 ---
 change_id: one-time-link-voting
 title: Participant votes through a one-time link with optional comments
-status: impl_reviewed
+status: archived
 created: 2026-10-05
 updated: 2026-10-06
-archived_at: null
+archived_at: 2026-10-06T09:16:10Z
 ---
 
 ## Notes
