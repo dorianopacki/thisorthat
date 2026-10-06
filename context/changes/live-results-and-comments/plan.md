@@ -246,24 +246,24 @@ None — no database change. Rolling back is reverting the app commit.
 
 #### Automated
 
-- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [x] 2.2 Database tests still pass: `npx supabase test db`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — bc9dc38
+- [x] 2.2 Database tests still pass: `npx supabase test db` — bc9dc38
 
 #### Manual
 
-- [x] 2.3 With the author's study page open, voting from another browser updates X z N, the ranking and comments within ~10 s with no reload and no highlight of the change
-- [x] 2.4 In DevTools Network, requests to `/api/studies/<id>/results` stop while the tab is hidden and one fires immediately on return; responses carry `Cache-Control: no-store` and only the keys `status, responded, total, variants`
-- [x] 2.5 Setting the study to `closed` in Studio makes the page show the final-results notice and polling stops; a closed study loaded fresh makes no polling requests
-- [x] 2.6 Signed out, `GET /api/studies/<id>/results` redirects to sign-in; as another author it returns 404; after signing out in another tab the open page shows the session-expired notice and stops polling
-- [x] 2.7 `contract-surfaces.md` contains the Results view section and the extended anonymity rule
+- [x] 2.3 With the author's study page open, voting from another browser updates X z N, the ranking and comments within ~10 s with no reload and no highlight of the change — bc9dc38
+- [x] 2.4 In DevTools Network, requests to `/api/studies/<id>/results` stop while the tab is hidden and one fires immediately on return; responses carry `Cache-Control: no-store` and only the keys `status, responded, total, variants` — bc9dc38
+- [x] 2.5 Setting the study to `closed` in Studio makes the page show the final-results notice and polling stops; a closed study loaded fresh makes no polling requests — bc9dc38
+- [x] 2.6 Signed out, `GET /api/studies/<id>/results` redirects to sign-in; as another author it returns 404; after signing out in another tab the open page shows the session-expired notice and stops polling — bc9dc38
+- [x] 2.7 `contract-surfaces.md` contains the Results view section and the extended anonymity rule — bc9dc38
 
 ### Phase 3: Production rollout
 
 #### Automated
 
-- [ ] 3.1 CI is green on the PR, including `supabase test db`
+- [x] 3.1 CI is green on the PR, including `supabase test db`
 
 #### Manual
 
-- [ ] 3.2 `npx supabase migration list` shows local and remote in sync with no new migration
-- [ ] 3.3 In production, with the author's study page open on a laptop, a vote and comment sent from a phone via a link appear on the author's page within ~10 s
+- [x] 3.2 `npx supabase migration list` shows local and remote in sync with no new migration
+- [x] 3.3 In production, with the author's study page open on a laptop, a vote and comment sent from a phone via a link appear on the author's page within ~10 s
