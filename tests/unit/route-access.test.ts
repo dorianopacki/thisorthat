@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { ROUTE_AUDIENCE, requiresAuthor } from "@/lib/route-access";
 
 const PAGES_DIR = fileURLToPath(new URL("../../src/pages", import.meta.url));
-const ROUTE_FILE = /\.(astro|ts)$/;
+// Every extension Astro routes from src/pages; files or folders starting with "_" are not routed.
+const ROUTE_FILE = /\.(astro|ts|js|mjs|md|mdx|html)$/;
+const isRouted = (file: string) => ROUTE_FILE.test(file) && !file.split(/[\\/]/).some((part) => part.startsWith("_"));
 
 // src/pages/api/studies/[id]/start.ts -> /api/studies/[id]/start; index files map to their folder.
 function routePattern(relativePath: string): string {
@@ -13,7 +15,7 @@ function routePattern(relativePath: string): string {
   return `/${segments.join("/")}`;
 }
 
-const pageFiles = readdirSync(PAGES_DIR, { recursive: true, encoding: "utf8" }).filter((file) => ROUTE_FILE.test(file));
+const pageFiles = readdirSync(PAGES_DIR, { recursive: true, encoding: "utf8" }).filter(isRouted);
 const filePatterns = new Map(pageFiles.map((file) => [routePattern(file), file]));
 
 describe("route classification", () => {

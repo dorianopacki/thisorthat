@@ -55,6 +55,11 @@ export function redirectTarget(response: HttpResponse): string {
   return url.origin === BASE_URL ? url.pathname + url.search : url.href;
 }
 
+/** "status location", for assertion messages. */
+export function describeResponse(response: HttpResponse): string {
+  return `${String(response.status)} ${response.location}`.trim();
+}
+
 function encodeForm(form: Form): string {
   const params = new URLSearchParams();
   for (const [name, value] of Object.entries(form)) {
@@ -82,6 +87,8 @@ function send(path: string, method: string, headers: Record<string, string>, bod
         res.on("error", reject);
       },
     );
+    // Fail with the request that hung instead of waiting for the test timeout.
+    req.setTimeout(10_000, () => req.destroy(new Error(`timeout: ${method} ${path}`)));
     req.on("error", reject);
     req.end(body);
   });

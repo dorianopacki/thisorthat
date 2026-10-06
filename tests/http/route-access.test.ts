@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { ROUTE_AUDIENCE, type RouteAudience } from "@/lib/route-access";
 import {
   createStartedStudy,
+  describeResponse,
   newClient,
   redirectTarget,
   signUpAndSignIn,
@@ -61,10 +62,6 @@ function audienceOf(path: string): RouteAudience | undefined {
 function requiresAuthorOrUnknown(path: string): boolean {
   const audience = audienceOf(path);
   return audience === undefined || audience === "author";
-}
-
-function describeResponse(response: HttpResponse): string {
-  return `${String(response.status)} ${response.location}`.trim();
 }
 
 const entries = Object.entries(ROUTE_AUDIENCE);

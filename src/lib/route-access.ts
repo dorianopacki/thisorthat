@@ -2,6 +2,8 @@
 // src/pages/ needs an entry: tests/unit/route-access.test.ts fails on an unclassified or stale one.
 // The middleware protects by the pattern the router matched, never by the URL path string, so
 // encoded or dot-segment paths cannot reach an author route under another name.
+// `server:defer` components are served via /_server-islands/[name], outside this map: an author-only
+// island must check Astro.locals.user itself.
 
 export type RouteAudience = "author" | "participant" | "public";
 
