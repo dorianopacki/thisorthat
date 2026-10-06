@@ -438,11 +438,11 @@ There are no data or schema migrations. The middleware change is behaviour-prese
 
 #### Automated
 
-- [x] 5.1 Workflow file is valid YAML and the new steps appear in order
-- [ ] 5.2 CI run on the PR passes the `smoke` job, including `test:unit` and `test:http`
-- [x] 5.3 Linting passes: `npm run lint`
+- [x] 5.1 Workflow file is valid YAML and the new steps appear in order — e5c9ff0
+- [x] 5.2 CI run on the PR passes the `smoke` job, including `test:unit` and `test:http` — e5c9ff0
+- [x] 5.3 Linting passes: `npm run lint` — e5c9ff0
 
 #### Manual
 
-- [x] 5.4 Test-plan §6.2 is followable by someone adding a fictional `/studies/[id]/edit` page
-- [x] 5.5 `AGENTS.md` and `README.md` no longer mention `PROTECTED_ROUTES`
+- [x] 5.4 Test-plan §6.2 is followable by someone adding a fictional `/studies/[id]/edit` page — e5c9ff0
+- [x] 5.5 `AGENTS.md` and `README.md` no longer mention `PROTECTED_ROUTES` — e5c9ff0

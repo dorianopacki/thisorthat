@@ -139,6 +139,7 @@ Gotchas:
 - Expect a sign-in redirect or a 404 for path variants. A 2xx or 5xx means a handler ran anonymously.
 - Every POST needs `Origin` (the client sends it).
 - Keep fixture titles and emails unique per run (`uniqueSuffix()`).
+- **Local auth rate limit.** `supabase/config.toml` allows `sign_in_sign_ups = 30` per 5 minutes per IP, and one run of smoke plus `test:http` makes about 11 auth calls. If `beforeAll` throws `signup: expected 302 …, got 429`, wait 5 minutes; it is not a regression.
 
 ### 6.3 Adding a unit test for pure logic
 

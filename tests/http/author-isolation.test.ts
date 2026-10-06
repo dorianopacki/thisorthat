@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
-import { createStudy, newAuthor, redirectTarget, uniqueSuffix, type Author, type HttpResponse } from "./client";
+import { createStudy, describeResponse, newAuthor, redirectTarget, uniqueSuffix, type Author } from "./client";
 
 // Author B against author A's study ids. Ownership lives in the database (RLS and the definer
 // functions); these tests prove the app translates "not owned" into a 404 page, a JSON 404 or a
@@ -36,10 +36,6 @@ beforeAll(async () => {
 
   fixtures = { authorA, authorB, activeId, draftId, titles };
 });
-
-function describeResponse(response: HttpResponse): string {
-  return `${String(response.status)} ${response.location}`.trim();
-}
 
 // The ids B tries. Resolved lazily: the A ids exist only after beforeAll.
 const targets: readonly { target: string; id: () => string }[] = [
