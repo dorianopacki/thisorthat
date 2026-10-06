@@ -9,27 +9,46 @@ on:
 permissions:
   contents: read
 
-# Lint, type check and build live in deploy.yml (job "verify").
+# A newer push to the same PR cancels the older run; runs on main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Validation (static, tests) -> gate (ci-passed) -> deploy (deploy-production, preview-upload).
 jobs:
-  smoke:
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
-      - uses: supabase/setup-cli@v1
+      - run: npm ci
+      - run: npx astro sync
+      - run: npm run lint
+      - run: npx astro check
+      # The app reads Supabase only via astro:env server secrets at runtime,
+      # so the build needs no Supabase values (see deploy-plan.md Phase 4).
+      - run: npm run build
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          version: latest
+          node-version-file: .nvmrc
+          cache: npm
+      # Also installs the Supabase CLI pinned in package.json (used via npx below).
       - run: npm ci
       # Needs no server: runs first so a later smoke failure cannot hide it.
       - run: npm run test:unit
       - name: Start local Supabase
         run: |
-          supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
-          supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' > supabase.env
-      - run: supabase test db
+          npx supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
+          npx supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' > supabase.env
+      - run: npx supabase test db
       - name: Configure secrets for build and preview
         run: |
           source supabase.env
@@ -39,10 +58,68 @@ jobs:
       - name: Run smoke test against production preview
         run: |
           npm run preview -- --port 4321 &
-          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:4321/ && break; sleep 1; done
+          for _ in $(seq 1 60); do curl -sf -o /dev/null http://localhost:4321/ && break; sleep 1; done
           curl -sf -o /dev/null http://localhost:4321/ || { echo "preview did not start on :4321"; exit 1; }
           BASE_URL=http://localhost:4321 npm run smoke
       - name: Run HTTP integration tests against production preview
         run: BASE_URL=http://localhost:4321 npm run test:http
       - if: always()
-        run: supabase stop --no-backup
+        run: npx supabase stop --no-backup
+
+  ci-passed:
+    if: always()
+    needs: [static, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All validation jobs succeeded
+        run: |
+          [ "${{ needs.static.result }}" = success ] && [ "${{ needs.tests.result }}" = success ] \
+            || { echo "static=${{ needs.static.result }} tests=${{ needs.tests.result }}"; exit 1; }
+
+  deploy-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: ci-passed
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://thisorthat.dorianwew.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.131.1"
+          command: deploy --message "${{ github.sha }}"
+
+  preview-upload:
+    # Fork PRs get no secrets, so only upload previews for same-repo branches.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: ci-passed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Uploads a version without routing traffic to it. preview_urls is false in
+      # wrangler.jsonc, so no public preview URL is created (edge case E12).
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.131.1"
+          # No "#" in the message: wrangler-action's argument parsing treats it as a comment.
+          command: versions upload --message "PR-${{ github.event.number }}"

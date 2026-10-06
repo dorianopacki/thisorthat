@@ -1,10 +1,10 @@
 ---
 change_id: testing-access-boundaries
 title: Test rollout Phase 1 — access boundaries (route protection and author isolation)
-status: impl_reviewed
+status: archived
 created: 2026-10-06
 updated: 2026-10-06
-archived_at: null
+archived_at: 2026-10-06T12:42:11Z
 ---
 
 ## Notes
