@@ -401,27 +401,27 @@ There are no data or schema migrations. The middleware change is behaviour-prese
 
 #### Automated
 
-- [x] 2.1 HTTP suite passes against a fresh preview
-- [x] 2.2 Temporarily reverting the middleware to the old pathname check makes the encoded-variant cases fail (then restore)
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Type check passes: `npx astro check`
+- [x] 2.1 HTTP suite passes against a fresh preview — 3f767f9
+- [x] 2.2 Temporarily reverting the middleware to the old pathname check makes the encoded-variant cases fail (then restore) — 3f767f9
+- [x] 2.3 Linting passes: `npm run lint` — 3f767f9
+- [x] 2.4 Type check passes: `npx astro check` — 3f767f9
 
 #### Manual
 
-- [x] 2.5 The test output lists every `ROUTE_AUDIENCE` entry by name
+- [x] 2.5 The test output lists every `ROUTE_AUDIENCE` entry by name — 3f767f9
 
 ### Phase 3: Two-author isolation over HTTP (risk #2)
 
 #### Automated
 
-- [ ] 3.1 HTTP suite passes: `BASE_URL=http://localhost:4321 npm run test:http`
-- [ ] 3.2 The suite passes twice in a row against the same database
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Type check passes: `npx astro check`
+- [x] 3.1 HTTP suite passes: `BASE_URL=http://localhost:4321 npm run test:http`
+- [x] 3.2 The suite passes twice in a row against the same database
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Type check passes: `npx astro check`
 
 #### Manual
 
-- [ ] 3.5 Reading the test names alone gives the B-vs-A matrix
+- [x] 3.5 Reading the test names alone gives the B-vs-A matrix
 
 ### Phase 4: pgTAP isolation gaps
 
