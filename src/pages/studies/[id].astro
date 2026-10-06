@@ -10,6 +10,9 @@ import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/
 
 // No top-level `return` here: typescript-eslint's no-misused-promises crashes on a return
 // outside a function, so a missing study sets the 404 status and renders a short message.
+// Results and comments are rendered here: never serve this page from a browser/bfcache copy.
+Astro.response.headers.set("Cache-Control", "no-store");
+
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (!supabase) {
   throw new Error("Supabase nie jest skonfigurowany.");

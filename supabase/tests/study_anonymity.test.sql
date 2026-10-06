@@ -189,8 +189,8 @@ select is(
   'the unused link stays unused after invalid calls'
 );
 
-select is((select count(*)::int from public.votes), 3, 'invalid calls recorded no vote');
-select is((select count(*)::int from public.comments), 3, 'invalid calls recorded no comment');
+select is((select count(*)::int from public.votes where study_id = 'a0000000-0000-0000-0000-000000000001'), 3, 'invalid calls recorded no vote');
+select is((select count(*)::int from public.comments where study_id = 'a0000000-0000-0000-0000-000000000001'), 3, 'invalid calls recorded no comment');
 
 select * from finish();
 rollback;
