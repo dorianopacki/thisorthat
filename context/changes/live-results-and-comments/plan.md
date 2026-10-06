@@ -232,30 +232,30 @@ None — no database change. Rolling back is reverting the app commit.
 
 #### Automated
 
-- [x] 1.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [x] 1.2 Database tests still pass: `npx supabase test db`
+- [x] 1.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — edaf993
+- [x] 1.2 Database tests still pass: `npx supabase test db` — edaf993
 
 #### Manual
 
-- [x] 1.3 A draft study's page looks unchanged (variant list + start button, no results)
-- [x] 1.4 An active study with no votes shows „Odpowiedziało 0 z N”, „Nikt jeszcze nie zagłosował”, every variant at place 1 with „0 głosów” and „Brak komentarzy”
-- [x] 1.5 After votes A=2, B=2, C=1, D=0 (4 variants, via `/v/<token>` links) the page shows places 1, 1, 3, 4, tied variants in wizard order, „2 głosy”/„1 głos”/„0 głosów”, and comments under the right variants sorted alphabetically
-- [x] 1.6 At 360 px width the results section has no horizontal scroll and long content wraps
+- [x] 1.3 A draft study's page looks unchanged (variant list + start button, no results) — edaf993
+- [x] 1.4 An active study with no votes shows „Odpowiedziało 0 z N”, „Nikt jeszcze nie zagłosował”, every variant at place 1 with „0 głosów” and „Brak komentarzy” — edaf993
+- [x] 1.5 After votes A=2, B=2, C=1, D=0 (4 variants, via `/v/<token>` links) the page shows places 1, 1, 3, 4, tied variants in wizard order, „2 głosy”/„1 głos”/„0 głosów”, and comments under the right variants sorted alphabetically — edaf993
+- [x] 1.6 At 360 px width the results section has no horizontal scroll and long content wraps — edaf993
 
 ### Phase 2: Live updates
 
 #### Automated
 
-- [ ] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [ ] 2.2 Database tests still pass: `npx supabase test db`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 2.2 Database tests still pass: `npx supabase test db`
 
 #### Manual
 
-- [ ] 2.3 With the author's study page open, voting from another browser updates X z N, the ranking and comments within ~10 s with no reload and no highlight of the change
-- [ ] 2.4 In DevTools Network, requests to `/api/studies/<id>/results` stop while the tab is hidden and one fires immediately on return; responses carry `Cache-Control: no-store` and only the keys `status, responded, total, variants`
-- [ ] 2.5 Setting the study to `closed` in Studio makes the page show the final-results notice and polling stops; a closed study loaded fresh makes no polling requests
-- [ ] 2.6 Signed out, `GET /api/studies/<id>/results` redirects to sign-in; as another author it returns 404; after signing out in another tab the open page shows the session-expired notice and stops polling
-- [ ] 2.7 `contract-surfaces.md` contains the Results view section and the extended anonymity rule
+- [x] 2.3 With the author's study page open, voting from another browser updates X z N, the ranking and comments within ~10 s with no reload and no highlight of the change
+- [x] 2.4 In DevTools Network, requests to `/api/studies/<id>/results` stop while the tab is hidden and one fires immediately on return; responses carry `Cache-Control: no-store` and only the keys `status, responded, total, variants`
+- [x] 2.5 Setting the study to `closed` in Studio makes the page show the final-results notice and polling stops; a closed study loaded fresh makes no polling requests
+- [x] 2.6 Signed out, `GET /api/studies/<id>/results` redirects to sign-in; as another author it returns 404; after signing out in another tab the open page shows the session-expired notice and stops polling
+- [x] 2.7 `contract-surfaces.md` contains the Results view section and the extended anonymity rule
 
 ### Phase 3: Production rollout
 

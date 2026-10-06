@@ -1,20 +1,130 @@
-import { formatVotes, rankVariants, type StudyResults as Results } from "@/lib/study-results";
+import { useEffect, useState } from "react";
+import { formatVotes, parseStudyResults, rankVariants, type StudyResults as Results } from "@/lib/study-results";
+
+/** Live refresh interval while the study is active (docs/reference/contract-surfaces.md#results-view). */
+const RESULTS_POLL_MS = 10_000;
+
+const NOTICES = {
+  transient: "Nie udało się odświeżyć wyników. Spróbujemy ponownie.",
+  expired: "Sesja wygasła — odśwież stronę, aby zobaczyć aktualne wyniki.",
+  notFound: "Nie znaleziono badania — odśwież stronę.",
+  final: "Badanie jest zakończone — wyniki są ostateczne.",
+} as const;
+
+type Notice = keyof typeof NOTICES;
 
 interface Props {
-  /** Used by the live refresh (Phase 2). */
   studyId: string;
   initial: Results;
 }
 
-// No change cues (docs/reference/contract-surfaces.md#anonymity-rule): the whole state is rendered
-// as received, comments in the order get_study_results returns them, nothing marks what changed.
-export default function StudyResults({ initial }: Props) {
-  const results = initial;
+// No change cues (docs/reference/contract-surfaces.md#anonymity-rule): each refresh replaces the
+// whole state, comments render in the order get_study_results returns them, nothing marks what changed.
+export default function StudyResults({ studyId, initial }: Props) {
+  const [results, setResults] = useState(initial);
+  const [notice, setNotice] = useState<Notice | null>(null);
+
+  // Polls only while the study is active and the tab is visible; a study loaded as closed makes no requests.
+  useEffect(() => {
+    if (initial.status !== "active") return;
+
+    const url = `/api/studies/${encodeURIComponent(studyId)}/results`;
+    const controller = new AbortController();
+    let stopped = false;
+    let inFlight = false;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    // A getter, so the checks after `await` re-read the flag that stop() or unmount may have set.
+    const isStopped = () => stopped;
+
+    function clearTimer() {
+      if (timer !== undefined) clearInterval(timer);
+      timer = undefined;
+    }
+
+    function startTimer() {
+      clearTimer();
+      timer = setInterval(() => {
+        void refresh();
+      }, RESULTS_POLL_MS);
+    }
+
+    function stop(final: Notice) {
+      stopped = true;
+      clearTimer();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      setNotice(final);
+    }
+
+    async function refresh() {
+      // Never two requests at once; nothing after a permanent stop.
+      if (stopped || inFlight) return;
+      inFlight = true;
+      try {
+        const res = await fetch(url, { cache: "no-store", credentials: "same-origin", signal: controller.signal });
+        if (isStopped()) return;
+        // The middleware redirects an expired session to the sign-in page (HTML with 200).
+        if (res.redirected) {
+          stop("expired");
+          return;
+        }
+        if (res.status === 404) {
+          stop("notFound");
+          return;
+        }
+        if (!res.ok) {
+          setNotice("transient");
+          return;
+        }
+        const next = parseStudyResults(await res.json());
+        if (isStopped()) return;
+        if (!next) {
+          setNotice("transient");
+          return;
+        }
+        setResults(next);
+        if (next.status !== "active") {
+          stop("final");
+          return;
+        }
+        setNotice(null);
+      } catch {
+        // Network error, non-JSON body, or the abort on unmount: keep the last data.
+        if (!isStopped()) setNotice("transient");
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    function onVisibilityChange() {
+      if (stopped) return;
+      if (document.visibilityState === "visible") {
+        void refresh();
+        startTimer();
+      } else {
+        clearTimer();
+      }
+    }
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    // The server-rendered data is fresh, so the first request waits one interval.
+    if (document.visibilityState === "visible") startTimer();
+
+    return () => {
+      stopped = true;
+      clearTimer();
+      controller.abort();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [studyId, initial.status]);
+
   const ranked = rankVariants(results.variants);
   const percent = results.total > 0 ? Math.min(100, Math.round((results.responded / results.total) * 100)) : 0;
 
   return (
     <div className="space-y-4">
+      <div aria-live="polite" className="text-sm text-blue-100/80 empty:hidden">
+        {notice && <p className="rounded-md border border-white/20 bg-white/5 px-3 py-2">{NOTICES[notice]}</p>}
+      </div>
       <div>
         <p className="mb-2 text-sm text-blue-100/80">
           Odpowiedziało <span className="font-semibold text-white">{results.responded}</span> z{" "}
