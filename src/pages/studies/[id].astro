@@ -5,6 +5,8 @@ import { voteUrl } from "@/lib/study-links";
 import { ServerError } from "@/components/auth/ServerError";
 import StartStudyButton from "@/components/studies/StartStudyButton";
 import LinkList from "@/components/studies/LinkList";
+import StudyResults from "@/components/studies/StudyResults";
+import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
 
 // No top-level `return` here: typescript-eslint's no-misused-promises crashes on a return
 // outside a function, so a missing study sets the 404 status and renders a short message.
@@ -29,8 +31,9 @@ if (studyError && studyError.code !== "22P02") {
 }
 
 let variants: { id: string; position: number; content: string }[] = [];
+let results: StudyResultsData | null = null;
 let urls: string[] = [];
-if (study) {
+if (study?.status === "draft") {
   const { data, error: variantsError } = await supabase
     .from("variants")
     .select("id, position, content")
@@ -41,9 +44,21 @@ if (study) {
     throw new Error("Nie udało się wczytać wariantów badania.");
   }
   variants = data;
+} else if (study) {
+  // Votes and comments reach the author only as aggregates (docs/reference/contract-surfaces.md#anonymity-rule).
+  const { data, error: resultsError } = await supabase.rpc("get_study_results", { p_study_id: study.id });
+  if (resultsError) {
+    throw new Error("Nie udało się wczytać wyników badania.");
+  }
+  if (data !== null) {
+    results = parseStudyResults(data);
+    if (!results) {
+      throw new Error("Nie udało się odczytać wyników badania.");
+    }
+  }
 
   // Links exist once the study has started. Select only `id, token` — authors never read `used`.
-  if (study.status !== "draft") {
+  if (results) {
     const { data: links, error: linksError } = await supabase
       .from("study_links")
       .select("id, token")
@@ -55,17 +70,21 @@ if (study) {
     }
     urls = links.map((link) => voteUrl(Astro.url.origin, link.token));
   }
-} else {
+}
+
+// A null get_study_results after the RLS-filtered read should not happen; treat it as not found.
+const shown = study && (study.status === "draft" || results) ? study : null;
+if (!shown) {
   Astro.response.status = 404;
 }
 
 const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } as const;
 ---
 
-<Layout title={study ? study.title : "Nie znaleziono badania"}>
+<Layout title={shown ? shown.title : "Nie znaleziono badania"}>
   <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
     <div class="w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
-      {!study ? (
+      {!shown ? (
         <>
           <h1 class="mb-4 text-center text-2xl font-bold">Nie znaleziono badania</h1>
           <p class="text-center text-sm text-blue-100/80">
@@ -76,30 +95,36 @@ const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } 
         </>
       ) : (
         <>
-          <p class="mb-2 text-center text-xs tracking-wide text-blue-100/60 uppercase">{STATUS_LABELS[study.status]}</p>
+          <p class="mb-2 text-center text-xs tracking-wide text-blue-100/60 uppercase">{STATUS_LABELS[shown.status]}</p>
           <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold break-words text-transparent">
-            {study.title}
+            {shown.title}
           </h1>
           <p class="mb-4 text-sm text-blue-100/80">
-            Liczba uczestników: <span class="font-semibold text-white">{study.participant_target}</span>
+            Liczba uczestników: <span class="font-semibold text-white">{shown.participant_target}</span>
           </p>
-          <h2 class="mb-2 text-sm text-blue-100/80">Warianty</h2>
-          <ol class="space-y-2">
-            {variants.map((variant, index) => (
-              <li class="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm">
-                <span class="mb-1 block text-xs text-blue-100/60">Wariant {index + 1}</span>
-                <span class="break-words whitespace-pre-wrap">{variant.content}</span>
-              </li>
-            ))}
-          </ol>
+          {results ? (
+            <StudyResults studyId={shown.id} initial={results} client:load />
+          ) : (
+            <>
+              <h2 class="mb-2 text-sm text-blue-100/80">Warianty</h2>
+              <ol class="space-y-2">
+                {variants.map((variant, index) => (
+                  <li class="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm">
+                    <span class="mb-1 block text-xs text-blue-100/60">Wariant {index + 1}</span>
+                    <span class="break-words whitespace-pre-wrap">{variant.content}</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
           {error && (
             <div class="mt-6">
               <ServerError message={error} />
             </div>
           )}
-          {study.status === "draft" ? (
+          {shown.status === "draft" ? (
             <div class="mt-6">
-              <StartStudyButton studyId={study.id} participantTarget={study.participant_target} client:load />
+              <StartStudyButton studyId={shown.id} participantTarget={shown.participant_target} client:load />
             </div>
           ) : (
             <>
