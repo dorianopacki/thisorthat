@@ -414,25 +414,25 @@ There are no data or schema migrations. The middleware change is behaviour-prese
 
 #### Automated
 
-- [x] 3.1 HTTP suite passes: `BASE_URL=http://localhost:4321 npm run test:http`
-- [x] 3.2 The suite passes twice in a row against the same database
-- [x] 3.3 Linting passes: `npm run lint`
-- [x] 3.4 Type check passes: `npx astro check`
+- [x] 3.1 HTTP suite passes: `BASE_URL=http://localhost:4321 npm run test:http` — ef054ca
+- [x] 3.2 The suite passes twice in a row against the same database — ef054ca
+- [x] 3.3 Linting passes: `npm run lint` — ef054ca
+- [x] 3.4 Type check passes: `npx astro check` — ef054ca
 
 #### Manual
 
-- [x] 3.5 Reading the test names alone gives the B-vs-A matrix
+- [x] 3.5 Reading the test names alone gives the B-vs-A matrix — ef054ca
 
 ### Phase 4: pgTAP isolation gaps
 
 #### Automated
 
-- [ ] 4.1 Database tests pass: `npx supabase test db`
-- [ ] 4.2 The new suite runs and reports its full plan count in the output
+- [x] 4.1 Database tests pass: `npx supabase test db`
+- [x] 4.2 The new suite runs and reports its full plan count in the output
 
 #### Manual
 
-- [ ] 4.3 Each gap in research §3 maps to at least one named assertion
+- [x] 4.3 Each gap in research §3 maps to at least one named assertion
 
 ### Phase 5: CI wiring and documentation
 
