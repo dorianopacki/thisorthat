@@ -39,5 +39,8 @@ jobs:
           npm run preview -- --port 4321 &
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:4321/ && break; sleep 1; done
           BASE_URL=http://localhost:4321 npm run smoke
+      - run: npm run test:unit
+      - name: Run HTTP integration tests against production preview
+        run: BASE_URL=http://localhost:4321 npm run test:http
       - if: always()
         run: supabase stop --no-backup

@@ -427,22 +427,22 @@ There are no data or schema migrations. The middleware change is behaviour-prese
 
 #### Automated
 
-- [x] 4.1 Database tests pass: `npx supabase test db`
-- [x] 4.2 The new suite runs and reports its full plan count in the output
+- [x] 4.1 Database tests pass: `npx supabase test db` — 56e9b91
+- [x] 4.2 The new suite runs and reports its full plan count in the output — 56e9b91
 
 #### Manual
 
-- [x] 4.3 Each gap in research §3 maps to at least one named assertion
+- [x] 4.3 Each gap in research §3 maps to at least one named assertion — 56e9b91
 
 ### Phase 5: CI wiring and documentation
 
 #### Automated
 
-- [ ] 5.1 Workflow file is valid YAML and the new steps appear in order
+- [x] 5.1 Workflow file is valid YAML and the new steps appear in order
 - [ ] 5.2 CI run on the PR passes the `smoke` job, including `test:unit` and `test:http`
-- [ ] 5.3 Linting passes: `npm run lint`
+- [x] 5.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 5.4 Test-plan §6.2 is followable by someone adding a fictional `/studies/[id]/edit` page
-- [ ] 5.5 `AGENTS.md` and `README.md` no longer mention `PROTECTED_ROUTES`
+- [x] 5.4 Test-plan §6.2 is followable by someone adding a fictional `/studies/[id]/edit` page
+- [x] 5.5 `AGENTS.md` and `README.md` no longer mention `PROTECTED_ROUTES`

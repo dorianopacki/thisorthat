@@ -87,7 +87,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 |-------|------|---------|-------|
 | database (integration) | pgTAP via `supabase test db` | Supabase CLI 2.117 | 5 suites; runs in CI; the main guarantee layer |
 | HTTP smoke | `scripts/smoke.mjs` (no dependencies) | n/a | auth + dashboard redirect against the built preview in CI |
-| unit + HTTP integration | none yet — see Phase 1 (Vitest via Astro `getViteConfig()`) | — | Astro Container API is still `experimental_`; prefer HTTP against preview for routes |
+| unit + HTTP integration | Vitest (plain Node config, no `getViteConfig()`) — projects `unit` and `http` | 5.0.3 | HTTP tests run against the built preview via `node:http` (paths sent verbatim); Astro Container API is still `experimental_` |
 | e2e | none yet — see Phase 4 (Playwright) | — | one critical flow only |
 | (optional) AI-native | post-edit hook running database tests on migration edits — checked: 2026-10-06 | n/a | When NOT to use: edits outside `supabase/`; never as a substitute for the CI gate |
 
@@ -123,7 +123,22 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.2 Adding a route-access test (new page or endpoint)
 
-- TBD — see §3 Phase 1 for the anonymous / owner / foreign-author matrix pattern.
+When you add a file under `src/pages/` (example: `src/pages/studies/[id]/edit.astro`):
+
+1. **Classify it** in `ROUTE_AUDIENCE` (`src/lib/route-access.ts`), keyed by the Astro route pattern: `"/studies/[id]/edit": "author"`. The middleware protects by this map, matched on `context.routePattern`. Until you add it, `npm run test:unit` (`tests/unit/route-access.test.ts`) fails and names the file.
+2. **Add a probe row** in `PROBES` (`tests/http/route-access.test.ts`) with the route's real method or methods, and a realistic form for form endpoints: `"/studies/[id]/edit": [{ method: "GET" }]`. Until you add it, the "has a probe row" test fails. The anonymous matrix and the path variants (trailing slash, encoded letter, `%252e%252e`, single-encoded dots) then cover the route automatically.
+3. **If the route takes another author's id** (`[id]`): add it to the B-vs-A matrix in `tests/http/author-isolation.test.ts` as an `it.each(targets)` block named `B: <METHOD> <route with <$target>> answers …`, using the fixtures from `tests/http/client.ts` (`newAuthor`, `createStudy`, `createStartedStudy`).
+4. **If it adds an RPC or a table write:** add the B-vs-A assertions to pgTAP in the style of `supabase/tests/author_isolation_gaps.test.sql`. Run them as B, then check A's rows as the superuser after `reset role`.
+
+Run:
+- `npm run test:unit`
+- `npm run build && npm run preview`, then `BASE_URL=http://localhost:4321 npm run test:http`
+- `npx supabase test db`
+
+Gotchas:
+- Expect a sign-in redirect or a 404 for path variants. A 2xx or 5xx means a handler ran anonymously.
+- Every POST needs `Origin` (the client sends it).
+- Keep fixture titles and emails unique per run (`uniqueSuffix()`).
 
 ### 6.3 Adding a unit test for pure logic
 
@@ -140,6 +155,12 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.6 Per-rollout-phase notes
 
 (Appended by each rollout phase.)
+
+- **Phase 1 — Access boundaries (`testing-access-boundaries`, 2026-10-06).**
+  - **Bypass fixed.** Route protection moved from a pathname prefix list to `ROUTE_AUDIENCE` matched on `context.routePattern`. This closed a confirmed bypass: `/api/studies/%252e%252e/*` reached the handlers anonymously because the router and the middleware saw different paths.
+  - **Probe through the real router.** Single-encoded `%2e%2e` is a plain `..` under the URL standard, so it is asserted as "answers like the resolved path". `fetch` normalizes dot segments client-side, so HTTP probes use `node:http`.
+  - **Vitest overwrites `BASE_URL`.** Inside test workers, Vitest replaces `process.env.BASE_URL` with Vite's base, so the server address is passed as `TEST_BASE_URL`.
+  - **Known gap:** an empty-body POST to `/api/auth/signin` or `/api/auth/signup` returns 500. This is not covered here; it is a candidate for its own fix.
 
 ## 7. What We Deliberately Don't Test
 
