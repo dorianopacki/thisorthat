@@ -1,7 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { createClient } from "@/lib/supabase";
-
-const PROTECTED_ROUTES = ["/dashboard", "/studies", "/api/studies"];
+import { requiresAuthor } from "@/lib/route-access";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const supabase = createClient(context.request.headers, context.cookies);
@@ -15,11 +14,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.user = null;
   }
 
-  const { pathname } = context.url;
-  if (PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
-    if (!context.locals.user) {
-      return context.redirect("/auth/signin");
-    }
+  // Decide by the route the router matched, not context.url.pathname: the two disagree on
+  // encoded dot segments (e.g. /api/studies/%252e%252e/start).
+  if (requiresAuthor(context.routePattern) && !context.locals.user) {
+    return context.redirect("/auth/signin");
   }
 
   return next();
