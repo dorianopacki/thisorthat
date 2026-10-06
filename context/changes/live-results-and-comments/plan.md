@@ -261,9 +261,9 @@ None — no database change. Rolling back is reverting the app commit.
 
 #### Automated
 
-- [x] 3.1 CI is green on the PR, including `supabase test db`
+- [x] 3.1 CI is green on the PR, including `supabase test db` — 06f32fc
 
 #### Manual
 
-- [x] 3.2 `npx supabase migration list` shows local and remote in sync with no new migration
-- [x] 3.3 In production, with the author's study page open on a laptop, a vote and comment sent from a phone via a link appear on the author's page within ~10 s
+- [x] 3.2 `npx supabase migration list` shows local and remote in sync with no new migration — 06f32fc
+- [x] 3.3 In production, with the author's study page open on a laptop, a vote and comment sent from a phone via a link appear on the author's page within ~10 s — 06f32fc
