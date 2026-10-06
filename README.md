@@ -182,10 +182,13 @@ It needs a reachable Supabase instance (local or cloud) with email confirmation 
 
 ## CI
 
-GitHub Actions runs two jobs on every push and PR to `master`:
+One GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
 
-- **ci** — lint, `astro check` and build. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets for the build step.
-- **smoke** — starts a local Supabase via the Supabase CLI, builds, serves the production preview on the Cloudflare runtime and runs `npm run smoke` against it. No secrets required.
+- **static** — lint, `astro check` and build. No secrets required.
+- **tests** — starts a local Supabase via `npx supabase`, runs the pgTAP database tests and the unit tests, builds, serves the production preview on the Cloudflare runtime and runs the smoke test and HTTP integration tests against it. No secrets required.
+- **ci-passed** — the gate: fails unless `static` and `tests` both succeeded. Merge a PR only when this check passes.
+- **preview-upload** — on PRs from branches in this repository, uploads a Cloudflare Workers version without routing traffic to it.
+- **deploy-production** — on pushes to `main`, deploys to Cloudflare Workers. Needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
 
 ## License
 
