@@ -3,7 +3,6 @@ import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
 import { VOTED_COOKIE } from "@/lib/study-links";
 import { orderForToken } from "@/lib/ballot-order";
-import { ServerError } from "@/components/auth/ServerError";
 import BallotForm from "@/components/voting/BallotForm";
 
 interface Ballot {
@@ -42,15 +41,13 @@ const error = Astro.url.searchParams.get("error");
 type Screen = "thanks" | "ended" | "used" | "ballot" | "error";
 let screen: Screen;
 let ballot: Ballot | null = null;
-let loadError: string | null = null;
 
 if (status === "accepted") {
   screen = "thanks";
 } else {
   const supabase = createClient(Astro.request.headers, Astro.cookies);
   if (!supabase) {
-    screen = "ended";
-    loadError = "Nie udało się wczytać badania. Spróbuj ponownie później.";
+    screen = "error";
   } else {
     const { data, error: rpcError } = await supabase.rpc("get_ballot", { p_token: token });
     if (rpcError) {
@@ -70,6 +67,10 @@ if (status === "accepted") {
     }
   }
 }
+
+// A failed load is a server fault: surface it to monitoring. „ended” stays 200 so an unknown token
+// and a closed study remain indistinguishable.
+if (screen === "error") Astro.response.status = 500;
 
 const TITLES: Record<Screen, string> = {
   thanks: "Dziękujemy za udział w badaniu",
@@ -98,11 +99,6 @@ const TITLES: Record<Screen, string> = {
             <p class="mt-4 text-center text-sm text-blue-100/80">
               Nie udało się wczytać badania. Odśwież stronę i spróbuj ponownie.
             </p>
-          )}
-          {loadError && (
-            <div class="mt-6">
-              <ServerError message={loadError} />
-            </div>
           )}
         </>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { CircleAlert, MessageSquare, Send } from "lucide-react";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
@@ -17,6 +17,8 @@ interface Props {
   serverError?: string | null;
 }
 
+const subscribeNoop = () => () => undefined;
+
 const COMMENT_TOO_LONG = `Komentarz może mieć najwyżej ${String(MAX_COMMENT_LENGTH)} znaków.`;
 
 export default function BallotForm({ token, variants, serverError }: Props) {
@@ -25,6 +27,12 @@ export default function BallotForm({ token, variants, serverError }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [submitting, setSubmitting] = useState(false);
+  // Until the island hydrates the native form must still be sendable; the server rejects a missing choice.
+  const hydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
 
   // A page restored from the back/forward cache keeps its React state; re-enable the button.
   useEffect(() => {
@@ -151,7 +159,7 @@ export default function BallotForm({ token, variants, serverError }: Props) {
 
       <SubmitButton
         pending={submitting}
-        disabled={!selected}
+        disabled={hydrated && !selected}
         pendingText="Wysyłanie głosu..."
         icon={<Send className="size-4" />}
       >

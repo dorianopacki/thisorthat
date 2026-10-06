@@ -32,7 +32,13 @@ export const POST: APIRoute = async (context) => {
     });
   };
 
-  const form = await context.request.formData();
+  // A non-form or truncated body throws; answer it like any other failed send, not with a 500.
+  let form: FormData;
+  try {
+    form = await context.request.formData();
+  } catch {
+    return fail(GENERIC_MESSAGE);
+  }
 
   const variantId = form.get("variant_id");
   if (typeof variantId !== "string" || !variantId.trim()) return fail("Wybierz wariant.");
