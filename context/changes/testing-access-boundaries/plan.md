@@ -384,31 +384,31 @@ There are no data or schema migrations. The middleware change is behaviour-prese
 
 #### Automated
 
-- [x] 1.1 Unit suite passes: `npm run test:unit`
-- [x] 1.2 Adding a throwaway `src/pages/zz-probe.astro` makes `npm run test:unit` fail with the file named (then remove it)
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Type check passes: `npx astro check`
-- [x] 1.5 Build passes: `npm run build`
-- [x] 1.6 Existing smoke still passes against the preview: `npm run smoke`
+- [x] 1.1 Unit suite passes: `npm run test:unit` — 6a4a6ab
+- [x] 1.2 Adding a throwaway `src/pages/zz-probe.astro` makes `npm run test:unit` fail with the file named (then remove it) — 6a4a6ab
+- [x] 1.3 Linting passes: `npm run lint` — 6a4a6ab
+- [x] 1.4 Type check passes: `npx astro check` — 6a4a6ab
+- [x] 1.5 Build passes: `npm run build` — 6a4a6ab
+- [x] 1.6 Existing smoke still passes against the preview: `npm run smoke` — 6a4a6ab
 
 #### Manual
 
-- [x] 1.7 Against `npm run preview`, unauthenticated encoded-`..` probes on results and start now answer 302 → `/auth/signin`
-- [x] 1.8 The same two probes answer 302 → `/auth/signin` under `npm run dev`
-- [x] 1.9 Signed in, `/dashboard`, `/studies/new` and an own `/studies/<id>` still render
+- [x] 1.7 Against `npm run preview`, unauthenticated encoded-`..` probes on results and start now answer 302 → `/auth/signin` — 6a4a6ab
+- [x] 1.8 The same two probes answer 302 → `/auth/signin` under `npm run dev` — 6a4a6ab
+- [x] 1.9 Signed in, `/dashboard`, `/studies/new` and an own `/studies/<id>` still render — 6a4a6ab
 
 ### Phase 2: HTTP route × role matrix (risk #1)
 
 #### Automated
 
-- [ ] 2.1 HTTP suite passes against a fresh preview
-- [ ] 2.2 Temporarily reverting the middleware to the old pathname check makes the encoded-variant cases fail (then restore)
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Type check passes: `npx astro check`
+- [x] 2.1 HTTP suite passes against a fresh preview
+- [x] 2.2 Temporarily reverting the middleware to the old pathname check makes the encoded-variant cases fail (then restore)
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Type check passes: `npx astro check`
 
 #### Manual
 
-- [ ] 2.5 The test output lists every `ROUTE_AUDIENCE` entry by name
+- [x] 2.5 The test output lists every `ROUTE_AUDIENCE` entry by name
 
 ### Phase 3: Two-author isolation over HTTP (risk #2)
 
