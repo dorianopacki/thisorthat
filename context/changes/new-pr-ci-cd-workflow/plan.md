@@ -224,11 +224,11 @@ The check names in the GitHub UI change from `CI / smoke` and `Deploy / verify` 
 
 #### Automated
 
-- [x] 2.1 No live doc references the removed workflow or old job names
-- [x] 2.2 README no longer mentions master
-- [x] 2.3 Formatting is clean
+- [x] 2.1 No live doc references the removed workflow or old job names — 4471239
+- [x] 2.2 README no longer mentions master — 4471239
+- [x] 2.3 Formatting is clean — 4471239
 
 #### Manual
 
-- [x] 2.4 Main run deploys only after ci-passed and production serves the new version
-- [x] 2.5 test-plan §5 reads correctly alongside §3
+- [x] 2.4 Main run deploys only after ci-passed and production serves the new version — 4471239
+- [x] 2.5 test-plan §5 reads correctly alongside §3 — 4471239
