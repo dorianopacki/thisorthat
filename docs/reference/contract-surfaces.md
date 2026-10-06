@@ -10,6 +10,8 @@ Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `
 
 **No participant-reachable read reveals `study_links.used`.** The only way to learn a link's state is `cast_vote`, which consumes an unused link. `get_ballot` never reads `used` and returns identical output for a used and an unused link; `supabase/tests/get_ballot.test.sql` enforces this. Any later participant-facing read (S-03, S-04, S-06) must keep this rule.
 
+**Accepted operator-level exposure.** Cloudflare Workers observability (`wrangler.jsonc`) logs request URLs with timestamps, so `/v/<token>`, `/api/v/<token>` and the `?status=accepted|used` redirects show per-link vote timing to whoever holds the Cloudflare account. This is outside the author threat model (the operator can already read the database) and is accepted for the MVP; revisit if account access widens or logs leave the account.
+
 ## Enum `public.study_status`
 
 `draft` | `active` | `closed`
@@ -46,6 +48,7 @@ The page (`src/pages/v/[token].astro`, S-02) picks its screen in this order:
 - Thank-you comes before „ended” on purpose: S-04 will auto-close a study on its last link, and the last voter's redirect must still show the thank-you. S-04 must keep this order.
 - The voted cookie is scoped to path `/v/<token>` and set by the vote endpoint (`/api/v/<token>`) on `accepted` and `link_used`. It is a same-browser UI hint only: one vote per link is enforced solely by `cast_vote`. A missing cookie only means the ballot shows again (sending then returns `link_used`).
 - Variants are shown in an order shuffled per link, deterministic from the token (stable across reloads, nothing stored).
+- The page and every endpoint redirect send `Cache-Control: no-store`, `X-Robots-Tag: noindex` and `Referrer-Policy: same-origin`. Not `no-referrer`: with it the browser sends `Origin: null` on the vote POST and Astro's `checkOrigin` rejects it with 403. `same-origin` still keeps the token out of cross-site `Referer`.
 
 ## `public.create_study(p_title text, p_participant_target integer, p_variants text[]) returns uuid`
 

@@ -53,6 +53,8 @@ Mirror F-01 and S-01: the guarantee goes into the database first and is proven w
 
 **Token in URLs and headers.** The token is the participant's credential: build the path through one helper that `encodeURIComponent`s it. Send `Referrer-Policy: no-referrer` and `Cache-Control: no-store` (plus `X-Robots-Tag: noindex`) on the page and the endpoint's redirects, so the token does not leak via `Referer` and a shared/back-cached page does not show a stale screen.
 
+> **Deviation (impl-review F1, 2026-10-06):** implemented as `Referrer-Policy: same-origin`, not `no-referrer`. With `no-referrer` the browser sends `Origin: null` on the vote POST and Astro's `checkOrigin` rejects it (403). `same-origin` keeps the intent (no token in cross-site `Referer`). Wherever this plan says `no-referrer` below (Phase 2 §3, §5, check 2.8, Manual Testing step 8), read `same-origin`; 2.8 was verified against `same-origin`. Recorded in `contract-surfaces.md` → Vote URL.
+
 ## Phase 1: Database — `get_ballot`
 
 ### Overview
@@ -158,6 +160,8 @@ The public `/v/<token>` page with all four screens, the mobile-first ballot isla
 
 **Contract**: Calls `supabase.rpc("get_ballot", { p_token })` once (handle the `null` client branch with the „ended”-style card plus a generic error, not a throw). Screens and precedence as in Critical Implementation Details: thank-you „Dziękujemy za udział w badaniu”; „Badanie jest zakończone”; „Twój głos został już oddany”; ballot (study title + `BallotForm` with variants passed through `orderForToken`). Sets `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`. No author/dashboard links on any screen. Unexpected RPC errors render a generic Polish error card rather than throwing.
 
+> **Deviation (impl-review F4, 2026-10-06):** a `null` client now renders the generic error card („Coś poszło nie tak”), not the „ended” card — „ended” plus „try again” contradicted itself. The error card responds with HTTP 500; „ended” stays 200.
+
 #### 4. Ballot island
 
 **File**: `src/components/voting/BallotForm.tsx`
@@ -165,6 +169,8 @@ The public `/v/<token>` page with all four screens, the mobile-first ballot isla
 **Intent**: FR-007–FR-009 on a phone: select one variant, optionally comment under any variant, send in one tap.
 
 **Contract**: Default-export island (`client:load`); props `token`, `variants: { variant_id: string; content: string }[]`, `serverError?: string | null`. Native `<form method="POST" action="/api/v/<encoded token>">`. Each variant is a full-width card with a native radio `name="variant_id"` (whole card tappable, selected card clearly highlighted, keyboard-accessible). Under each card a „Dodaj komentarz” toggle expands a textarea `name="comment:<variant_id>"`; collapsing hides it without discarding text (toggle then reads „Edytuj komentarz”). Client validation: comment ≤ `MAX_COMMENT_LENGTH` via `charLength`, Polish message. „Wyślij głos” is disabled until a variant is selected and while `submitting` (own state set in `onSubmit`, reset on bfcache `pageshow`, as in `StudyWizard`). Shows `serverError` via `ServerError`. Variant content rendered with `whitespace-pre-wrap break-words`.
+
+> **Addendum (impl-review F3/F7, 2026-10-06):** `src/components/auth/SubmitButton.tsx` gained an optional `disabled` prop (default `false`; existing callers unchanged) so the button can be disabled without the pending spinner. The „no selection” disable applies only after hydration, so the native form still works before the island loads (the endpoint rejects a missing choice).
 
 #### 5. Vote endpoint
 
@@ -255,7 +261,7 @@ Apply the migration to the production Supabase project, then ship the app by mer
 5. Reload link 1 — „Twój głos został już oddany”; open link 1 in a private window — ballot; send — same message; `get_study_results` shows 1 response.
 6. On link 2, double-tap Send — one vote; `responded` = 2.
 7. Open `/v/unknown` — „Badanie jest zakończone”; set the study `closed` in Studio, open link 3 — „ended”.
-8. Inspect response headers on `/v/<token>` — `no-store`, `no-referrer`, `noindex`.
+8. Inspect response headers on `/v/<token>` — `no-store`, `same-origin` (see F1 deviation), `noindex`.
 
 ## Performance Considerations
 
@@ -296,26 +302,26 @@ Forward-only, additive (one new function); existing migrations untouched. Rollba
 
 #### Automated
 
-- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build`
-- [x] 2.2 Database tests still pass: `npx supabase test db`
+- [x] 2.1 App gate passes: `npm run lint`, `npx astro check`, `npm run build` — d2205dd
+- [x] 2.2 Database tests still pass: `npx supabase test db` — d2205dd
 
 #### Manual
 
-- [x] 2.3 Signed out, at 360 px width, a fresh link shows the title and variants with no horizontal scroll; „Wyślij głos” is disabled until a variant is tapped
-- [x] 2.4 Two different links of the same study show the variants in different orders (for a 3+ variant study), and each link keeps its order on reload
-- [x] 2.5 Sending with a choice and one comment shows „Dziękujemy za udział w badaniu”; `get_study_results` (as the author, via SQL in Studio) shows `responded` = 1, the vote and the comment
-- [x] 2.6 Reopening the same link in the same browser shows „Twój głos został już oddany”; opening it in a private window shows the ballot, and sending shows the same message with no second vote recorded
-- [x] 2.7 A double tap on „Wyślij głos” records one vote; collapsing a comment keeps its text; a 2001-character comment is blocked with a Polish message
-- [x] 2.8 An unknown token and a token of a study set to `closed` in Studio show „Badanie jest zakończone”; the response headers include `no-store` and `no-referrer`
+- [x] 2.3 Signed out, at 360 px width, a fresh link shows the title and variants with no horizontal scroll; „Wyślij głos” is disabled until a variant is tapped — d2205dd
+- [x] 2.4 Two different links of the same study show the variants in different orders (for a 3+ variant study), and each link keeps its order on reload — d2205dd
+- [x] 2.5 Sending with a choice and one comment shows „Dziękujemy za udział w badaniu”; `get_study_results` (as the author, via SQL in Studio) shows `responded` = 1, the vote and the comment — d2205dd
+- [x] 2.6 Reopening the same link in the same browser shows „Twój głos został już oddany”; opening it in a private window shows the ballot, and sending shows the same message with no second vote recorded — d2205dd
+- [x] 2.7 A double tap on „Wyślij głos” records one vote; collapsing a comment keeps its text; a 2001-character comment is blocked with a Polish message — d2205dd
+- [x] 2.8 An unknown token and a token of a study set to `closed` in Studio show „Badanie jest zakończone”; the response headers include `no-store` and `no-referrer` — d2205dd
 
 ### Phase 3: Production rollout
 
 #### Automated
 
-- [ ] 3.1 CI is green on the PR, including `supabase test db`
+- [x] 3.1 CI is green on the PR, including `supabase test db` — ee0d121
 
 #### Manual
 
-- [ ] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync
-- [ ] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`)
-- [ ] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany”
+- [x] 3.2 Migration pushed after approval; `npx supabase migration list` shows local and remote in sync — ee0d121
+- [x] 3.3 Security advisors show no new ERROR (expected WARN for definer `get_ballot`) — ee0d121
+- [x] 3.4 In production, on a real phone, a participant opens a link from a started study, comments, votes, sees the thank-you, and reopening shows „Twój głos został już oddany” — ee0d121
