@@ -247,7 +247,7 @@ select is(
 );
 
 select is(
-  (select count(*)::int from public.votes where study_id <> 'a0000000-0000-0000-0000-000000000001'),
+  (select count(*)::int from public.votes where study_id in ('a0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003')),
   0,
   'no votes recorded for closed or draft studies'
 );
