@@ -10,6 +10,8 @@ Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `
 
 **No participant-reachable read reveals `study_links.used`.** The only way to learn a link's state is `cast_vote`, which consumes an unused link. `get_ballot` never reads `used` and returns identical output for a used and an unused link; `supabase/tests/get_ballot.test.sql` enforces this. Any later participant-facing read (S-03, S-04, S-06) must keep this rule.
 
+**The results UI never marks what changed between refreshes** (no highlight, animation or new-item count) and renders comments in the order `get_study_results` returns them. Accepted limit: with few votes, comparing two snapshots shows which variant gained a vote and which comments arrived together, and when; this is inherent to live results (FR-013) and to a plain reload, and is accepted for the MVP. See [Results view](#results-view).
+
 **Accepted operator-level exposure.** Cloudflare Workers observability (`wrangler.jsonc`) logs request URLs with timestamps, so `/v/<token>`, `/api/v/<token>` and the `?status=accepted|used` redirects show per-link vote timing to whoever holds the Cloudflare account. This is outside the author threat model (the operator can already read the database) and is accepted for the MVP; revisit if account access widens or logs leave the account.
 
 ## Enum `public.study_status`
@@ -120,3 +122,12 @@ Callable by `authenticated` only. Returns `null` when the caller does not own th
 - `responded`: count of used links; `total`: count of links.
 - `variants` ordered by `position`; `comments` sorted by body (never insertion order).
 - Top-level keys are exactly `status, responded, total, variants`; per-variant keys are exactly `variant_id, position, content, vote_count, comments`.
+
+## Results view
+
+The author's results on `/studies/<id>` (S-03, change `live-results-and-comments`). S-04, S-05 and S-07 must keep these rules.
+
+- **`GET /api/studies/<id>/results`** returns the `get_study_results` JSON unchanged (`200`, `Content-Type: application/json`, `Cache-Control: no-store`) and adds no fields (no server time, no content-derived ETag). `404` when the caller does not own the study or the id is not a uuid; `500` on any other error. Under `/api/studies`, so the middleware redirects a signed-out request to `/auth/signin`.
+- **Ranking** (`rankVariants` in `src/lib/study-results.ts`): `vote_count` descending, then `position` ascending. Place = 1 + number of variants with a strictly greater `vote_count`, so 5, 5, 2, 0 votes → places 1, 1, 3, 4. Variants with 0 votes are ranked too.
+- **„Odpowiedziało X z N”**: X = `responded`, N = `total` (the live link count), not `studies.participant_target` — S-07 adds links mid-study.
+- **Live refresh**: the page polls the endpoint every 10 s only while the last known `status` is `active` and the tab is visible (an immediate request when it becomes visible again). Polling stops for good when a response is not `active`, on `404`, or when the session expired. Each response replaces the whole view; nothing marks what changed (see [Anonymity rule](#anonymity-rule)).
