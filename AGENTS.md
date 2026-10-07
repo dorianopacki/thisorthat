@@ -39,11 +39,11 @@ ThisOrThat is a preference-testing MVP (A/B studies with per-voter invite links)
 
 ## Testing
 
-Database guarantees (author isolation, vote anonymity, `cast_vote` behaviour) are pgTAP suites in `supabase/tests/`, run with `npx supabase test db` (Docker required); CI runs them in @.github/workflows/ci.yml. Any schema change ships as a new forward-fix migration (`npx supabase migration new`) with matching tests and an update to @docs/reference/contract-surfaces.md. Route access (anonymous matrix, encoded paths, author B against author A's ids) is covered by the Vitest suites `tests/unit/` and `tests/http/`; how to add a case for a new route: @context/foundation/test-plan.md §6.2. There is no e2e suite yet. Before finishing a change, run `npm run lint`, `npx astro check` and `npm run build`. Run `npm run smoke` after touching auth or dependencies.
+Database guarantees (author isolation, vote anonymity, `cast_vote` behaviour) are pgTAP suites in `supabase/tests/`, run with `npx supabase test db` (Docker required); CI runs them in @.github/workflows/ci.yml. CI's `ci-passed` job aggregates all checks and gates deploys; merge a PR only when `gh pr checks` shows `ci-passed` passing (branch protection is unavailable on this plan). Any schema change ships as a new forward-fix migration (`npx supabase migration new`) with matching tests and an update to @docs/reference/contract-surfaces.md. Route access (anonymous matrix, encoded paths, author B against author A's ids) is covered by the Vitest suites `tests/unit/` and `tests/http/`; how to add a case for a new route: @context/foundation/test-plan.md §6.2. There is no e2e suite yet. Before finishing a change, run `npm run lint`, `npx astro check` and `npm run build`. Run `npm run smoke` after touching auth or dependencies.
 
 ## Commits & Pull Requests
 
-The project is not yet a git repository, so commit conventions are to be defined. The Husky pre-commit hook runs `lint-staged`; CI runs on pushes and PRs to `master`.
+The Husky pre-commit hook runs `lint-staged`; CI runs on pushes and PRs to `main` (merge rule: see Testing).
 
 ## Security & Configuration
 

@@ -1,9 +1,9 @@
 ---
 change_id: new-pr-ci-cd-workflow
 title: Introduce first GitHub Actions CI/CD workflow to validate new PRs
-status: implementing
+status: impl_reviewed
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-07
 archived_at: null
 ---
 

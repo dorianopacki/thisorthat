@@ -151,6 +151,8 @@ Make the quality contract and contributor docs describe the consolidated workflo
 
 **Contract**: `## CI` section (lines 185-190). One workflow on push/PR to `main`. Jobs `static` (lint, `astro check`, build without secrets), `tests` (local Supabase via `npx supabase`, pgTAP, unit, build, smoke and HTTP integration against the preview), `ci-passed` (gate), `preview-upload` (same-repo PRs) and `deploy-production` (push to `main`, needs `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`).
 
+**Addendum (impl-review F1)**: Implementation also prettier-formatted all of `test-plan.md`, which success criterion 2.3 requires, and corrected the stale AGENTS.md "Commits & Pull Requests" line (`master` → `main`, dropped "not yet a git repository").
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -208,27 +210,27 @@ The check names in the GitHub UI change from `CI / smoke` and `Deploy / verify` 
 
 #### Automated
 
-- [x] 1.1 Workflow parses as YAML
-- [x] 1.2 actionlint reports no errors
-- [x] 1.3 Only one workflow file remains
-- [x] 1.4 No floating versions remain
-- [x] 1.5 Local gates still pass
+- [x] 1.1 Workflow parses as YAML — a8fc6b0
+- [x] 1.2 actionlint reports no errors — a8fc6b0
+- [x] 1.3 Only one workflow file remains — a8fc6b0
+- [x] 1.4 No floating versions remain — a8fc6b0
+- [x] 1.5 Local gates still pass — a8fc6b0
 
 #### Manual
 
-- [ ] 1.6 PR checks show static, tests, ci-passed, preview-upload pass and deploy-production skipped
-- [ ] 1.7 A second push cancels the in-progress PR run
-- [ ] 1.8 Gate negative check: failing test makes ci-passed fail and skips preview-upload
+- [x] 1.6 PR checks show static, tests, ci-passed, preview-upload pass and deploy-production skipped
+- [x] 1.7 A second push cancels the in-progress PR run
+- [x] 1.8 Gate negative check: failing test makes ci-passed fail and skips preview-upload
 
 ### Phase 2: Docs and merge convention
 
 #### Automated
 
-- [ ] 2.1 No live doc references the removed workflow or old job names
-- [ ] 2.2 README no longer mentions master
-- [ ] 2.3 Formatting is clean
+- [x] 2.1 No live doc references the removed workflow or old job names — 4471239
+- [x] 2.2 README no longer mentions master — 4471239
+- [x] 2.3 Formatting is clean — 4471239
 
 #### Manual
 
-- [ ] 2.4 Main run deploys only after ci-passed and production serves the new version
-- [ ] 2.5 test-plan §5 reads correctly alongside §3
+- [x] 2.4 Main run deploys only after ci-passed and production serves the new version — verified on main run for 37876b0
+- [x] 2.5 test-plan §5 reads correctly alongside §3 — 4471239
