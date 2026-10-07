@@ -1,0 +1,5 @@
+# Managed by @przeprogramowani/10x-cli: regenerated on every `10x-cli get`, never hand-formatted.
+.claude/skills/
+.claude/prompts/
+.claude/.10x-cli-manifest.json
+CLAUDE.md
