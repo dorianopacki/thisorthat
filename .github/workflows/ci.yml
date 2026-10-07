@@ -40,7 +40,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      # Also installs the Supabase CLI pinned in package.json (used via npx below).
+      # Also installs the Supabase CLI pinned by package-lock.json (used via npx below).
       - run: npm ci
       # Needs no server: runs first so a later smoke failure cannot hide it.
       - run: npm run test:unit

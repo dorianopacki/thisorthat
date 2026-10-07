@@ -151,6 +151,8 @@ Make the quality contract and contributor docs describe the consolidated workflo
 
 **Contract**: `## CI` section (lines 185-190). One workflow on push/PR to `main`. Jobs `static` (lint, `astro check`, build without secrets), `tests` (local Supabase via `npx supabase`, pgTAP, unit, build, smoke and HTTP integration against the preview), `ci-passed` (gate), `preview-upload` (same-repo PRs) and `deploy-production` (push to `main`, needs `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`).
 
+**Addendum (impl-review F1)**: Implementation also prettier-formatted all of `test-plan.md`, which success criterion 2.3 requires, and corrected the stale AGENTS.md "Commits & Pull Requests" line (`master` → `main`, dropped "not yet a git repository").
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -230,5 +232,5 @@ The check names in the GitHub UI change from `CI / smoke` and `Deploy / verify` 
 
 #### Manual
 
-- [x] 2.4 Main run deploys only after ci-passed and production serves the new version — 4471239
+- [x] 2.4 Main run deploys only after ci-passed and production serves the new version — verified on main run for 37876b0
 - [x] 2.5 test-plan §5 reads correctly alongside §3 — 4471239
