@@ -48,7 +48,10 @@ afterAll(() => {
 
 // Run from a git hook (pre-commit), this suite inherits GIT_INDEX_FILE, GIT_DIR and friends,
 // which would point every git call in the fixture repos at the outer repository.
-const CLEAN_ENV = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
+// (Cast: src/env.d.ts makes SUPABASE_URL/KEY required on ProcessEnv; the copy keeps whatever is set.)
+const CLEAN_ENV = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")),
+) as NodeJS.ProcessEnv;
 
 function sh(cwd: string, args: string[]): string {
   const r = spawnSync("git", ["-c", "user.name=hook-test", "-c", "user.email=hook-test@example.com", ...args], {
