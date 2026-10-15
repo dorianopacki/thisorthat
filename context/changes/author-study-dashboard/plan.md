@@ -254,16 +254,16 @@ Forward-only new function, with no data changes. Rollback = a forward migration 
 
 #### Automated
 
-- [x] 2.1 Unit tests pass, including the progress label cases
-- [x] 2.2 HTTP tests pass, including the dashboard progress assertion
-- [x] 2.3 Type check passes
-- [x] 2.4 Lint passes
-- [x] 2.5 Build passes
-- [x] 2.6 The whole E2E suite stays green with the updated locators
+- [x] 2.1 Unit tests pass, including the progress label cases — f2db4f6
+- [x] 2.2 HTTP tests pass, including the dashboard progress assertion — f2db4f6
+- [x] 2.3 Type check passes — f2db4f6
+- [x] 2.4 Lint passes — f2db4f6
+- [x] 2.5 Build passes — f2db4f6
+- [x] 2.6 The whole E2E suite stays green with the updated locators — f2db4f6
 
 #### Manual
 
-- [x] 2.7 Dashboard shows a draft as Szkic with Planowane N uczestników, an active study as Trwa with Odpowiedziało X z N, and a closed or past-deadline study as Zakończone
-- [x] 2.8 Progress on the dashboard matches Odpowiedziało X z N on the study page after a vote
-- [x] 2.9 No English template text or duplicate Sign out remains; the page works at phone width
+- [x] 2.7 Dashboard shows a draft as Szkic with Planowane N uczestników, an active study as Trwa with Odpowiedziało X z N, and a closed or past-deadline study as Zakończone — f2db4f6
+- [x] 2.8 Progress on the dashboard matches Odpowiedziało X z N on the study page after a vote — f2db4f6
+- [x] 2.9 No English template text or duplicate Sign out remains; the page works at phone width — f2db4f6
 - [ ] 2.10 Migration pushed to the production database with npx supabase db push before or with the merge
