@@ -266,6 +266,7 @@ Serialize votes and closes on the study row. Make `cast_vote` respect the deadli
   5. `conn_close` commits.
   6. Assert `dblink_get_result('conn_vote')` = `study_ended`, the vote count = 0 and the link is still unused.
   7. **Cleanup:** `conn_seed` deletes the fixtures. Cleanup also runs as the first step, keyed by a fixed test-id prefix, so a run that failed earlier does not leave data behind.
+  - _Implementation note (2026-10-15):_ `host=127.0.0.1` is refused, because the server trusts 127.0.0.1 without a password and dblink requires one for non-superusers. The suite connects to `host(inet_server_addr())` (scram) and asserts first that the runner is on TCP. Verified locally, and a deliberate lock removal makes 5 of its 7 assertions fail. The HTTP fallback was not needed.
   - **Connection:** `dblink` is created with `create extension if not exists dblink with schema extensions`. The connection string is `host=127.0.0.1 port=5432 dbname=postgres user=postgres password=postgres`. Verify that it connects locally before writing the suite.
   - **Fallback**, only if `dblink` cannot connect locally or in CI: a `tests/http` test fires a vote and a close concurrently and asserts that recorded votes equal used links and that no vote exists past the close. Record in the plan that the fallback was used, because it does not prove serialization.
 - Extend `study_isolation.test.sql` / `author_isolation_gaps.test.sql` with `close_study` on a foreign study (`P0002`, the row is unchanged).
@@ -471,28 +472,28 @@ The migrations are forward-only, and earlier migrations are applied in productio
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly on a fresh local database
-- [x] 1.2 All pgTAP suites pass, including the new study_deadline.test.sql
-- [x] 1.3 Regenerated types compile
-- [x] 1.4 Existing callers of create_study still work
+- [x] 1.1 Migration applies cleanly on a fresh local database — 5ed05a9
+- [x] 1.2 All pgTAP suites pass, including the new study_deadline.test.sql — 5ed05a9
+- [x] 1.3 Regenerated types compile — 5ed05a9
+- [x] 1.4 Existing callers of create_study still work — 5ed05a9
 
 #### Manual
 
-- [x] 1.5 contract-surfaces.md describes the closing rule, the new parameters and the error codes
+- [x] 1.5 contract-surfaces.md describes the closing rule, the new parameters and the error codes — 5ed05a9
 
 ### Phase 2: Vote path and manual close
 
 #### Automated
 
-- [ ] 2.1 Migration applies cleanly
-- [ ] 2.2 All pgTAP suites pass, including study_closing.test.sql and the extended isolation suites
-- [ ] 2.3 The race test passes (pgTAP via dblink, or its tests/http fallback)
-- [ ] 2.4 Existing vote suites still pass unchanged
-- [ ] 2.5 Types compile
+- [x] 2.1 Migration applies cleanly
+- [x] 2.2 All pgTAP suites pass, including study_closing.test.sql and the extended isolation suites
+- [x] 2.3 The race test passes (pgTAP via dblink, or its tests/http fallback)
+- [x] 2.4 Existing vote suites still pass unchanged
+- [x] 2.5 Types compile
 
 #### Manual
 
-- [ ] 2.6 contract-surfaces.md documents close_study, the auto-close rule and the lock ordering
+- [x] 2.6 contract-surfaces.md documents close_study, the auto-close rule and the lock ordering
 
 ### Phase 3: Author UI
 

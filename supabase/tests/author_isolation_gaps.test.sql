@@ -6,7 +6,7 @@
 -- Fixtures are inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(25);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (uuid prefixes 3333/4444 users, c1 studies, d1 variants, e1 links)
@@ -179,6 +179,20 @@ select throws_ok(
   'P0002',
   null,
   'B: start_study on an unknown uuid raises P0002'
+);
+
+select throws_ok(
+  $$ select public.close_study('c1000000-0000-0000-0000-000000000002') $$,
+  'P0002',
+  null,
+  'B: close_study on A''s active study raises P0002'
+);
+
+select throws_ok(
+  $$ select public.close_study('c1000000-0000-0000-0000-0000000000ff') $$,
+  'P0002',
+  null,
+  'B: close_study on an unknown uuid raises P0002'
 );
 
 select is(

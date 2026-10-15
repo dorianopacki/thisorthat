@@ -186,6 +186,7 @@ export type Database = {
         Args: { p_comments?: Json; p_token: string; p_variant_id: string };
         Returns: string;
       };
+      close_study: { Args: { p_study_id: string }; Returns: undefined };
       create_study: {
         Args: {
           p_closes_local?: string;
