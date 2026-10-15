@@ -70,6 +70,19 @@ describe("author B against author A's studies", () => {
     },
   );
 
+  it.each(targets)(
+    "B: POST /api/studies/<$target>/close redirects to /studies/<$target> without ?error=, which answers B 404",
+    async ({ id }) => {
+      const studyId = id();
+      const response = await fixtures.authorB.request(`/api/studies/${studyId}/close`, { method: "POST" });
+      expect(response.status, describeResponse(response)).toBe(302);
+      expect(redirectTarget(response)).toBe(`/studies/${studyId}`);
+
+      const followed = await fixtures.authorB.request(redirectTarget(response));
+      expect(followed.status, describeResponse(followed)).toBe(404);
+    },
+  );
+
   it("B: GET /dashboard lists B's own study and neither of A's", async () => {
     const response = await fixtures.authorB.request("/dashboard");
     expect(response.status, describeResponse(response)).toBe(200);
@@ -86,6 +99,12 @@ describe("author A controls, after B's requests", () => {
     const response = await fixtures.authorA.request(`/api/studies/${fixtures.draftId}/results`);
     expect(response.status, describeResponse(response)).toBe(200);
     expect(JSON.parse(response.body) as unknown).toMatchObject({ status: "draft" });
+  });
+
+  it('A: GET /api/studies/<A-active>/results still answers status "active" after B\'s close attempts', async () => {
+    const response = await fixtures.authorA.request(`/api/studies/${fixtures.activeId}/results`);
+    expect(response.status, describeResponse(response)).toBe(200);
+    expect(JSON.parse(response.body) as unknown).toMatchObject({ status: "active" });
   });
 
   it("A: GET /studies/<A-active> answers 200", async () => {

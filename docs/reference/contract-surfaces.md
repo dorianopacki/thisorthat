@@ -2,7 +2,7 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) and `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` and `20261015150000_study_closing_vote_path.sql` (change `study-closing-rules`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
@@ -18,17 +18,37 @@ Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `
 
 `draft` | `active` | `closed`
 
+## Closing rule
+
+A study is **effectively closed** when `status = 'closed'`, or when `status = 'active'` and `now() >= closes_at`. The boundary belongs to the closed side: at exactly `closes_at` the study is closed.
+
+- The deadline is computed, never written. A study past its deadline keeps `status = 'active'` in the table. **Every reader must use `study_status_effective` (SQL) or the `effective_status` computed field (PostgREST), never `studies.status` alone.**
+- `get_ballot`, `get_study_results` and the open check in `cast_vote` apply the rule.
+- **Only two paths write `closed`**, and both lock the study row first (`FOR NO KEY UPDATE`):
+  - `close_study`: the manual, irreversible close by the owner;
+  - `cast_vote`: when the vote it records used the study's last unused link. It counts unused links live, so links added later (S-07) keep it correct.
+- **Lock order is study → link** in every writer (`start_study`, `cast_vote`, the delete cascade). New writers must keep it.
+- The participant never learns why a study ended. Every closed study looks the same as an unknown token (`get_ballot` → `null`).
+
+## `public.study_status_effective(p_status study_status, p_closes_at timestamptz) returns study_status`
+
+The closing rule in one body (`stable`, `security invoker`). Returns `'closed'` for an `active` status at or past `p_closes_at`, otherwise `p_status` unchanged. Callable by `authenticated`; not by `anon`.
+
+## `public.effective_status(s public.studies) returns study_status`
+
+PostgREST computed field over `studies` (`select("…, effective_status")`), delegating to `study_status_effective`. Deliberately a different name from the scalar function, so nothing is overloaded. Callable by `authenticated`; not by `anon`.
+
 ## Tables
 
-| Table                | Columns                                                                                                       | Author access (`authenticated`)                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `created_at`, `updated_at` | select/delete own; insert/update only `title`, `participant_target`; update only while `draft`         |
-| `public.variants`    | `id`, `study_id`, `position`, `content`                                                                       | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only |
-| `public.study_links` | `id`, `study_id`, `token`, `used`                                                                             | select `id, study_id, token` of own studies; no access to `used`                                       |
-| `public.votes`       | `id`, `study_id`, `variant_id`                                                                                | none                                                                                                   |
-| `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                        | none                                                                                                   |
+| Table                | Columns                                                                                                                                 | Author access (`authenticated`)                                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `closes_at`, `closes_tz`, `created_at`, `updated_at` | select/delete own; insert/update only `title`, `participant_target`, `closes_at`, `closes_tz`; update only while `draft` |
+| `public.variants`    | `id`, `study_id`, `position`, `content`                                                                                                 | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only                   |
+| `public.study_links` | `id`, `study_id`, `token`, `used`                                                                                                       | select `id, study_id, token` of own studies; no access to `used`                                                         |
+| `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                     |
+| `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                     |
 
-`studies.status` is in no column grant: only `security definer` functions change it. Deleting a study cascades to its variants, links, votes and comments. `anon` has no table privileges.
+`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). They are fixed after start, because updates are draft-only. Deleting a study cascades to its variants, links, votes and comments. `anon` has no table privileges.
 
 ## Limits
 
@@ -47,17 +67,19 @@ The page (`src/pages/v/[token].astro`, S-02) picks its screen in this order:
 3. Voted cookie present or `?status=used` → „Twój głos został już oddany”.
 4. Otherwise the ballot (with `?error=` if present).
 
-- Thank-you comes before „ended” on purpose: S-04 will auto-close a study on its last link, and the last voter's redirect must still show the thank-you. S-04 must keep this order.
+- Thank-you comes before „ended” on purpose: `cast_vote` auto-closes a study on its last link (S-04), and the last voter's redirect must still show the thank-you. Keep this order.
 - The voted cookie is scoped to path `/v/<token>` and set by the vote endpoint (`/api/v/<token>`) on `accepted` and `link_used`. It is a same-browser UI hint only: one vote per link is enforced solely by `cast_vote`. A missing cookie only means the ballot shows again (sending then returns `link_used`).
 - Variants are shown in an order shuffled per link, deterministic from the token (stable across reloads, nothing stored).
 - The page and every endpoint redirect send `Cache-Control: no-store`, `X-Robots-Tag: noindex` and `Referrer-Policy: same-origin`. Not `no-referrer`: with it the browser sends `Origin: null` on the vote POST and Astro's `checkOrigin` rejects it with 403. `same-origin` still keeps the token out of cross-site `Referer`.
 
-## `public.create_study(p_title text, p_participant_target integer, p_variants text[]) returns uuid`
+## `public.create_study(p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns uuid`
 
 Callable by `authenticated` only (`security invoker`: runs under the caller's grants and RLS). Creates a `draft` study owned by `auth.uid()` with one variant per array entry at `position` 0, 1, … in array order; title and variant contents are trimmed. Returns the study id.
 
 - Raises `22023` when `p_variants` has fewer than 2 or more than 6 entries, or any entry is null or blank after trimming.
 - Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, or a variant is over 2000 characters.
+- Optional deadline: the author's local date and time `p_closes_local` plus the IANA zone `p_closes_tz` (from the browser). Stored as `closes_at = p_closes_local at time zone p_closes_tz`. Postgres resolves DST: a local time in the spring gap (e.g. 2027-03-28 02:30 Europe/Warsaw) is read with the offset before the jump (+01). The doubled autumn hour (2027-10-31 02:30) is read with the offset after the jump back (+01).
+- Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names`, or the deadline is not in the future.
 - Nothing is inserted when it raises.
 
 ## `public.start_study(p_study_id uuid) returns void`
@@ -67,6 +89,7 @@ Callable by `authenticated` only (`security definer`). Moves the caller's `draft
 - Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
 - Raises `55000` when the study is not `draft` (already started or closed).
 - Raises `22023` when the study has fewer than 2 or more than 6 variants.
+- Raises `22008` when the draft's deadline (`closes_at`) has already passed.
 
 ## `public.cast_vote(p_token text, p_variant_id uuid, p_comments jsonb default '[]') returns text`
 
@@ -76,15 +99,24 @@ Callable by `anon` and `authenticated`. The only write path for votes and commen
 - Return codes:
   - `accepted` — link consumed, vote and comments recorded.
   - `link_used` — the link was already used on an `active` study; nothing recorded.
-  - `study_ended` — unknown token, or the study is `draft`/`closed`/deleted; nothing recorded.
+  - `study_ended` — unknown token, or the study is `draft`, effectively closed (including past its deadline) or deleted; nothing recorded.
+- `cast_vote` locks the token's study row (`FOR NO KEY UPDATE`) before validating and consuming. Votes on one study therefore run one after another, and none can slip past a concurrent close (`supabase/tests/study_closing_race.test.sql`).
+- The vote that uses the study's last unused link also sets `status = 'closed'` and still returns `accepted`, so that voter sees the thank-you screen. See [Vote URL](#vote-url).
 - Raises SQLSTATE `22023` (link stays unused) when: `p_variant_id` is not a variant of the token's study; `p_comments` is not an array or an entry is not an object; a comment `variant_id` is missing, not a uuid, or not in the study; two comments share a `variant_id`; a body exceeds 2000 characters. Validation runs before the link is consumed, so errors never reveal whether a link is used.
 - **Known, accepted limit:** whoever holds a token can test it, and authors hold every token of their studies (they distribute them). An author can therefore call `cast_vote` on each token: used links answer `link_used`, unused ones get consumed with a fake vote. This reveals per-link usage only by destroying the remaining links (visible in `responded`), so it is not a silent oracle. Blocking `authenticated` would not help, because the author can call as `anon`. Decision (S-01, `create-and-start-study`): authors keep reading raw tokens, because they distribute the links themselves; since the probe is destructive and shows up in `responded`, the limit is accepted.
+
+## `public.close_study(p_study_id uuid) returns void`
+
+Callable by `authenticated` only (`security definer`). Closes the caller's effectively active study. The close is irreversible, and there is no reopen. It locks the study row first, so it is serialized with votes in flight: a vote either commits before the close, or waits for it and then returns `study_ended`.
+
+- Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
+- Raises `55000` when the study is not effectively active: `draft`, already `closed`, or past its deadline.
 
 ## `public.get_ballot(p_token text) returns jsonb`
 
 Callable by `anon` and `authenticated` (`security definer`, `stable`). The participant read path, called by the `/v/<token>` page. Grants no table access.
 
-- Returns `null` for an unknown token, or when the token's study is deleted, `draft` or `closed`.
+- Returns `null` for an unknown token, or when the token's study is deleted, `draft` or effectively closed (including past its deadline; see [Closing rule](#closing-rule)).
 - Never reads `study_links.used`: a used and an unused link of the same active study return identical output.
 - Returns no link id, token, `position`, study id, status or counts.
 
@@ -119,6 +151,7 @@ Callable by `authenticated` only. Returns `null` when the caller does not own th
 }
 ```
 
+- `status` is the effective status (see [Closing rule](#closing-rule)): a study past its deadline reads `closed`.
 - `responded`: count of used links; `total`: count of links.
 - `variants` ordered by `position`; `comments` sorted by body (never insertion order).
 - Top-level keys are exactly `status, responded, total, variants`; per-variant keys are exactly `variant_id, position, content, vote_count, comments`.

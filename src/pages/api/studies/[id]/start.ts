@@ -4,6 +4,7 @@ import { MAX_VARIANTS, MIN_VARIANTS } from "@/lib/study-limits";
 
 const VARIANT_COUNT_MESSAGE = `Nie można rozpocząć badania: musi mieć od ${String(MIN_VARIANTS)} do ${String(MAX_VARIANTS)} wariantów.`;
 const GENERIC_MESSAGE = "Nie udało się rozpocząć badania. Spróbuj ponownie.";
+const DEADLINE_PASSED_MESSAGE = "Termin zakończenia już minął. Utwórz badanie z nowym terminem.";
 
 export const POST: APIRoute = async (context) => {
   const id = context.params.id ?? "";
@@ -22,6 +23,7 @@ export const POST: APIRoute = async (context) => {
     // renders the 404 with a way back, so redirect there like every other form endpoint.
     if (error.code === "P0002" || error.code === "22P02") return context.redirect(studyUrl);
     if (error.code === "22023") return fail(VARIANT_COUNT_MESSAGE);
+    if (error.code === "22008") return fail(DEADLINE_PASSED_MESSAGE);
     return fail(GENERIC_MESSAGE);
   }
 

@@ -21,6 +21,7 @@ export const ROUTE_AUDIENCE: Readonly<Record<string, RouteAudience>> = {
   "/studies/[id]": "author",
   "/api/studies": "author",
   "/api/studies/[id]/start": "author",
+  "/api/studies/[id]/close": "author",
   "/api/studies/[id]/results": "author",
 
   "/v/[token]": "participant",

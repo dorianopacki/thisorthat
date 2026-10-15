@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatVotes, parseStudyResults, rankVariants, type StudyResults as Results } from "@/lib/study-results";
+import { STATUS_LABELS } from "@/lib/study-status";
 
 /** Live refresh interval while the study is active (docs/reference/contract-surfaces.md#results-view). */
 const RESULTS_POLL_MS = 10_000;
@@ -22,7 +23,8 @@ interface Props {
 // whole state, comments render in the order get_study_results returns them, nothing marks what changed.
 export default function StudyResults({ studyId, initial }: Props) {
   const [results, setResults] = useState(initial);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  // A study loaded already closed gets the final notice from the first render.
+  const [notice, setNotice] = useState<Notice | null>(initial.status === "closed" ? "final" : null);
 
   // Polls only while the study is active and the tab is visible; a study loaded as closed makes no requests.
   useEffect(() => {
@@ -122,6 +124,8 @@ export default function StudyResults({ studyId, initial }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* The label follows the effective status, so it turns „Zakończone” when a poll sees the close. */}
+      <p className="text-xs tracking-wide text-blue-100/60 uppercase">Status: {STATUS_LABELS[results.status]}</p>
       <div aria-live="polite" className="text-sm text-blue-100/80 empty:hidden">
         {notice && <p className="rounded-md border border-white/20 bg-white/5 px-3 py-2">{NOTICES[notice]}</p>}
       </div>

@@ -3,7 +3,7 @@ project: "ThisOrThat"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-06
+updated: 2026-10-15
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -45,15 +45,15 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 
 | ID   | Change ID                   | Outcome (user can …)                                                                                    | Prerequisites | PRD refs                                        | Status   |
 | ---- | --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | -------- |
-| F-01 | `study-data-model`          | (foundation) najmniejszy model danych jednej pętli badania + polityki dostępu z wbudowaną anonimowością   | —             | NFR §anonimowość, NFR §izolacja, Access Control  | done |
-| S-01 | `create-and-start-study`    | Autor tworzy badanie tekstowe, ustala N, startuje je i kopiuje N jednorazowych linków                     | F-01          | US-01, FR-003, FR-004, FR-005, FR-006           | done |
-| S-02 | `one-time-link-voting`      | Uczestnik bez konta otwiera link, wybiera wariant, opcjonalnie komentuje i widzi podziękowanie            | S-01          | US-01, FR-007, FR-008, FR-009, FR-010           | done |
-| S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"           | S-02          | US-01, FR-011, FR-012, FR-013                   | done |
-| S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                    | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | proposed |
-| S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                             | S-02          | FR-002, FR-001                                  | proposed |
-| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                                 | S-05          | FR-017, FR-018, FR-010                          | proposed |
-| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                    | S-01, S-04    | FR-019                                          | proposed |
-| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                       | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed |
+| F-01 | `study-data-model`          | (foundation) najmniejszy model danych jednej pętli badania + polityki dostępu z wbudowaną anonimowością | —             | NFR §anonimowość, NFR §izolacja, Access Control | done     |
+| S-01 | `create-and-start-study`    | Autor tworzy badanie tekstowe, ustala N, startuje je i kopiuje N jednorazowych linków                   | F-01          | US-01, FR-003, FR-004, FR-005, FR-006           | done     |
+| S-02 | `one-time-link-voting`      | Uczestnik bez konta otwiera link, wybiera wariant, opcjonalnie komentuje i widzi podziękowanie          | S-01          | US-01, FR-007, FR-008, FR-009, FR-010           | done     |
+| S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"         | S-02          | US-01, FR-011, FR-012, FR-013                   | done     |
+| S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | planning |
+| S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | proposed |
+| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | proposed |
+| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed |
+| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed |
 
 ## Streams
 
@@ -61,10 +61,10 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme                          | Chain                             | Note                                                                                          |
 | ------ | ------------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| A      | Rdzeń pętli badania            | `F-01` → `S-01` → `S-02` → `S-03` | Najkrótsza droga do gwiazdy przewodniej; przy celu `speed` nic nie wchodzi przed tym ciągiem.   |
-| B      | Domykanie badania              | `S-04` → `S-07`                   | Dołącza do strumienia A przy `S-02`. `S-04` domyka kryteria akceptacji US-01.                   |
-| C      | Zarządzanie własnymi badaniami | `S-05` → `S-06`                   | Dołącza do strumienia A przy `S-02`. Edycja i usuwanie sięgane są z listy badań.                |
-| D      | Warianty graficzne             | `S-08`                            | Dołącza do strumienia A przy `S-02`; jedyny plasterek dokładający magazyn plików.               |
+| A      | Rdzeń pętli badania            | `F-01` → `S-01` → `S-02` → `S-03` | Najkrótsza droga do gwiazdy przewodniej; przy celu `speed` nic nie wchodzi przed tym ciągiem. |
+| B      | Domykanie badania              | `S-04` → `S-07`                   | Dołącza do strumienia A przy `S-02`. `S-04` domyka kryteria akceptacji US-01.                 |
+| C      | Zarządzanie własnymi badaniami | `S-05` → `S-06`                   | Dołącza do strumienia A przy `S-02`. Edycja i usuwanie sięgane są z listy badań.              |
+| D      | Warianty graficzne             | `S-08`                            | Dołącza do strumienia A przy `S-02`; jedyny plasterek dokładający magazyn plików.             |
 
 ## Baseline
 
@@ -147,7 +147,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Termin jest oceniany leniwie — przy otwarciu linku lub strony wyników (`tech-stack.md`: brak zadań w tle). Czy badanie po terminie, którego nikt nie otworzył, może figurować jako „trwa" do pierwszego otwarcia? — Owner: user. Block: no.
 - **Risk:** Trzy niezależne drogi do tego samego stanu końcowego (wyczerpanie linków, ręczne zamknięcie, termin) muszą zbiegać się do jednej reguły, inaczej badanie da się zamknąć dwa razy lub przyjąć głos w trakcie zamykania. Ręczne zamknięcie jest nieodwracalne — PRD świadomie to akceptuje (runda Socrates przy FR-015).
-- **Status:** proposed
+- **Status:** planning
 
 ### S-05: Autor widzi listę swoich badań
 
@@ -201,16 +201,16 @@ Foundations below assume these are present and do NOT re-scaffold them.
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                   | Suggested issue title                                        | Ready for `/10x-plan` | Notes                                | Issue |
-| ---------- | --------------------------- | ------------------------------------------------------------ | --------------------- | ------------------------------------ | ------ |
-| F-01       | `study-data-model`          | Model danych pętli badania + polityki dostępu i anonimowość  | yes                   | Uruchom `/10x-plan study-data-model` | #5 |
-| S-01       | `create-and-start-study`    | Kreator badania tekstowego, ustalenie N i generowanie linków | no                    | Czeka na `F-01`                      | #6 |
-| S-02       | `one-time-link-voting`      | Głosowanie uczestnika przez jednorazowy link z komentarzami  | no                    | Czeka na `S-01`                      | #7 |
-| S-03       | `live-results-and-comments` | Ranking na żywo, komentarze przy wariantach i postęp „X z N" | no                    | Czeka na `S-02`; gwiazda przewodnia  | #8 |
-| S-04       | `study-closing-rules`       | Zamykanie badania: automatyczne, ręczne i po terminie        | no                    | Czeka na `S-02`                      | #9 |
-| S-05       | `author-study-dashboard`    | Lista badań autora ze statusem i postępem                    | no                    | Czeka na `S-02`                      | #10 |
-| S-06       | `edit-and-delete-study`     | Edycja szkicu badania i usuwanie badania                     | no                    | Czeka na `S-05`                      | #11 |
-| S-07       | `generate-extra-links`      | Dogenerowanie linków w trwającym badaniu                     | no                    | Czeka na `S-01`, `S-04`              | #12 |
-| S-08       | `image-variants`            | Warianty graficzne i chroniony magazyn plików                | no                    | Czeka na `S-01`, `S-02`              | #13 |
+| ---------- | --------------------------- | ------------------------------------------------------------ | --------------------- | ------------------------------------ | ----- |
+| F-01       | `study-data-model`          | Model danych pętli badania + polityki dostępu i anonimowość  | yes                   | Uruchom `/10x-plan study-data-model` | #5    |
+| S-01       | `create-and-start-study`    | Kreator badania tekstowego, ustalenie N i generowanie linków | no                    | Czeka na `F-01`                      | #6    |
+| S-02       | `one-time-link-voting`      | Głosowanie uczestnika przez jednorazowy link z komentarzami  | no                    | Czeka na `S-01`                      | #7    |
+| S-03       | `live-results-and-comments` | Ranking na żywo, komentarze przy wariantach i postęp „X z N" | no                    | Czeka na `S-02`; gwiazda przewodnia  | #8    |
+| S-04       | `study-closing-rules`       | Zamykanie badania: automatyczne, ręczne i po terminie        | no                    | Czeka na `S-02`                      | #9    |
+| S-05       | `author-study-dashboard`    | Lista badań autora ze statusem i postępem                    | no                    | Czeka na `S-02`                      | #10   |
+| S-06       | `edit-and-delete-study`     | Edycja szkicu badania i usuwanie badania                     | no                    | Czeka na `S-05`                      | #11   |
+| S-07       | `generate-extra-links`      | Dogenerowanie linków w trwającym badaniu                     | no                    | Czeka na `S-01`, `S-04`              | #12   |
+| S-08       | `image-variants`            | Warianty graficzne i chroniony magazyn plików                | no                    | Czeka na `S-01`, `S-02`              | #13   |
 
 **Tracker:** GitHub Issues — `dorianopacki/thisorthat`, milestone `M-1: MVP — pełny cykl życia badania`, tablica postępu #14.
 Otwarte pytania z sekcji poniżej żyją jako #2, #3, #4. Ten plik pozostaje źródłem prawdy; issues są widokiem operacyjnym.

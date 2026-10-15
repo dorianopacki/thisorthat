@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { FilePlus, Plus, Type, Users } from "lucide-react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { CalendarClock, FilePlus, Plus, Type, Users } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
@@ -13,6 +13,12 @@ import {
   MIN_VARIANTS,
   charLength,
 } from "@/lib/study-limits";
+
+// The browser's IANA zone. The server snapshot is empty, so the server-rendered markup does not depend
+// on the server's zone (Workers run in UTC); the zone never changes while the page is open.
+const subscribeToNothing = () => () => undefined;
+const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+const noTimeZone = () => "";
 
 interface Props {
   serverError?: string | null;
@@ -28,6 +34,7 @@ interface Errors {
   participantTarget?: string;
   variants?: (string | undefined)[];
   variantCount?: string;
+  closesLocal?: string;
 }
 
 export default function StudyWizard({ serverError }: Props) {
@@ -37,6 +44,10 @@ export default function StudyWizard({ serverError }: Props) {
   const [variants, setVariants] = useState<Variant[]>(() =>
     Array.from({ length: MIN_VARIANTS }, (_, key) => ({ key, value: "" })),
   );
+  // Optional deadline: local date-time from a datetime-local input plus the browser's IANA zone, which
+  // the server passes to create_study (docs/reference/contract-surfaces.md#closing-rule).
+  const [closesLocal, setClosesLocal] = useState("");
+  const closesTz = useSyncExternalStore(subscribeToNothing, browserTimeZone, noTimeZone);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,6 +92,11 @@ export default function StudyWizard({ serverError }: Props) {
       return undefined;
     });
     if (variantErrors.some(Boolean)) next.variants = variantErrors;
+
+    // A datetime-local value has no zone, so Date reads it in the browser's zone — the zone we send.
+    if (closesLocal && !(new Date(closesLocal).getTime() > Date.now())) {
+      next.closesLocal = "Termin musi być w przyszłości.";
+    }
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -184,6 +200,26 @@ export default function StudyWizard({ serverError }: Props) {
           Dodaj wariant
         </button>
       </fieldset>
+
+      <FormField
+        id="closes_local"
+        label="Termin zakończenia (opcjonalnie)"
+        type="datetime-local"
+        value={closesLocal}
+        onChange={(v) => {
+          setClosesLocal(v);
+          if (errors.closesLocal) setErrors((prev) => ({ ...prev, closesLocal: undefined }));
+        }}
+        error={errors.closesLocal}
+        hint={
+          <p className="mt-1 text-xs text-blue-100/50">
+            Badanie zamknie się samo o tej godzinie{closesTz ? ` (strefa ${closesTz})` : ""}. Po starcie terminu nie
+            można zmienić.
+          </p>
+        }
+        icon={<CalendarClock className="size-4" />}
+      />
+      <input type="hidden" name="closes_tz" value={closesTz} />
 
       <ServerError message={serverError} />
 
