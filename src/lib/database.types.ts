@@ -60,6 +60,8 @@ export type Database = {
       studies: {
         Row: {
           author_id: string;
+          closes_at: string | null;
+          closes_tz: string | null;
           created_at: string;
           id: string;
           participant_target: number;
@@ -69,6 +71,8 @@ export type Database = {
         };
         Insert: {
           author_id?: string;
+          closes_at?: string | null;
+          closes_tz?: string | null;
           created_at?: string;
           id?: string;
           participant_target: number;
@@ -78,6 +82,8 @@ export type Database = {
         };
         Update: {
           author_id?: string;
+          closes_at?: string | null;
+          closes_tz?: string | null;
           created_at?: string;
           id?: string;
           participant_target?: number;
@@ -182,15 +188,28 @@ export type Database = {
       };
       create_study: {
         Args: {
+          p_closes_local?: string;
+          p_closes_tz?: string;
           p_participant_target: number;
           p_title: string;
           p_variants: string[];
         };
         Returns: string;
       };
+      effective_status: {
+        Args: { s: Database["public"]["Tables"]["studies"]["Row"] };
+        Returns: Database["public"]["Enums"]["study_status"];
+      };
       get_ballot: { Args: { p_token: string }; Returns: Json };
       get_study_results: { Args: { p_study_id: string }; Returns: Json };
       start_study: { Args: { p_study_id: string }; Returns: undefined };
+      study_status_effective: {
+        Args: {
+          p_closes_at: string;
+          p_status: Database["public"]["Enums"]["study_status"];
+        };
+        Returns: Database["public"]["Enums"]["study_status"];
+      };
     };
     Enums: {
       study_status: "draft" | "active" | "closed";
