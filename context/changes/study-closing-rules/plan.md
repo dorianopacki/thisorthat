@@ -499,11 +499,11 @@ The migrations are forward-only, and earlier migrations are applied in productio
 
 #### Automated
 
-- [x] 3.1 Unit tests pass, including the route-access map completeness check
-- [x] 3.2 HTTP tests pass, including the close route probe and foreign-author close → 404
-- [x] 3.3 Type check passes
-- [x] 3.4 Lint passes
-- [x] 3.5 Build passes
+- [x] 3.1 Unit tests pass, including the route-access map completeness check — 4a81f27
+- [x] 3.2 HTTP tests pass, including the close route probe and foreign-author close → 404 — 4a81f27
+- [x] 3.3 Type check passes — 4a81f27
+- [x] 3.4 Lint passes — 4a81f27
+- [x] 3.5 Build passes — 4a81f27
 
 #### Manual
 
@@ -517,9 +517,9 @@ The migrations are forward-only, and earlier migrations are applied in productio
 
 #### Automated
 
-- [ ] 4.1 The new spec passes
-- [ ] 4.2 The whole E2E suite stays green
+- [x] 4.1 The new spec passes
+- [x] 4.2 The whole E2E suite stays green
 
 #### Manual
 
-- [ ] 4.3 Deliberate break makes the spec fail on the Badanie jest zakończone assertion
+- [x] 4.3 Deliberate break makes the spec fail on the Badanie jest zakończone assertion
