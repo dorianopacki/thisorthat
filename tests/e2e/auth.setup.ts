@@ -22,9 +22,10 @@ setup("sign in once and save the session", async ({ page }) => {
     await page.waitForURL((url) => !url.pathname.startsWith("/auth/signin"), { timeout: 5_000 });
   }).toPass();
 
-  // Only a signed-in author stays on /dashboard and is greeted by email.
+  // Only a signed-in author stays on /dashboard, sees their study list and their email in the topbar.
   await page.goto("/dashboard");
-  await expect(page.getByText(`Welcome, ${username}`)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Twoje badania", level: 1 })).toBeVisible();
+  await expect(page.getByText(username, { exact: true })).toBeVisible();
 
   await page.context().storageState({ path: authFile });
 });

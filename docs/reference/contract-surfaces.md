@@ -2,11 +2,11 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
-**Authors never read `votes`, `comments`, or `study_links.used`.** `anon` and `authenticated` have no privileges on `votes` and `comments`, and `authenticated` can select only `study_links (id, study_id, token)`. Authors see votes and comments only as aggregates through `get_study_results`. `votes` and `comments` never get a link reference, a timestamp or a serial/identity column. `supabase/tests/study_anonymity.test.sql` enforces this.
+**Authors never read `votes`, `comments`, or `study_links.used`.** `anon` and `authenticated` have no privileges on `votes` and `comments`, and `authenticated` can select only `study_links (id, study_id, token)`. Authors see votes and comments only as aggregates through `get_study_results`. Link usage reaches authors only as per-study counts (`responded`, `total`) through `get_study_results` and `list_author_studies`. `votes` and `comments` never get a link reference, a timestamp or a serial/identity column. `supabase/tests/study_anonymity.test.sql` enforces this.
 
 **No participant-reachable read reveals `study_links.used`.** The only way to learn a link's state is `cast_vote`, which consumes an unused link. `get_ballot` never reads `used` and returns identical output for a used and an unused link; `supabase/tests/get_ballot.test.sql` enforces this. Any later participant-facing read (S-03, S-04, S-06) must keep this rule.
 
@@ -155,6 +155,16 @@ Callable by `authenticated` only. Returns `null` when the caller does not own th
 - `responded`: count of used links; `total`: count of links.
 - `variants` ordered by `position`; `comments` sorted by body (never insertion order).
 - Top-level keys are exactly `status, responded, total, variants`; per-variant keys are exactly `variant_id, position, content, vote_count, comments`.
+
+## `public.list_author_studies() returns table (id uuid, title text, status study_status, participant_target integer, responded integer, total integer, created_at timestamptz)`
+
+Callable by `authenticated` only (`security definer`, `stable`). The author's study list, called by `/dashboard` (S-05, change `author-study-dashboard`). Grants no table access.
+
+- Rows: the studies whose `author_id = auth.uid()`; no `auth.uid()` returns zero rows. Ordered by `created_at desc, id`.
+- `status` is the effective status (see [Closing rule](#closing-rule)).
+- `responded`: count of used links; `total`: count of links. Both are `0` for a draft.
+- Columns are exactly `id, title, status, participant_target, responded, total, created_at`.
+- Progress „Odpowiedziało X z N” for a started study uses N = `total`, the live link count (as in [Results view](#results-view)). A draft has no links, so the dashboard shows its planned `participant_target` instead („Planowane: N uczestników”).
 
 ## Results view
 

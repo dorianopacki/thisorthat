@@ -9,8 +9,8 @@ test("signed-in author's session cookie opens an author page on the Workers runt
   await page.goto("/dashboard");
 
   await expect(page).toHaveURL("/dashboard");
-  await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
-  await expect(page.getByText(`Welcome, ${process.env.E2E_USERNAME}`)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Twoje badania", level: 1 })).toBeVisible();
+  await expect(page.getByText(process.env.E2E_USERNAME ?? "", { exact: true })).toBeVisible();
 });
 
 test.describe("signed out", () => {

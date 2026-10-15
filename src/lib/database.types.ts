@@ -203,6 +203,18 @@ export type Database = {
       };
       get_ballot: { Args: { p_token: string }; Returns: Json };
       get_study_results: { Args: { p_study_id: string }; Returns: Json };
+      list_author_studies: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          id: string;
+          participant_target: number;
+          responded: number;
+          status: Database["public"]["Enums"]["study_status"];
+          title: string;
+          total: number;
+        }[];
+      };
       start_study: { Args: { p_study_id: string }; Returns: undefined };
       study_status_effective: {
         Args: {
