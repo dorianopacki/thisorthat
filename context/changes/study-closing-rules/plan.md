@@ -485,25 +485,25 @@ The migrations are forward-only, and earlier migrations are applied in productio
 
 #### Automated
 
-- [x] 2.1 Migration applies cleanly
-- [x] 2.2 All pgTAP suites pass, including study_closing.test.sql and the extended isolation suites
-- [x] 2.3 The race test passes (pgTAP via dblink, or its tests/http fallback)
-- [x] 2.4 Existing vote suites still pass unchanged
-- [x] 2.5 Types compile
+- [x] 2.1 Migration applies cleanly — 90c7ba9
+- [x] 2.2 All pgTAP suites pass, including study_closing.test.sql and the extended isolation suites — 90c7ba9
+- [x] 2.3 The race test passes (pgTAP via dblink, or its tests/http fallback) — 90c7ba9
+- [x] 2.4 Existing vote suites still pass unchanged — 90c7ba9
+- [x] 2.5 Types compile — 90c7ba9
 
 #### Manual
 
-- [x] 2.6 contract-surfaces.md documents close_study, the auto-close rule and the lock ordering
+- [x] 2.6 contract-surfaces.md documents close_study, the auto-close rule and the lock ordering — 90c7ba9
 
 ### Phase 3: Author UI
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass, including the route-access map completeness check
-- [ ] 3.2 HTTP tests pass, including the close route probe and foreign-author close → 404
-- [ ] 3.3 Type check passes
-- [ ] 3.4 Lint passes
-- [ ] 3.5 Build passes
+- [x] 3.1 Unit tests pass, including the route-access map completeness check
+- [x] 3.2 HTTP tests pass, including the close route probe and foreign-author close → 404
+- [x] 3.3 Type check passes
+- [x] 3.4 Lint passes
+- [x] 3.5 Build passes
 
 #### Manual
 

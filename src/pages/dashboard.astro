@@ -1,14 +1,26 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
+import { STATUS_LABELS, type StudyStatus } from "@/lib/study-status";
 
 const { user } = Astro.locals;
 
-const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } as const;
+interface DashboardStudy {
+  id: string;
+  title: string;
+  effective_status: StudyStatus;
+  created_at: string;
+}
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 const { data: studies, error: studiesError } = supabase
-  ? await supabase.from("studies").select("id, title, status, created_at").order("created_at", { ascending: false })
+  ? await supabase
+      .from("studies")
+      .select("id, title, effective_status, created_at")
+      .order("created_at", { ascending: false })
+      // effective_status is a computed field (a function over studies) that the generated types
+      // cannot see; it labels a study past its deadline as closed (contract-surfaces.md#closing-rule).
+      .overrideTypes<DashboardStudy[], { merge: false }>()
   : { data: [], error: null };
 ---
 
@@ -43,7 +55,7 @@ const { data: studies, error: studiesError } = supabase
                   class="flex items-center justify-between gap-4 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm transition-colors hover:bg-white/10"
                 >
                   <span class="truncate">{study.title}</span>
-                  <span class="shrink-0 text-xs text-blue-100/60">{STATUS_LABELS[study.status]}</span>
+                  <span class="shrink-0 text-xs text-blue-100/60">{STATUS_LABELS[study.effective_status]}</span>
                 </a>
               </li>
             ))}

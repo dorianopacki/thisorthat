@@ -6,6 +6,9 @@ import { ServerError } from "@/components/auth/ServerError";
 import StartStudyButton from "@/components/studies/StartStudyButton";
 import LinkList from "@/components/studies/LinkList";
 import StudyResults from "@/components/studies/StudyResults";
+import CloseStudyButton from "@/components/studies/CloseStudyButton";
+import { formatDeadline } from "@/lib/study-deadline";
+import { STATUS_LABELS } from "@/lib/study-status";
 import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
 
 // No top-level `return` here: typescript-eslint's no-misused-promises crashes on a return
@@ -25,7 +28,7 @@ const error = Astro.url.searchParams.get("error");
 // answer 22P02. Both are a 404 for the author.
 const { data: study, error: studyError } = await supabase
   .from("studies")
-  .select("id, title, participant_target, status")
+  .select("id, title, participant_target, status, closes_at, closes_tz")
   .eq("id", id)
   .maybeSingle();
 
@@ -81,7 +84,10 @@ if (!shown) {
   Astro.response.status = 404;
 }
 
-const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } as const;
+// studies.status alone can read 'active' past the deadline: started studies take the effective
+// status from get_study_results (docs/reference/contract-surfaces.md#closing-rule).
+const effectiveStatus = results?.status ?? shown?.status;
+const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.closes_at, shown.closes_tz) : null;
 ---
 
 <Layout title={shown ? shown.title : "Nie znaleziono badania"}>
@@ -98,13 +104,23 @@ const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } 
         </>
       ) : (
         <>
-          <p class="mb-2 text-center text-xs tracking-wide text-blue-100/60 uppercase">{STATUS_LABELS[shown.status]}</p>
+          {!results && (
+            <p class="mb-2 text-center text-xs tracking-wide text-blue-100/60 uppercase">
+              {STATUS_LABELS[shown.status]}
+            </p>
+          )}
           <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold break-words text-transparent">
             {shown.title}
           </h1>
           <p class="mb-4 text-sm text-blue-100/80">
             Liczba uczestników: <span class="font-semibold text-white">{shown.participant_target}</span>
           </p>
+          {deadline && (
+            <p class="mb-4 text-sm text-blue-100/80">
+              {effectiveStatus === "closed" ? "Termin: " : "Zakończy się automatycznie: "}
+              <span class="font-semibold text-white">{deadline}</span>
+            </p>
+          )}
           {results ? (
             <StudyResults studyId={shown.id} initial={results} client:load />
           ) : (
@@ -133,6 +149,11 @@ const STATUS_LABELS = { draft: "Szkic", active: "Trwa", closed: "Zakończone" } 
             <>
               <h2 class="mt-6 mb-2 text-sm text-blue-100/80">Linki do głosowania ({urls.length})</h2>
               <LinkList urls={urls} client:load />
+              {effectiveStatus === "active" && (
+                <div class="mt-6">
+                  <CloseStudyButton studyId={shown.id} client:load />
+                </div>
+              )}
             </>
           )}
           <p class="mt-6 text-center text-sm text-blue-100/60">

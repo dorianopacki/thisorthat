@@ -13,6 +13,10 @@ import {
 const VARIANT_COUNT_MESSAGE = `Badanie musi mieć od ${String(MIN_VARIANTS)} do ${String(MAX_VARIANTS)} niepustych wariantów.`;
 const LIMITS_MESSAGE = `Sprawdź limity: tytuł do ${String(MAX_TITLE_LENGTH)} znaków, od ${String(MIN_PARTICIPANTS)} do ${String(MAX_PARTICIPANTS)} uczestników, wariant do ${String(MAX_VARIANT_LENGTH)} znaków.`;
 const GENERIC_MESSAGE = "Nie udało się utworzyć badania. Spróbuj ponownie.";
+// create_study raises 22023 for a deadline in the past or an unknown zone; the zone comes from the
+// browser, so in practice only the past is reachable.
+const DEADLINE_MESSAGE = "Termin musi być w przyszłości.";
+const DEADLINE_ZONE_MESSAGE = "Nie udało się ustalić strefy czasowej terminu. Odśwież stronę i spróbuj ponownie.";
 
 function asString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -51,9 +55,14 @@ export const POST: APIRoute = async (context) => {
   const title = normalize(asString(form.get("title")));
   const participantTarget = asString(form.get("participant_target")).trim();
   const variants = form.getAll("variant").map((v) => normalize(asString(v)));
+  // Optional deadline: the author's local date-time (datetime-local) plus the browser's IANA zone.
+  // Postgres converts it to an instant (docs/reference/contract-surfaces.md#closing-rule).
+  const closesLocal = asString(form.get("closes_local")).trim();
+  const closesTz = asString(form.get("closes_tz")).trim();
 
   const validationError = validate(title, participantTarget, variants);
   if (validationError) return fail(validationError);
+  if (closesLocal && !closesTz) return fail(DEADLINE_ZONE_MESSAGE);
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) return fail("Supabase nie jest skonfigurowany.");
@@ -62,10 +71,12 @@ export const POST: APIRoute = async (context) => {
     p_title: title,
     p_participant_target: Number(participantTarget),
     p_variants: variants,
+    ...(closesLocal ? { p_closes_local: closesLocal, p_closes_tz: closesTz } : {}),
   });
 
   if (error) {
-    if (error.code === "22023") return fail(VARIANT_COUNT_MESSAGE);
+    // Variants were validated above, so a 22023 on a request with a deadline is the deadline.
+    if (error.code === "22023") return fail(closesLocal ? DEADLINE_MESSAGE : VARIANT_COUNT_MESSAGE);
     if (error.code === "23514") return fail(LIMITS_MESSAGE);
     return fail(GENERIC_MESSAGE);
   }
