@@ -1,10 +1,10 @@
 ---
 change_id: study-closing-rules
 title: Zamykanie badania — automatycznie po N głosach, ręcznie albo po terminie
-status: impl_reviewed
+status: archived
 created: 2026-10-15
 updated: 2026-10-15
-archived_at: null
+archived_at: 2026-10-15T20:29:47Z
 ---
 
 ## Notes
