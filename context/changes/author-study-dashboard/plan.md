@@ -144,6 +144,7 @@ Point the page at the RPC, render progress per status, remove the template chrom
 
 - `progressLabel({ status, responded, total, participant_target }): string` returns `Planowane: ${participant_target} uczestników` for `draft`, otherwise `Odpowiedziało ${responded} z ${total}`.
 - Unit tests cover draft, active and closed.
+- Implementation note: the draft text is „Planowana liczba uczestników: N”, not „Planowane: N uczestników”. The plan's form is ungrammatical for N = 2–4 („2 uczestników”), and the fixed form needs no plural rules. The intent (planned `participant_target` for drafts) is unchanged.
 
 #### 2. Dashboard page
 
