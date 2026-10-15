@@ -507,19 +507,19 @@ The migrations are forward-only, and earlier migrations are applied in productio
 
 #### Manual
 
-- [ ] 3.6 Study past its deadline shows Zakończone on the page and Badanie jest zakończone on the link
-- [ ] 3.7 Deadline is displayed in the author's zone
-- [ ] 3.8 Manual close with confirmation works and Anuluj leaves the study active
-- [ ] 3.9 Label switches from Trwa to Zakończone within one poll after the last vote
-- [ ] 3.10 Dashboard lists closed and past-deadline studies as Zakończone
+- [x] 3.6 Study past its deadline shows Zakończone on the page and Badanie jest zakończone on the link — 4a81f27
+- [x] 3.7 Deadline is displayed in the author's zone — 4a81f27
+- [x] 3.8 Manual close with confirmation works and Anuluj leaves the study active — 4a81f27
+- [x] 3.9 Label switches from Trwa to Zakończone within one poll after the last vote — 4a81f27
+- [x] 3.10 Dashboard lists closed and past-deadline studies as Zakończone — 4a81f27
 
 ### Phase 4: E2E — manual close ends voting
 
 #### Automated
 
-- [x] 4.1 The new spec passes
-- [x] 4.2 The whole E2E suite stays green
+- [x] 4.1 The new spec passes — 299d878
+- [x] 4.2 The whole E2E suite stays green — 299d878
 
 #### Manual
 
-- [x] 4.3 Deliberate break makes the spec fail on the Badanie jest zakończone assertion
+- [x] 4.3 Deliberate break makes the spec fail on the Badanie jest zakończone assertion — 299d878
