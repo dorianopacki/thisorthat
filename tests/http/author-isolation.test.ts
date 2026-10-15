@@ -90,6 +90,14 @@ describe("author B against author A's studies", () => {
     expect(response.body).not.toContain(fixtures.titles.active);
     expect(response.body).not.toContain(fixtures.titles.draft);
   });
+
+  it("B: GET /dashboard shows B's draft progress from B's own participant_target", async () => {
+    const response = await fixtures.authorB.request("/dashboard");
+    expect(response.status, describeResponse(response)).toBe(200);
+    // createStudy sets N to the variant count (2); B owns exactly one study, a draft.
+    expect(response.body).toContain("Planowana liczba uczestników: 2");
+    expect(response.body).not.toContain("Odpowiedziało");
+  });
 });
 
 // Declared after the B block on purpose: Vitest runs a file's tests in order, so these controls

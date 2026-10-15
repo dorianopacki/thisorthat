@@ -242,28 +242,28 @@ Forward-only new function, with no data changes. Rollback = a forward migration 
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly on a fresh local database
-- [x] 1.2 All pgTAP suites pass, including author_study_dashboard.test.sql
-- [x] 1.3 Regenerated types compile
+- [x] 1.1 Migration applies cleanly on a fresh local database — a476bd9
+- [x] 1.2 All pgTAP suites pass, including author_study_dashboard.test.sql — a476bd9
+- [x] 1.3 Regenerated types compile — a476bd9
 
 #### Manual
 
-- [x] 1.4 contract-surfaces.md documents list_author_studies, its column set and the N = total rule
+- [x] 1.4 contract-surfaces.md documents list_author_studies, its column set and the N = total rule — a476bd9
 
 ### Phase 2: Docelowa strona /dashboard
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass, including the progress label cases
-- [ ] 2.2 HTTP tests pass, including the dashboard progress assertion
-- [ ] 2.3 Type check passes
-- [ ] 2.4 Lint passes
-- [ ] 2.5 Build passes
-- [ ] 2.6 The whole E2E suite stays green with the updated locators
+- [x] 2.1 Unit tests pass, including the progress label cases
+- [x] 2.2 HTTP tests pass, including the dashboard progress assertion
+- [x] 2.3 Type check passes
+- [x] 2.4 Lint passes
+- [x] 2.5 Build passes
+- [x] 2.6 The whole E2E suite stays green with the updated locators
 
 #### Manual
 
-- [ ] 2.7 Dashboard shows a draft as Szkic with Planowane N uczestników, an active study as Trwa with Odpowiedziało X z N, and a closed or past-deadline study as Zakończone
-- [ ] 2.8 Progress on the dashboard matches Odpowiedziało X z N on the study page after a vote
-- [ ] 2.9 No English template text or duplicate Sign out remains; the page works at phone width
+- [x] 2.7 Dashboard shows a draft as Szkic with Planowane N uczestników, an active study as Trwa with Odpowiedziało X z N, and a closed or past-deadline study as Zakończone
+- [x] 2.8 Progress on the dashboard matches Odpowiedziało X z N on the study page after a vote
+- [x] 2.9 No English template text or duplicate Sign out remains; the page works at phone width
 - [ ] 2.10 Migration pushed to the production database with npx supabase db push before or with the merge
