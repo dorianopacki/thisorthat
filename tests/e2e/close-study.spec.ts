@@ -54,8 +54,9 @@ test.describe("risk #3: no vote after a manual close", () => {
     await page.getByRole("button", { name: "Zakończ badanie" }).click();
     await expect(page.getByRole("alert")).toContainText("Zakończonego badania nie da się wznowić");
     await page.getByRole("button", { name: "Tak, zakończ" }).click();
-    // The form posts and the page reloads without the confirmation step.
-    await expect(page.getByRole("button", { name: "Tak, zakończ" })).toBeHidden();
+    // Wait for the reloaded page to show the result: the button turns „Zamykanie...” on submit,
+    // before close_study commits, so its disappearance is no proof the study is closed.
+    await expect(page.getByText("Status: Zakończone")).toBeVisible();
 
     // The participant sends the ballot that was open all along: no thank-you, the study has ended.
     await participant.getByRole("button", { name: "Wyślij głos" }).click();

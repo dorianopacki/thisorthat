@@ -16,7 +16,7 @@ select isnt(inet_server_addr(), null, 'the test runner is connected over TCP (db
 
 select set_config(
   'test.conninfo',
-  'host=' || host(inet_server_addr()) || ' port=5432 dbname=postgres user=postgres password=postgres',
+  'host=' || host(inet_server_addr()) || ' port=' || inet_server_port() || ' dbname=postgres user=postgres password=postgres',
   true
 );
 
@@ -71,6 +71,8 @@ select set_config(
 );
 
 select extensions.dblink_exec('conn_vote', 'set role anon');
+-- A regression that never releases the study lock must fail this suite, not hang CI.
+select extensions.dblink_exec('conn_vote', $$set lock_timeout = '10s'$$);
 select extensions.dblink_send_query('conn_vote', $$
   select public.cast_vote('race-1', 'c9000000-0000-0000-0000-0000000000b1')
 $$);

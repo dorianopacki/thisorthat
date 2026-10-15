@@ -6,7 +6,7 @@
 -- Fixtures are inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(31);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -98,17 +98,17 @@ select is(
 
 select set_config(
   'test.summer',
-  public.create_study('Summer', 2, array['Left', 'Right'], '2027-06-15 18:00', 'Europe/Warsaw')::text,
+  public.create_study('Summer', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
   'test.gap',
-  public.create_study('Spring gap', 2, array['Left', 'Right'], '2027-03-28 02:30', 'Europe/Warsaw')::text,
+  public.create_study('Spring gap', 2, array['Left', 'Right'], '2099-03-29 02:30', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
   'test.doubled',
-  public.create_study('Doubled hour', 2, array['Left', 'Right'], '2027-10-31 02:30', 'Europe/Warsaw')::text,
+  public.create_study('Doubled hour', 2, array['Left', 'Right'], '2099-10-25 02:30', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
@@ -119,7 +119,7 @@ select set_config(
 
 select is(
   (select closes_at from public.studies where id = current_setting('test.summer')::uuid),
-  '2027-06-15 16:00:00+00'::timestamptz,
+  '2099-06-15 16:00:00+00'::timestamptz,
   'create_study: 18:00 Warsaw summer time is 16:00 UTC'
 );
 
@@ -134,13 +134,13 @@ select is(
 -- after the jump back (+01).
 select is(
   (select closes_at from public.studies where id = current_setting('test.gap')::uuid),
-  '2027-03-28 01:30:00+00'::timestamptz,
+  '2099-03-29 01:30:00+00'::timestamptz,
   'create_study: 02:30 in the spring gap is read as +01'
 );
 
 select is(
   (select closes_at from public.studies where id = current_setting('test.doubled')::uuid),
-  '2027-10-31 01:30:00+00'::timestamptz,
+  '2099-10-25 01:30:00+00'::timestamptz,
   'create_study: the doubled 02:30 in autumn is read as +01'
 );
 
@@ -151,14 +151,30 @@ select is(
 );
 
 select throws_ok(
-  $$ select public.create_study('Bad zone', 2, array['Left', 'Right'], '2027-06-15 18:00', 'Mars/Olympus') $$,
+  $$ select public.create_study('Bad zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Mars/Olympus') $$,
   '22023',
   null,
   'create_study: unknown time zone'
 );
 
+-- pg_timezone_names also lists names Intl rejects (posix/…, Factory); the author page formats the
+-- deadline with Intl, so create_study must refuse them.
 select throws_ok(
-  $$ select public.create_study('Local only', 2, array['Left', 'Right'], '2027-06-15 18:00', null) $$,
+  $$ select public.create_study('Posix zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'posix/Europe/Warsaw') $$,
+  '22023',
+  null,
+  'create_study: a posix/ zone Intl cannot format'
+);
+
+select throws_ok(
+  $$ select public.create_study('Factory zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Factory') $$,
+  '22023',
+  null,
+  'create_study: the Factory zone'
+);
+
+select throws_ok(
+  $$ select public.create_study('Local only', 2, array['Left', 'Right'], '2099-06-15 18:00', null) $$,
   '22023',
   null,
   'create_study: local time without a zone'
@@ -195,18 +211,24 @@ select lives_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- The deadline cannot change after start (draft-only update policy)
+-- The deadline is written only by create_study: no direct update, so no
+-- unvalidated zone (no column grant for update on closes_at / closes_tz)
 -- ---------------------------------------------------------------------------
 
-update public.studies set closes_at = null, closes_tz = null
- where id = 'a0000000-0000-0000-0000-000000000003';
+select throws_ok(
+  $$ update public.studies set closes_tz = 'Factory'
+      where id = current_setting('test.summer')::uuid $$,
+  '42501',
+  null,
+  'an author cannot update the deadline zone directly, even on a draft'
+);
 
 reset role;
 
-select isnt(
-  (select closes_at from public.studies where id = 'a0000000-0000-0000-0000-000000000003'),
-  null,
-  'an author cannot remove the deadline of an active study'
+select is(
+  (select closes_tz from public.studies where id = current_setting('test.summer')::uuid),
+  'Europe/Warsaw',
+  'the draft keeps its validated zone'
 );
 
 -- ---------------------------------------------------------------------------
