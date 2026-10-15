@@ -43,17 +43,17 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 
 ## At a glance
 
-| ID   | Change ID                   | Outcome (user can …)                                                                                    | Prerequisites | PRD refs                                        | Status      |
-| ---- | --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | ----------- |
-| F-01 | `study-data-model`          | (foundation) najmniejszy model danych jednej pętli badania + polityki dostępu z wbudowaną anonimowością | —             | NFR §anonimowość, NFR §izolacja, Access Control | done        |
-| S-01 | `create-and-start-study`    | Autor tworzy badanie tekstowe, ustala N, startuje je i kopiuje N jednorazowych linków                   | F-01          | US-01, FR-003, FR-004, FR-005, FR-006           | done        |
-| S-02 | `one-time-link-voting`      | Uczestnik bez konta otwiera link, wybiera wariant, opcjonalnie komentuje i widzi podziękowanie          | S-01          | US-01, FR-007, FR-008, FR-009, FR-010           | done        |
-| S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"         | S-02          | US-01, FR-011, FR-012, FR-013                   | done        |
-| S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done        |
-| S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | in-progress |
-| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | proposed    |
-| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed    |
-| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed    |
+| ID   | Change ID                   | Outcome (user can …)                                                                                    | Prerequisites | PRD refs                                        | Status   |
+| ---- | --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | -------- |
+| F-01 | `study-data-model`          | (foundation) najmniejszy model danych jednej pętli badania + polityki dostępu z wbudowaną anonimowością | —             | NFR §anonimowość, NFR §izolacja, Access Control | done     |
+| S-01 | `create-and-start-study`    | Autor tworzy badanie tekstowe, ustala N, startuje je i kopiuje N jednorazowych linków                   | F-01          | US-01, FR-003, FR-004, FR-005, FR-006           | done     |
+| S-02 | `one-time-link-voting`      | Uczestnik bez konta otwiera link, wybiera wariant, opcjonalnie komentuje i widzi podziękowanie          | S-01          | US-01, FR-007, FR-008, FR-009, FR-010           | done     |
+| S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"         | S-02          | US-01, FR-011, FR-012, FR-013                   | done     |
+| S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done     |
+| S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | done     |
+| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | proposed |
+| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed |
+| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed |
 
 ## Streams
 
@@ -159,7 +159,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Pierwsze miejsce, w którym izolacja między autorami jest widoczna dla użytkownika — zapytanie o listę musi opierać się na politykach z `F-01`, a nie na filtrowaniu po stronie aplikacji. Poza tym plasterek jest celowo płytki: PRD świadomie ograniczył dashboard do listy (runda Socrates przy FR-002).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-06: Autor edytuje szkic i usuwa badanie
 
@@ -243,5 +243,6 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **S-02: Uczestnik bez konta może otworzyć otrzymany link, zobaczyć warianty, wybrać jeden, opcjonalnie dopisać komentarz przy każdym wariancie i po wysłaniu zobaczyć podziękowanie; po ponownym otwarciu zużytego linku widzi „Twój głos został już oddany".** — Archived 2026-10-06 → `context/archive/2026-10-05-one-time-link-voting/`. Lesson: —.
 - **S-03: Autor może oglądać ranking wariantów według liczby głosów (warianty z równą liczbą głosów dzielą miejsce), anonimowe komentarze pogrupowane przy wariantach oraz postęp „odpowiedziało X z N", aktualizowane w trakcie trwania badania.** — Archived 2026-10-06 → `context/archive/2026-10-06-live-results-and-comments/`. Lesson: —.
 - **S-04: Badanie zamyka się automatycznie po wykorzystaniu wszystkich N linków; autor może je zamknąć ręcznie w dowolnym momencie albo ustawić termin (dzień + godzina w swojej strefie czasowej), po którym badanie się zamyka. Zamknięte badanie nie przyjmuje głosów, a uczestnik widzi „Badanie jest zakończone"; wyniki pozostają widoczne dla autora.** — Archived 2026-10-15 → `context/archive/2026-10-15-study-closing-rules/`. Lesson: —.
+- **S-05: Autor po zalogowaniu widzi prostą listę wyłącznie swoich badań ze statusem (szkic / trwa / zamknięte) i postępem „X z N", z której wchodzi w konkretne badanie.** — Archived 2026-10-15 → `context/archive/2026-10-15-author-study-dashboard/`. Lesson: —.
 
 (Empty on first generation. `/10x-archive` appends entries here.)
