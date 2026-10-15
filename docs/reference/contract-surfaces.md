@@ -2,7 +2,7 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`), plus `20261015221845_edit_and_delete_study.sql` (change `edit-and-delete-study`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
@@ -27,7 +27,7 @@ A study is **effectively closed** when `status = 'closed'`, or when `status = 'a
 - **Only two paths write `closed`**, and both lock the study row first (`FOR NO KEY UPDATE`):
   - `close_study`: the manual, irreversible close by the owner;
   - `cast_vote`: when the vote it records used the study's last unused link. It counts unused links live, so links added later (S-07) keep it correct.
-- **Lock order is study → link** in every writer (`start_study`, `cast_vote`, the delete cascade). New writers must keep it.
+- **Lock order is study → link** in every writer (`start_study`, `update_study_draft`, `cast_vote`, the delete cascade). New writers must keep it.
 - The participant never learns why a study ended. Every closed study looks the same as an unknown token (`get_ballot` → `null`).
 
 ## `public.study_status_effective(p_status study_status, p_closes_at timestamptz) returns study_status`
@@ -48,12 +48,12 @@ PostgREST computed field over `studies` (`select("…, effective_status")`), del
 | `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                                             |
 | `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                                             |
 
-`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` writes them (no update grant), so the zone is always one it validated; a page formatting a zone it cannot handle falls back to UTC. Deleting a study cascades to its variants, links, votes and comments. `anon` has no table privileges.
+`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` and `update_study_draft` write them (no column update grant), so the zone is always one they validated; a page formatting a zone it cannot handle falls back to UTC. Deleting a study cascades to its variants, links, votes and comments. Deleting an `active` study (allowed in any status by the delete policy) breaks its links: they answer like an unknown token, so `get_ballot` → `null` („Badanie jest zakończone”) and `cast_vote` → `study_ended`. `anon` has no table privileges.
 
 ## Limits
 
 - **N (`studies.participant_target`): 1–100**, enforced by the check constraint `studies_participant_target_check`. N is the total number of links a study ever gets: anything that adds links later (S-07) must keep the total within 100.
-- **Variants per study: 2–6.** Not a table constraint (drafts are edited row by row); enforced by `create_study` and again by `start_study`.
+- **Variants per study: 2–6.** Not a table constraint (drafts are edited row by row); enforced by `create_study`, `update_study_draft` and again by `start_study`.
 - Title 1–200 and variant content 1–2000 characters after trimming (table check constraints).
 
 ## Vote URL
@@ -81,6 +81,17 @@ Callable by `authenticated` only (`security invoker`: runs under the caller's gr
 - Optional deadline: the author's local date and time `p_closes_local` plus the IANA zone `p_closes_tz` (from the browser). Stored as `closes_at = p_closes_local at time zone p_closes_tz`. Postgres resolves DST: a local time in the spring gap (e.g. 2027-03-28 02:30 Europe/Warsaw) is read with the offset before the jump (+01). The doubled autumn hour (2027-10-31 02:30) is read with the offset after the jump back (+01).
 - Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names` or is one Intl cannot format (`posix/…`, `right/…`, `Factory`, `localtime`, `posixrules`), or the deadline is not in the future.
 - Nothing is inserted when it raises.
+
+## `public.update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns void`
+
+Callable by `authenticated` only (`security definer`). The only write path for editing a draft, including its deadline (change `edit-and-delete-study`, S-06). Locks the study row first (`FOR UPDATE`, filtered by `auth.uid()`), so it is serialized with `start_study`: variants never change under a started study.
+
+- **Replace semantics:** the whole draft is replaced. Title (trimmed), N and the deadline are overwritten; omitting both deadline arguments (null/null) clears the deadline. All variants are deleted and the new list is inserted at `position` 0, 1, … in array order with trimmed contents (new variant ids).
+- Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
+- Raises `55000` when the study is not `draft` (active or closed).
+- Raises `22023` for the same variant and deadline rules as `create_study` (2–6 variants, none null or blank; both or neither deadline value; an Intl-formattable zone from `pg_timezone_names`; a deadline in the future). The deadline is stored as `p_closes_local at time zone p_closes_tz`.
+- Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, or a variant is over 2000 characters.
+- Nothing changes when it raises.
 
 ## `public.start_study(p_study_id uuid) returns void`
 

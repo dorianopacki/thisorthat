@@ -3,7 +3,7 @@ project: "ThisOrThat"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-15
+updated: 2026-10-16
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -51,7 +51,7 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 | S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"         | S-02          | US-01, FR-011, FR-012, FR-013                   | done        |
 | S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done        |
 | S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | in-progress |
-| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | proposed    |
+| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | in-progress |
 | S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed    |
 | S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed    |
 
@@ -171,7 +171,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Usunięcie trwającego badania psuje linki, które uczestnicy już dostali — PRD akceptuje to świadomie i domyka komunikatem z FR-010. Edycja musi być twardo zablokowana poza stanem szkicu, inaczej autor zmieniłby warianty pod oddanymi już głosami.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-07: Autor dogenerowuje dodatkowe linki
 

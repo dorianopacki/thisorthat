@@ -223,6 +223,17 @@ export type Database = {
         };
         Returns: Database["public"]["Enums"]["study_status"];
       };
+      update_study_draft: {
+        Args: {
+          p_closes_local?: string;
+          p_closes_tz?: string;
+          p_participant_target: number;
+          p_study_id: string;
+          p_title: string;
+          p_variants: string[];
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       study_status: "draft" | "active" | "closed";
