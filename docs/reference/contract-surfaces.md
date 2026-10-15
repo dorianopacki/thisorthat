@@ -2,7 +2,7 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` and `20261015150000_study_closing_vote_path.sql` (change `study-closing-rules`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
@@ -40,15 +40,15 @@ PostgREST computed field over `studies` (`select("…, effective_status")`), del
 
 ## Tables
 
-| Table                | Columns                                                                                                                                 | Author access (`authenticated`)                                                                                          |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `closes_at`, `closes_tz`, `created_at`, `updated_at` | select/delete own; insert/update only `title`, `participant_target`, `closes_at`, `closes_tz`; update only while `draft` |
-| `public.variants`    | `id`, `study_id`, `position`, `content`                                                                                                 | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only                   |
-| `public.study_links` | `id`, `study_id`, `token`, `used`                                                                                                       | select `id, study_id, token` of own studies; no access to `used`                                                         |
-| `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                     |
-| `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                     |
+| Table                | Columns                                                                                                                                 | Author access (`authenticated`)                                                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `closes_at`, `closes_tz`, `created_at`, `updated_at` | select/delete own; insert `title`, `participant_target`, `closes_at`, `closes_tz`; update only `title`, `participant_target`, only while `draft` |
+| `public.variants`    | `id`, `study_id`, `position`, `content`                                                                                                 | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only                                           |
+| `public.study_links` | `id`, `study_id`, `token`, `used`                                                                                                       | select `id, study_id, token` of own studies; no access to `used`                                                                                 |
+| `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                                             |
+| `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                                             |
 
-`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). They are fixed after start, because updates are draft-only. Deleting a study cascades to its variants, links, votes and comments. `anon` has no table privileges.
+`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` writes them (no update grant), so the zone is always one it validated; a page formatting a zone it cannot handle falls back to UTC. Deleting a study cascades to its variants, links, votes and comments. `anon` has no table privileges.
 
 ## Limits
 
@@ -79,7 +79,7 @@ Callable by `authenticated` only (`security invoker`: runs under the caller's gr
 - Raises `22023` when `p_variants` has fewer than 2 or more than 6 entries, or any entry is null or blank after trimming.
 - Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, or a variant is over 2000 characters.
 - Optional deadline: the author's local date and time `p_closes_local` plus the IANA zone `p_closes_tz` (from the browser). Stored as `closes_at = p_closes_local at time zone p_closes_tz`. Postgres resolves DST: a local time in the spring gap (e.g. 2027-03-28 02:30 Europe/Warsaw) is read with the offset before the jump (+01). The doubled autumn hour (2027-10-31 02:30) is read with the offset after the jump back (+01).
-- Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names`, or the deadline is not in the future.
+- Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names` or is one Intl cannot format (`posix/…`, `right/…`, `Factory`, `localtime`, `posixrules`), or the deadline is not in the future.
 - Nothing is inserted when it raises.
 
 ## `public.start_study(p_study_id uuid) returns void`

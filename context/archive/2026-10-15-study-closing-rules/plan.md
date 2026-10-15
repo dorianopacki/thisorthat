@@ -309,6 +309,7 @@ Add a deadline field to the wizard, a close endpoint and button, a status label 
 - Add a hidden `closes_tz`, filled from `Intl.DateTimeFormat().resolvedOptions().timeZone`.
 - Client `validate()` and server `validate()` reject a past deadline with „Termin musi być w przyszłości.”.
 - The server passes `p_closes_local` / `p_closes_tz` to `create_study` only when the field is filled.
+- _Implementation note (2026-10-15, impl-review F5):_ the server does not check the time itself. It relies on `create_study`'s `22023` (mapped to „Termin musi być w przyszłości.” whenever a deadline was sent) and refuses only a deadline without a zone up front. `src/lib/study-limits.ts` stayed unchanged. Covered by `tests/http/study-closing.test.ts`.
 - A `22023` caused by the deadline maps to the same message. Branch on the parameters present (only a request carrying a deadline can hit the deadline errors) and keep the variant message otherwise.
 
 #### 2. Start endpoint

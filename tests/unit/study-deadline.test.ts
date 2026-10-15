@@ -17,6 +17,12 @@ describe("formatDeadline", () => {
     expect(text).toContain("17:00");
   });
 
+  it("falls back to UTC for a stored zone Intl cannot format, instead of throwing", () => {
+    const text = formatDeadline("2030-06-15T16:00:00+00:00", "posix/Europe/Warsaw");
+    expect(text).toContain("16:00");
+    expect(text).toContain("(UTC)");
+  });
+
   it("uses the stored zone, not a fixed one", () => {
     const text = formatDeadline("2030-06-15T16:00:00+00:00", "America/New_York");
     expect(text).toContain("12:00");

@@ -86,7 +86,7 @@ describe("deadline from the wizard", () => {
   });
 
   it("a future deadline is stored and shown in the author's zone after start", async () => {
-    const created = await createWithDeadline(`Future deadline ${uniqueSuffix()}`, "2030-06-15T18:00");
+    const created = await createWithDeadline(`Future deadline ${uniqueSuffix()}`, "2099-06-15T18:00");
     const match = /^\/studies\/([^/?]+)$/.exec(redirectTarget(created));
     expect(match?.[1], describeResponse(created)).toBeDefined();
     const id = match?.[1] ?? "";
@@ -97,7 +97,7 @@ describe("deadline from the wizard", () => {
     const page = await owner.request(`/studies/${id}`);
     expect(page.status, describeResponse(page)).toBe(200);
     expect(page.body).toContain("Zakończy się automatycznie");
-    expect(page.body).toContain("15 czerwca 2030");
+    expect(page.body).toContain("15 czerwca 2099");
     expect(page.body).toContain("18:00");
   });
 
