@@ -11,6 +11,9 @@ const supabase = createClient(Astro.request.headers, Astro.cookies);
 const { data: studies, error: studiesError } = supabase
   ? await supabase.rpc("list_author_studies")
   : { data: [], error: null };
+
+// Set by POST /api/studies/<id>/delete. Only the flag is read; nothing from the URL is rendered.
+const deleted = Astro.url.searchParams.get("deleted") === "1";
 ---
 
 <Layout title="Twoje badania">
@@ -29,6 +32,12 @@ const { data: studies, error: studiesError } = supabase
           Nowe badanie
         </a>
       </div>
+
+      {deleted && (
+        <p class="mb-4 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-blue-100/90" role="status">
+          Badanie zostało usunięte.
+        </p>
+      )}
 
       {studiesError ? (
         <p class="text-sm text-red-300">Nie udało się wczytać badań.</p>

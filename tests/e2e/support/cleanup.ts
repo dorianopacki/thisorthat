@@ -1,8 +1,9 @@
 import { expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
-// The app has no delete route yet (S-06), so cleanup deletes the study as its author through Supabase:
-// RLS lets an author delete their own study, and links, votes and comments cascade with it.
+// Cleanup deletes by title, which the app's delete route (by id) does not offer, so it deletes the study
+// as its author through Supabase: RLS lets an author delete their own study, and links, votes and
+// comments cascade with it.
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Set ${name} in .dev.vars (see context/foundation/test-stack.md, ## E2E)`);

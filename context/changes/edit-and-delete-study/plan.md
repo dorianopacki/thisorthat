@@ -442,30 +442,30 @@ A forward-only migration that adds a function and touches no data. Push to produ
 
 #### Automated
 
-- [x] 2.1 Unit tests pass, including `toLocalInputValue` and route-access classification: `npm run test:unit`
-- [x] 2.2 HTTP tests pass against a fresh build, including the edit isolation and owner cases: `npm run build && npm run test:http` (with preview running)
-- [x] 2.3 pgTAP still green: `npx supabase test db`
-- [x] 2.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build`
+- [x] 2.1 Unit tests pass, including `toLocalInputValue` and route-access classification: `npm run test:unit` — d694e1d
+- [x] 2.2 HTTP tests pass against a fresh build, including the edit isolation and owner cases: `npm run build && npm run test:http` (with preview running) — d694e1d
+- [x] 2.3 pgTAP still green: `npx supabase test db` — d694e1d
+- [x] 2.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build` — d694e1d
 
 #### Manual
 
-- [x] 2.5 Creating a study still works exactly as before (empty form, „Utwórz szkic”)
-- [x] 2.6 Editing a draft at phone width: prefilled values are correct, including the deadline in its stored zone; add/remove variant works; saving shows the new values
-- [x] 2.7 A draft with a past deadline shows „Termin musi być w przyszłości.” on save until the deadline is moved or cleared
-- [x] 2.8 An active study's page shows no „Edytuj”, and `/studies/<id>/edit` redirects to the study page
+- [x] 2.5 Creating a study still works exactly as before (empty form, „Utwórz szkic”) — d694e1d
+- [x] 2.6 Editing a draft at phone width: prefilled values are correct, including the deadline in its stored zone; add/remove variant works; saving shows the new values — d694e1d
+- [x] 2.7 A draft with a past deadline shows „Termin musi być w przyszłości.” on save until the deadline is moved or cleared — d694e1d
+- [x] 2.8 An active study's page shows no „Edytuj”, and `/studies/<id>/edit` redirects to the study page — d694e1d
 
 ### Phase 3: Deleting a study
 
 #### Automated
 
-- [ ] 3.1 HTTP tests pass against a fresh build, including delete isolation and the participant „ended” screen: `npm run build && npm run test:http` (with preview running)
-- [ ] 3.2 Unit tests pass (route-access classification): `npm run test:unit`
-- [ ] 3.3 pgTAP still green: `npx supabase test db`
-- [ ] 3.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build`
-- [ ] 3.5 Existing e2e specs still pass: `npx playwright test`
+- [x] 3.1 HTTP tests pass against a fresh build, including delete isolation and the participant „ended” screen: `npm run build && npm run test:http` (with preview running)
+- [x] 3.2 Unit tests pass (route-access classification): `npm run test:unit`
+- [x] 3.3 pgTAP still green: `npx supabase test db`
+- [x] 3.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build`
+- [x] 3.5 Existing e2e specs still pass: `npx playwright test`
 
 #### Manual
 
-- [ ] 3.6 At phone width, „Usuń badanie” on a draft, an active and a closed study shows the matching warning; „Anuluj” returns to the first step
-- [ ] 3.7 Deleting an active study lands on the dashboard with „Badanie zostało usunięte.”, and one of its links opened in another browser shows „Badanie jest zakończone”
+- [x] 3.6 At phone width, „Usuń badanie” on a draft, an active and a closed study shows the matching warning; „Anuluj” returns to the first step
+- [x] 3.7 Deleting an active study lands on the dashboard with „Badanie zostało usunięte.”, and one of its links opened in another browser shows „Badanie jest zakończone”
 - [ ] 3.8 Before merge, the migration is pushed to production (`npx supabase db push`), because CI does not apply migrations

@@ -8,6 +8,7 @@ import StartStudyButton from "@/components/studies/StartStudyButton";
 import LinkList from "@/components/studies/LinkList";
 import StudyResults from "@/components/studies/StudyResults";
 import CloseStudyButton from "@/components/studies/CloseStudyButton";
+import DeleteStudyButton from "@/components/studies/DeleteStudyButton";
 import { formatDeadline } from "@/lib/study-deadline";
 import { STATUS_LABELS } from "@/lib/study-status";
 import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
@@ -164,6 +165,9 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
               )}
             </>
           )}
+          <div class:list={[shown.status === "draft" || effectiveStatus === "active" ? "mt-3" : "mt-6"]}>
+            <DeleteStudyButton studyId={shown.id} started={shown.status !== "draft"} client:load />
+          </div>
           <p class="mt-6 text-center text-sm text-blue-100/60">
             <a href="/dashboard" class="text-purple-300 hover:underline">
               Wróć do panelu

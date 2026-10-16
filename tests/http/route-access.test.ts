@@ -51,6 +51,7 @@ const PROBES: Readonly<Record<string, readonly Probe[]>> = {
       },
     },
   ],
+  "/api/studies/[id]/delete": [{ method: "POST" }],
 
   "/v/[token]": [{ method: "GET" }],
   "/api/v/[token]": [{ method: "POST", form: { variant_id: randomUUID() } }],

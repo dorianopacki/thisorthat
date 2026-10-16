@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   createStartedStudy,
   createStudy,
   describeResponse,
   newAuthor,
+  newClient,
   redirectTarget,
   uniqueSuffix,
   type Author,
@@ -12,7 +14,8 @@ import {
 } from "./client";
 
 // edit-and-delete-study (S-06), app side: the owner's draft edit through the edit page and
-// POST /api/studies/<id>/update. update_study_draft itself (replace semantics, draft-only, limits,
+// POST /api/studies/<id>/update, and the owner's delete through POST /api/studies/<id>/delete with its
+// participant-facing outcome. update_study_draft itself (replace semantics, draft-only, limits,
 // isolation) is proven in pgTAP (supabase/tests/edit_and_delete_study.test.sql); B against A is in
 // author-isolation.test.ts. Fixtures go through the app's own endpoints with unique titles, so the suite
 // can run repeatedly.
@@ -159,5 +162,84 @@ describe("edit of a started study (owner)", () => {
     expect(page.status, describeResponse(page)).toBe(200);
     expect(page.body).toContain(study.title);
     expect(page.body).not.toContain(renamed);
+  });
+});
+
+describe("draft delete (owner)", () => {
+  let owner: Author;
+  let draftId: string;
+  const title = `Delete draft ${uniqueSuffix()}`;
+
+  beforeAll(async () => {
+    owner = await newAuthor();
+    draftId = await createStudy(owner, title);
+  });
+
+  it("a draft's page offers „Usuń badanie”", async () => {
+    const page = await owner.request(`/studies/${draftId}`);
+    expect(page.status, describeResponse(page)).toBe(200);
+    expect(page.body).toContain("Usuń badanie");
+  });
+
+  it("POST /api/studies/<draft>/delete redirects to /dashboard?deleted=1", async () => {
+    const response = await owner.request(`/api/studies/${draftId}/delete`, { method: "POST" });
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe("/dashboard?deleted=1");
+  });
+
+  it("the dashboard shows the notice and no longer lists the title", async () => {
+    const page = await owner.request("/dashboard?deleted=1");
+    expect(page.status, describeResponse(page)).toBe(200);
+    expect(page.body).toContain("Badanie zostało usunięte.");
+    expect(page.body).not.toContain(title);
+  });
+
+  it("GET /studies/<deleted> answers 404", async () => {
+    const page = await owner.request(`/studies/${draftId}`);
+    expect(page.status, describeResponse(page)).toBe(404);
+  });
+
+  it("deleting again (a double submit) redirects to the study page without ?error=", async () => {
+    const response = await owner.request(`/api/studies/${draftId}/delete`, { method: "POST" });
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(`/studies/${draftId}`);
+  });
+});
+
+describe("started study delete (owner)", () => {
+  let owner: Author;
+  let study: StartedStudy;
+
+  beforeAll(async () => {
+    owner = await newAuthor();
+    study = await createStartedStudy(owner, `Delete started ${uniqueSuffix()}`);
+  });
+
+  it("an active study's page offers „Usuń badanie”", async () => {
+    const page = await owner.request(`/studies/${study.id}`);
+    expect(page.status, describeResponse(page)).toBe(200);
+    expect(page.body).toContain("Usuń badanie");
+  });
+
+  it("POST /api/studies/<active>/delete redirects to /dashboard?deleted=1", async () => {
+    const response = await owner.request(`/api/studies/${study.id}/delete`, { method: "POST" });
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe("/dashboard?deleted=1");
+  });
+
+  it("a participant link now shows „Badanie jest zakończone”", async () => {
+    const response = await newClient().request(`/v/${study.tokens[0] ?? ""}`);
+    expect(response.status, describeResponse(response)).toBe(200);
+    expect(response.body).toContain("Badanie jest zakończone");
+  });
+
+  it("a vote on that link is not accepted", async () => {
+    const token = study.tokens[0] ?? "";
+    const response = await newClient().request(`/api/v/${token}`, {
+      method: "POST",
+      form: { variant_id: randomUUID() },
+    });
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(`/v/${token}`);
   });
 });

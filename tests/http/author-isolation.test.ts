@@ -110,6 +110,19 @@ describe("author B against author A's studies", () => {
     },
   );
 
+  it.each(targets)(
+    "B: POST /api/studies/<$target>/delete redirects to /studies/<$target> without ?error=, which answers B 404",
+    async ({ id }) => {
+      const studyId = id();
+      const response = await fixtures.authorB.request(`/api/studies/${studyId}/delete`, { method: "POST" });
+      expect(response.status, describeResponse(response)).toBe(302);
+      expect(redirectTarget(response)).toBe(`/studies/${studyId}`);
+
+      const followed = await fixtures.authorB.request(redirectTarget(response));
+      expect(followed.status, describeResponse(followed)).toBe(404);
+    },
+  );
+
   it("B: GET /dashboard lists B's own study and neither of A's", async () => {
     const response = await fixtures.authorB.request("/dashboard");
     expect(response.status, describeResponse(response)).toBe(200);
@@ -142,7 +155,7 @@ describe("author A controls, after B's requests", () => {
     expect(JSON.parse(response.body) as unknown).toMatchObject({ status: "active" });
   });
 
-  it("A: GET /studies/<A-draft> still shows the original title and no deadline after B's update attempts", async () => {
+  it("A: GET /studies/<A-draft> still shows the original title and no deadline after B's update and delete attempts", async () => {
     const response = await fixtures.authorA.request(`/studies/${fixtures.draftId}`);
     expect(response.status, describeResponse(response)).toBe(200);
     expect(response.body).toContain(fixtures.titles.draft);
@@ -150,8 +163,9 @@ describe("author A controls, after B's requests", () => {
     expect(response.body).not.toContain("Zakończy się automatycznie");
   });
 
-  it("A: GET /studies/<A-active> answers 200", async () => {
+  it("A: GET /studies/<A-active> still answers 200 with its title after B's delete attempts", async () => {
     const response = await fixtures.authorA.request(`/studies/${fixtures.activeId}`);
     expect(response.status, describeResponse(response)).toBe(200);
+    expect(response.body).toContain(fixtures.titles.active);
   });
 });
