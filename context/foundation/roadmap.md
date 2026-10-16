@@ -52,7 +52,7 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 | S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done        |
 | S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | in-progress |
 | S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | done        |
-| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed    |
+| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | in-progress |
 | S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed    |
 
 ## Streams
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zależy od `S-04`, bo cała treść wymagania to rozróżnienie „trwa" od „zamknięte" — bez istniejącej reguły zamykania nie ma czego egzekwować. Dogenerowanie zmienia N w trakcie, więc postęp „X z N" z `S-03` i automatyczne zamknięcie z `S-04` muszą przeliczać się na bieżąco, a nie na wartości zapamiętanej przy starcie.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-08: Autor używa wariantów graficznych
 
