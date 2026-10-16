@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { CalendarClock, FilePlus, Plus, Type, Users } from "lucide-react";
+import { CalendarClock, FilePlus, Plus, Save, Type, Users } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
@@ -20,8 +20,23 @@ const subscribeToNothing = () => () => undefined;
 const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 const noTimeZone = () => "";
 
+/** A draft being edited: its current values, with the deadline as datetime-local text in its stored zone. */
+export interface StudyWizardInitial {
+  title: string;
+  participantTarget: number;
+  variants: string[];
+  closesLocal: string;
+  closesTz: string | null;
+}
+
 interface Props {
   serverError?: string | null;
+  /** Form endpoint: create by default; a draft edit posts to /api/studies/<id>/update. */
+  action?: string;
+  submitLabel?: string;
+  pendingText?: string;
+  /** Edit mode: the draft's current values. Without it the form starts empty (creation). */
+  initial?: StudyWizardInitial;
 }
 
 interface Variant {
@@ -37,17 +52,27 @@ interface Errors {
   closesLocal?: string;
 }
 
-export default function StudyWizard({ serverError }: Props) {
-  const nextKey = useRef(MIN_VARIANTS);
-  const [title, setTitle] = useState("");
-  const [participantTarget, setParticipantTarget] = useState("");
+export default function StudyWizard({
+  serverError,
+  action = "/api/studies",
+  submitLabel = "Utwórz szkic",
+  pendingText = "Tworzenie badania...",
+  initial,
+}: Props) {
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [participantTarget, setParticipantTarget] = useState(initial ? String(initial.participantTarget) : "");
+  // Keys 0..n-1 for the starting variants; nextKey continues after them, so added ones stay unique.
   const [variants, setVariants] = useState<Variant[]>(() =>
-    Array.from({ length: MIN_VARIANTS }, (_, key) => ({ key, value: "" })),
+    (initial?.variants ?? Array.from({ length: MIN_VARIANTS }, () => "")).map((value, key) => ({ key, value })),
   );
-  // Optional deadline: local date-time from a datetime-local input plus the browser's IANA zone, which
-  // the server passes to create_study (docs/reference/contract-surfaces.md#closing-rule).
-  const [closesLocal, setClosesLocal] = useState("");
-  const closesTz = useSyncExternalStore(subscribeToNothing, browserTimeZone, noTimeZone);
+  const nextKey = useRef(variants.length);
+  // Optional deadline: local date-time from a datetime-local input plus an IANA zone, which the server
+  // passes to create_study / update_study_draft (docs/reference/contract-surfaces.md#closing-rule).
+  const [closesLocal, setClosesLocal] = useState(initial?.closesLocal ?? "");
+  const browserTz = useSyncExternalStore(subscribeToNothing, browserTimeZone, noTimeZone);
+  // An edited draft keeps the zone its deadline was set in, so an unchanged deadline round-trips exactly
+  // and the server-rendered markup does not depend on the browser; otherwise the browser's zone.
+  const closesTz = initial?.closesTz ?? browserTz;
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -93,8 +118,9 @@ export default function StudyWizard({ serverError }: Props) {
     });
     if (variantErrors.some(Boolean)) next.variants = variantErrors;
 
-    // A datetime-local value has no zone, so Date reads it in the browser's zone — the zone we send.
-    if (closesLocal && !(new Date(closesLocal).getTime() > Date.now())) {
+    // A datetime-local value has no zone, so Date reads it in the browser's zone. Check only when that
+    // is the zone we send; for a stored zone that differs, the database's 22023 decides.
+    if (closesLocal && closesTz === browserTz && !(new Date(closesLocal).getTime() > Date.now())) {
       next.closesLocal = "Termin musi być w przyszłości.";
     }
 
@@ -140,7 +166,7 @@ export default function StudyWizard({ serverError }: Props) {
   }
 
   return (
-    <form method="POST" action="/api/studies" className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form method="POST" action={action} className="space-y-4" onSubmit={handleSubmit} noValidate>
       <FormField
         id="title"
         label="Tytuł badania"
@@ -223,8 +249,12 @@ export default function StudyWizard({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pending={submitting} pendingText="Tworzenie badania..." icon={<FilePlus className="size-4" />}>
-        Utwórz szkic
+      <SubmitButton
+        pending={submitting}
+        pendingText={pendingText}
+        icon={initial ? <Save className="size-4" /> : <FilePlus className="size-4" />}
+      >
+        {submitLabel}
       </SubmitButton>
     </form>
   );

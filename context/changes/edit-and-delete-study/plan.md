@@ -428,31 +428,31 @@ A forward-only migration that adds a function and touches no data. Push to produ
 
 #### Automated
 
-- [x] 1.1 Fresh database from migrations passes all pgTAP suites: `npx supabase db reset && npx supabase test db`
-- [x] 1.2 Database lint is clean: `npx supabase db lint`
-- [x] 1.3 Generated types match the migrations (regenerate, then `git diff --exit-code src/lib/database.types.ts`)
-- [x] 1.4 Type check passes: `npx astro check`
-- [x] 1.5 Lint passes: `npm run lint`
+- [x] 1.1 Fresh database from migrations passes all pgTAP suites: `npx supabase db reset && npx supabase test db` — 8a31499
+- [x] 1.2 Database lint is clean: `npx supabase db lint` — 8a31499
+- [x] 1.3 Generated types match the migrations (regenerate, then `git diff --exit-code src/lib/database.types.ts`) — 8a31499
+- [x] 1.4 Type check passes: `npx astro check` — 8a31499
+- [x] 1.5 Lint passes: `npm run lint` — 8a31499
 
 #### Manual
 
-- [x] 1.6 `contract-surfaces.md` reads correctly: new function section, updated Tables, Limits and lock-order lines
+- [x] 1.6 `contract-surfaces.md` reads correctly: new function section, updated Tables, Limits and lock-order lines — 8a31499
 
 ### Phase 2: Draft editing
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass, including `toLocalInputValue` and route-access classification: `npm run test:unit`
-- [ ] 2.2 HTTP tests pass against a fresh build, including the edit isolation and owner cases: `npm run build && npm run test:http` (with preview running)
-- [ ] 2.3 pgTAP still green: `npx supabase test db`
-- [ ] 2.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build`
+- [x] 2.1 Unit tests pass, including `toLocalInputValue` and route-access classification: `npm run test:unit`
+- [x] 2.2 HTTP tests pass against a fresh build, including the edit isolation and owner cases: `npm run build && npm run test:http` (with preview running)
+- [x] 2.3 pgTAP still green: `npx supabase test db`
+- [x] 2.4 Type check, lint and build pass: `npx astro check && npm run lint && npm run build`
 
 #### Manual
 
-- [ ] 2.5 Creating a study still works exactly as before (empty form, „Utwórz szkic”)
-- [ ] 2.6 Editing a draft at phone width: prefilled values are correct, including the deadline in its stored zone; add/remove variant works; saving shows the new values
-- [ ] 2.7 A draft with a past deadline shows „Termin musi być w przyszłości.” on save until the deadline is moved or cleared
-- [ ] 2.8 An active study's page shows no „Edytuj”, and `/studies/<id>/edit` redirects to the study page
+- [x] 2.5 Creating a study still works exactly as before (empty form, „Utwórz szkic”)
+- [x] 2.6 Editing a draft at phone width: prefilled values are correct, including the deadline in its stored zone; add/remove variant works; saving shows the new values
+- [x] 2.7 A draft with a past deadline shows „Termin musi być w przyszłości.” on save until the deadline is moved or cleared
+- [x] 2.8 An active study's page shows no „Edytuj”, and `/studies/<id>/edit` redirects to the study page
 
 ### Phase 3: Deleting a study
 

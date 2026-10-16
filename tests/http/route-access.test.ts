@@ -34,10 +34,23 @@ const PROBES: Readonly<Record<string, readonly Probe[]>> = {
   "/dashboard": [{ method: "GET" }],
   "/studies/new": [{ method: "GET" }],
   "/studies/[id]": [{ method: "GET" }],
+  "/studies/[id]/edit": [{ method: "GET" }],
   "/api/studies": [{ method: "POST", form: { title: "Anonymous", participant_target: "2", variant: ["A", "B"] } }],
   "/api/studies/[id]/start": [{ method: "POST" }],
   "/api/studies/[id]/close": [{ method: "POST" }],
   "/api/studies/[id]/results": [{ method: "GET" }],
+  "/api/studies/[id]/update": [
+    {
+      method: "POST",
+      form: {
+        title: "Anonymous",
+        participant_target: "2",
+        variant: ["A", "B"],
+        closes_local: "2099-06-15T18:00",
+        closes_tz: "Europe/Warsaw",
+      },
+    },
+  ],
 
   "/v/[token]": [{ method: "GET" }],
   "/api/v/[token]": [{ method: "POST", form: { variant_id: randomUUID() } }],

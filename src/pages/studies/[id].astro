@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { voteUrl } from "@/lib/study-links";
 import { ServerError } from "@/components/auth/ServerError";
@@ -143,6 +144,13 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
           )}
           {shown.status === "draft" ? (
             <div class="mt-6">
+              <a
+                href={`/studies/${encodeURIComponent(shown.id)}/edit`}
+                class="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2 font-medium text-white transition-colors hover:bg-white/10"
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+                Edytuj
+              </a>
               <StartStudyButton studyId={shown.id} participantTarget={shown.participant_target} client:load />
             </div>
           ) : (
