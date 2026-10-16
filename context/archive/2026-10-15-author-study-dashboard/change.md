@@ -1,10 +1,10 @@
 ---
 change_id: author-study-dashboard
 title: Lista badań autora ze statusem i postępem „X z N”
-status: impl_reviewed
+status: archived
 created: 2026-10-15
 updated: 2026-10-15
-archived_at: null
+archived_at: 2026-10-15T22:06:33Z
 ---
 
 ## Notes
