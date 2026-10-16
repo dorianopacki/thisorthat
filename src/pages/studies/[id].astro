@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { voteUrl } from "@/lib/study-links";
 import { ServerError } from "@/components/auth/ServerError";
@@ -7,6 +8,7 @@ import StartStudyButton from "@/components/studies/StartStudyButton";
 import LinkList from "@/components/studies/LinkList";
 import StudyResults from "@/components/studies/StudyResults";
 import CloseStudyButton from "@/components/studies/CloseStudyButton";
+import DeleteStudyButton from "@/components/studies/DeleteStudyButton";
 import { formatDeadline } from "@/lib/study-deadline";
 import { STATUS_LABELS } from "@/lib/study-status";
 import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
@@ -143,6 +145,13 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
           )}
           {shown.status === "draft" ? (
             <div class="mt-6">
+              <a
+                href={`/studies/${encodeURIComponent(shown.id)}/edit`}
+                class="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2 font-medium text-white transition-colors hover:bg-white/10"
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+                Edytuj
+              </a>
               <StartStudyButton studyId={shown.id} participantTarget={shown.participant_target} client:load />
             </div>
           ) : (
@@ -156,6 +165,9 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
               )}
             </>
           )}
+          <div class:list={[shown.status === "draft" || effectiveStatus === "active" ? "mt-3" : "mt-6"]}>
+            <DeleteStudyButton studyId={shown.id} started={shown.status !== "draft"} client:load />
+          </div>
           <p class="mt-6 text-center text-sm text-blue-100/60">
             <a href="/dashboard" class="text-purple-300 hover:underline">
               Wróć do panelu

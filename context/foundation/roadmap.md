@@ -3,7 +3,7 @@ project: "ThisOrThat"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-15
+updated: 2026-10-16
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -171,7 +171,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Usunięcie trwającego badania psuje linki, które uczestnicy już dostali — PRD akceptuje to świadomie i domyka komunikatem z FR-010. Edycja musi być twardo zablokowana poza stanem szkicu, inaczej autor zmieniłby warianty pod oddanymi już głosami.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-07: Autor dogenerowuje dodatkowe linki
 

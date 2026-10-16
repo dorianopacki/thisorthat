@@ -1,0 +1,103 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+import { inputZone, toLocalInputValue } from "@/lib/study-deadline";
+import StudyWizard, { type StudyWizardInitial } from "@/components/studies/StudyWizard";
+
+// Draft edit (S-06): the creation form prefilled with the draft, saved through
+// POST /api/studies/<id>/update (update_study_draft). Only a draft can be edited; the database
+// refuses anything else as well (docs/reference/contract-surfaces.md#publicupdate_study_draft).
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (!supabase) {
+  throw new Error("Supabase nie jest skonfigurowany.");
+}
+
+const id = Astro.params.id ?? "";
+const error = Astro.url.searchParams.get("error");
+const studyUrl = `/studies/${encodeURIComponent(id)}`;
+
+// RLS returns nothing for someone else's study; an id that is not a uuid makes PostgREST
+// answer 22P02. Both are a 404 for the author.
+const { data: study, error: studyError } = await supabase
+  .from("studies")
+  .select("id, title, participant_target, status, closes_at, closes_tz")
+  .eq("id", id)
+  .maybeSingle();
+
+if (studyError && studyError.code !== "22P02") {
+  throw new Error("Nie udało się wczytać badania.");
+}
+
+let initial: StudyWizardInitial | null = null;
+if (study?.status === "draft") {
+  const { data: variants, error: variantsError } = await supabase
+    .from("variants")
+    .select("content")
+    .eq("study_id", study.id)
+    .order("position", { ascending: true });
+
+  if (variantsError) {
+    throw new Error("Nie udało się wczytać wariantów badania.");
+  }
+
+  // The deadline is shown in the zone it was set in and sent back in that zone (closesTz).
+  const hasDeadline = Boolean(study.closes_at && study.closes_tz);
+  initial = {
+    title: study.title,
+    participantTarget: study.participant_target,
+    variants: variants.map((variant) => variant.content),
+    closesLocal: hasDeadline ? toLocalInputValue(study.closes_at ?? "", study.closes_tz ?? "") : "",
+    closesTz: hasDeadline ? inputZone(study.closes_tz ?? "") : null,
+  };
+}
+
+// No top-level `return` here (see src/pages/studies/[id].astro): a started or closed study answers
+// with a redirect set on the response, and the body below renders nothing for it.
+const redirectToStudy = study !== null && !initial;
+if (redirectToStudy) {
+  Astro.response.status = 302;
+  Astro.response.headers.set("Location", studyUrl);
+} else if (!initial) {
+  Astro.response.status = 404;
+}
+---
+
+{!redirectToStudy && (
+  <Layout title={initial ? "Edytuj badanie" : "Nie znaleziono badania"}>
+    <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+        {!initial ? (
+          <>
+            <h1 class="mb-4 text-center text-2xl font-bold">Nie znaleziono badania</h1>
+            <p class="text-center text-sm text-blue-100/80">
+              <a href="/dashboard" class="text-purple-300 hover:underline">
+                Wróć do panelu
+              </a>
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent">
+              Edytuj badanie
+            </h1>
+            <StudyWizard
+              action={`/api/studies/${encodeURIComponent(id)}/update`}
+              submitLabel="Zapisz zmiany"
+              pendingText="Zapisywanie..."
+              initial={initial}
+              serverError={error}
+              client:load
+            />
+            <p class="mt-4 text-center text-sm text-blue-100/60">
+              <a href={studyUrl} class="text-purple-300 hover:underline">
+                Wróć do badania
+              </a>
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  </Layout>
+)}

@@ -19,10 +19,13 @@ export const ROUTE_AUDIENCE: Readonly<Record<string, RouteAudience>> = {
   "/dashboard": "author",
   "/studies/new": "author",
   "/studies/[id]": "author",
+  "/studies/[id]/edit": "author",
   "/api/studies": "author",
   "/api/studies/[id]/start": "author",
   "/api/studies/[id]/close": "author",
   "/api/studies/[id]/results": "author",
+  "/api/studies/[id]/update": "author",
+  "/api/studies/[id]/delete": "author",
 
   "/v/[token]": "participant",
   "/api/v/[token]": "participant",
