@@ -28,12 +28,13 @@ export const POST: APIRoute = async (context) => {
     return max < 1 ? LIMIT_MESSAGE : `Podaj liczbę linków od 1 do ${String(max)}.`;
   };
 
-  // Parsed here; the form's min/max are only a hint.
+  // Parsed here; the form's min/max are only a hint. An unusable count still goes to the RPC as 0, so the
+  // database's check order decides the answer: not the caller's study (P0002), then not active (55000),
+  // and only then the count (22023).
   const form = await context.request.formData().catch(() => null);
   const count = parseLinkCount(form?.get("count"));
-  if (count === null) return fail(await countMessage());
 
-  const { error } = await supabase.rpc("add_study_links", { p_study_id: id, p_count: count });
+  const { error } = await supabase.rpc("add_study_links", { p_study_id: id, p_count: count ?? 0 });
 
   if (error) {
     // Not the caller's study, or an id that is not a uuid (PostgREST answers 22P02): the study page
@@ -41,10 +42,10 @@ export const POST: APIRoute = async (context) => {
     if (error.code === "P0002" || error.code === "22P02") return context.redirect(studyUrl);
     // Draft, closed, or past its deadline (docs/reference/contract-surfaces.md#closing-rule).
     if (error.code === "55000") return fail(CLOSED_MESSAGE);
-    if (error.code === "23514") return fail(LIMIT_MESSAGE);
-    if (error.code === "22023") return fail(await countMessage());
+    // Over the cap or not a usable count: tell the author how many they can still add.
+    if (error.code === "23514" || error.code === "22023") return fail(await countMessage());
     return fail(GENERIC_MESSAGE);
   }
 
-  return context.redirect(`${studyUrl}?added=${String(count)}`);
+  return context.redirect(`${studyUrl}?added=${String(count ?? 0)}`);
 };

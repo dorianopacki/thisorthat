@@ -137,6 +137,18 @@ describe("adding links to a closed study", () => {
     expect(redirectTarget(response)).toBe(errorTarget(study.id, CLOSED_MESSAGE));
     expect(await linkTotal(owner, study.id)).toBe(N);
   });
+
+  it("a bad count still gets the closed message (status is checked before the count)", async () => {
+    const response = await addLinks(owner, study.id, "abc");
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(errorTarget(study.id, CLOSED_MESSAGE));
+  });
+
+  it("?added= is ignored: no „Nowe linki” block", async () => {
+    const page = await owner.request(`/studies/${study.id}?added=1`);
+    expect(page.status, describeResponse(page)).toBe(200);
+    expect(page.body).not.toContain("Nowe linki");
+  });
 });
 
 describe("the 100-link cap and bad input", () => {
@@ -154,10 +166,10 @@ describe("the 100-link cap and bad input", () => {
     expect(redirectTarget(response)).toBe(errorTarget(study.id, COUNT_MESSAGE));
   });
 
-  it("a count over the cap redirects with the limit message and adds nothing", async () => {
+  it("a count over the cap redirects with how many can still be added, and adds nothing", async () => {
     const response = await addLinks(owner, study.id, String(MAX - N + 1));
     expect(response.status, describeResponse(response)).toBe(302);
-    expect(redirectTarget(response)).toBe(errorTarget(study.id, LIMIT_MESSAGE));
+    expect(redirectTarget(response)).toBe(errorTarget(study.id, COUNT_MESSAGE));
     expect(await linkTotal(owner, study.id)).toBe(N);
   });
 
@@ -170,6 +182,13 @@ describe("the 100-link cap and bad input", () => {
     expect(page.body).toContain(`Linki do głosowania (${String(MAX)})`);
     expect(page.body).not.toContain("Dogeneruj linki");
     expect(page.body).toContain(`Badanie ma już ${String(MAX)} linków`);
+  });
+
+  it("at 100 links a further POST redirects with the limit message", async () => {
+    const response = await addLinks(owner, study.id, "1");
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(errorTarget(study.id, LIMIT_MESSAGE));
+    expect(await linkTotal(owner, study.id)).toBe(MAX);
   });
 });
 
@@ -192,5 +211,11 @@ describe("isolation", () => {
     const followed = await other.request(redirectTarget(response));
     expect(followed.status, describeResponse(followed)).toBe(404);
     expect(await linkTotal(owner, study.id)).toBe(N);
+  });
+
+  it("another author's POST with a bad count also redirects without ?error=", async () => {
+    const response = await addLinks(other, study.id, "abc");
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(`/studies/${study.id}`);
   });
 });
