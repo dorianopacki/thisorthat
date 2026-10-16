@@ -171,7 +171,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Usunięcie trwającego badania psuje linki, które uczestnicy już dostali — PRD akceptuje to świadomie i domyka komunikatem z FR-010. Edycja musi być twardo zablokowana poza stanem szkicu, inaczej autor zmieniłby warianty pod oddanymi już głosami.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-07: Autor dogenerowuje dodatkowe linki
 
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zależy od `S-04`, bo cała treść wymagania to rozróżnienie „trwa" od „zamknięte" — bez istniejącej reguły zamykania nie ma czego egzekwować. Dogenerowanie zmienia N w trakcie, więc postęp „X z N" z `S-03` i automatyczne zamknięcie z `S-04` muszą przeliczać się na bieżąco, a nie na wartości zapamiętanej przy starcie.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-08: Autor używa wariantów graficznych
 

@@ -3,13 +3,16 @@ import { Check, CircleAlert, Copy } from "lucide-react";
 
 interface Props {
   urls: string[];
+  /** Number shown for the first url; a subset (the newly added links) keeps its real numbers. */
+  firstNumber?: number;
+  copyAllLabel?: string;
 }
 
 type CopyTarget = "all" | number;
 
 const COPIED_MS = 2000;
 
-export default function LinkList({ urls }: Props) {
+export default function LinkList({ urls, firstNumber = 1, copyAllLabel = "Kopiuj wszystkie" }: Props) {
   const [copied, setCopied] = useState<CopyTarget | null>(null);
   const [copyFailed, setCopyFailed] = useState(false);
   const timer = useRef<number | undefined>(undefined);
@@ -46,7 +49,7 @@ export default function LinkList({ urls }: Props) {
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
       >
         {copied === "all" ? <Check className="size-4" /> : <Copy className="size-4" />}
-        {copied === "all" ? "Skopiowano" : "Kopiuj wszystkie"}
+        {copied === "all" ? "Skopiowano" : copyAllLabel}
       </button>
 
       {copyFailed && (
@@ -65,7 +68,7 @@ export default function LinkList({ urls }: Props) {
             key={url}
             className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm"
           >
-            <span className="w-6 shrink-0 text-xs text-blue-100/60">{index + 1}.</span>
+            <span className="w-6 shrink-0 text-xs text-blue-100/60">{firstNumber + index}.</span>
             <span className="min-w-0 flex-1 font-mono text-xs break-all select-all">{url}</span>
             <button
               type="button"
@@ -73,7 +76,7 @@ export default function LinkList({ urls }: Props) {
                 void copy(url, index);
               }}
               className="flex shrink-0 items-center gap-1 text-xs text-purple-300 transition-colors hover:text-purple-100"
-              aria-label={`Kopiuj link ${String(index + 1)}`}
+              aria-label={`Kopiuj link ${String(firstNumber + index)}`}
             >
               {copied === index ? <Check className="size-3" /> : <Copy className="size-3" />}
               {copied === index ? "Skopiowano" : "Kopiuj"}

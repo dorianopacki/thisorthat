@@ -9,6 +9,9 @@ import LinkList from "@/components/studies/LinkList";
 import StudyResults from "@/components/studies/StudyResults";
 import CloseStudyButton from "@/components/studies/CloseStudyButton";
 import DeleteStudyButton from "@/components/studies/DeleteStudyButton";
+import AddLinksForm from "@/components/studies/AddLinksForm";
+import { parseAddedCount } from "@/lib/link-count";
+import { MAX_PARTICIPANTS } from "@/lib/study-limits";
 import { formatDeadline } from "@/lib/study-deadline";
 import { STATUS_LABELS } from "@/lib/study-status";
 import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
@@ -65,13 +68,14 @@ if (study?.status === "draft") {
     }
   }
 
-  // Links exist once the study has started. Select only `id, token` — authors never read `used`.
+  // Links exist once the study has started, numbered by `position` (added links come last). Select only
+  // `id, token, position` — authors never read `used`.
   if (results) {
     const { data: links, error: linksError } = await supabase
       .from("study_links")
-      .select("id, token")
+      .select("id, token, position")
       .eq("study_id", study.id)
-      .order("id", { ascending: true });
+      .order("position", { ascending: true });
 
     if (linksError) {
       throw new Error("Nie udało się wczytać linków badania.");
@@ -90,6 +94,12 @@ if (!shown) {
 // status from get_study_results (docs/reference/contract-surfaces.md#closing-rule).
 const effectiveStatus = results?.status ?? shown?.status;
 const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.closes_at, shown.closes_tz) : null;
+
+// After „Dogeneruj linki” (POST /api/studies/<id>/links -> ?added=k) the newest k links get their own
+// copyable block. The script below drops `added` from the address bar, so a reload shows only the full list.
+const added = effectiveStatus === "active" ? parseAddedCount(Astro.url.searchParams.get("added"), urls.length) : null;
+const addedUrls = added ? urls.slice(-added) : [];
+const linksLeft = MAX_PARTICIPANTS - urls.length;
 ---
 
 <Layout title={shown ? shown.title : "Nie znaleziono badania"}>
@@ -156,12 +166,34 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
             </div>
           ) : (
             <>
+              {added && (
+                <>
+                  <h2 class="mt-6 mb-2 text-sm text-blue-100/80">Nowe linki ({added})</h2>
+                  <LinkList
+                    urls={addedUrls}
+                    firstNumber={urls.length - added + 1}
+                    copyAllLabel="Kopiuj nowe"
+                    client:load
+                  />
+                </>
+              )}
               <h2 class="mt-6 mb-2 text-sm text-blue-100/80">Linki do głosowania ({urls.length})</h2>
               <LinkList urls={urls} client:load />
               {effectiveStatus === "active" && (
-                <div class="mt-6">
-                  <CloseStudyButton studyId={shown.id} client:load />
-                </div>
+                <>
+                  <div class="mt-6">
+                    {linksLeft >= 1 ? (
+                      <AddLinksForm studyId={shown.id} max={linksLeft} client:load />
+                    ) : (
+                      <p class="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-blue-100/80">
+                        Badanie ma już {MAX_PARTICIPANTS} linków — to limit, więcej nie można dodać.
+                      </p>
+                    )}
+                  </div>
+                  <div class="mt-3">
+                    <CloseStudyButton studyId={shown.id} client:load />
+                  </div>
+                </>
               )}
             </>
           )}
@@ -178,3 +210,12 @@ const deadline = shown?.closes_at && shown.closes_tz ? formatDeadline(shown.clos
     </div>
   </div>
 </Layout>
+
+<script>
+  // ?added=k only marks the redirect after „Dogeneruj linki”; keep it out of reloads and bookmarks.
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("added")) {
+    url.searchParams.delete("added");
+    history.replaceState(history.state, "", url);
+  }
+</script>

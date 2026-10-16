@@ -96,18 +96,21 @@ export type Database = {
       study_links: {
         Row: {
           id: string;
+          position: number;
           study_id: string;
           token: string;
           used: boolean;
         };
         Insert: {
           id?: string;
+          position: number;
           study_id: string;
           token?: string;
           used?: boolean;
         };
         Update: {
           id?: string;
+          position?: number;
           study_id?: string;
           token?: string;
           used?: boolean;
@@ -182,6 +185,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_study_links: {
+        Args: { p_count: number; p_study_id: string };
+        Returns: undefined;
+      };
       cast_vote: {
         Args: { p_comments?: Json; p_token: string; p_variant_id: string };
         Returns: string;

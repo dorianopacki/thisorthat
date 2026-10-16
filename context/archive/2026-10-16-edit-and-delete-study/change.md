@@ -1,10 +1,10 @@
 ---
 change_id: edit-and-delete-study
 title: Edycja szkicu badania i usuwanie badania
-status: impl_reviewed
+status: archived
 created: 2026-10-16
 updated: 2026-10-16
-archived_at: null
+archived_at: 2026-10-16T17:57:02Z
 ---
 
 ## Notes

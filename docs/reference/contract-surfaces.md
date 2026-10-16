@@ -2,11 +2,11 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`), plus `20261015221845_edit_and_delete_study.sql` (change `edit-and-delete-study`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`), plus `20261015221845_edit_and_delete_study.sql` (change `edit-and-delete-study`), plus `20261016181615_generate_extra_links.sql` (change `generate-extra-links`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
-**Authors never read `votes`, `comments`, or `study_links.used`.** `anon` and `authenticated` have no privileges on `votes` and `comments`, and `authenticated` can select only `study_links (id, study_id, token)`. Authors see votes and comments only as aggregates through `get_study_results`. Link usage reaches authors only as per-study counts (`responded`, `total`) through `get_study_results` and `list_author_studies`. `votes` and `comments` never get a link reference, a timestamp or a serial/identity column. `supabase/tests/study_anonymity.test.sql` enforces this.
+**Authors never read `votes`, `comments`, or `study_links.used`.** `anon` and `authenticated` have no privileges on `votes` and `comments`, and `authenticated` can select only `study_links (id, study_id, token, position)`. `position` reveals creation order only (1…total per study), never usage. Authors see votes and comments only as aggregates through `get_study_results`. Link usage reaches authors only as per-study counts (`responded`, `total`) through `get_study_results` and `list_author_studies`. `votes` and `comments` never get a link reference, a timestamp or a serial/identity column. `supabase/tests/study_anonymity.test.sql` enforces this.
 
 **No participant-reachable read reveals `study_links.used`.** The only way to learn a link's state is `cast_vote`, which consumes an unused link. `get_ballot` never reads `used` and returns identical output for a used and an unused link; `supabase/tests/get_ballot.test.sql` enforces this. Any later participant-facing read (S-03, S-04, S-06) must keep this rule.
 
@@ -27,7 +27,7 @@ A study is **effectively closed** when `status = 'closed'`, or when `status = 'a
 - **Only two paths write `closed`**, and both lock the study row first (`FOR NO KEY UPDATE`):
   - `close_study`: the manual, irreversible close by the owner;
   - `cast_vote`: when the vote it records used the study's last unused link. It counts unused links live, so links added later (S-07) keep it correct.
-- **Lock order is study → link** in every writer (`start_study`, `update_study_draft`, `cast_vote`, the delete cascade). New writers must keep it.
+- **Lock order is study → link** in every writer (`start_study`, `update_study_draft`, `cast_vote`, `add_study_links`, the delete cascade). New writers must keep it.
 - The participant never learns why a study ended. Every closed study looks the same as an unknown token (`get_ballot` → `null`).
 
 ## `public.study_status_effective(p_status study_status, p_closes_at timestamptz) returns study_status`
@@ -44,15 +44,15 @@ PostgREST computed field over `studies` (`select("…, effective_status")`), del
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `closes_at`, `closes_tz`, `created_at`, `updated_at` | select/delete own; insert `title`, `participant_target`, `closes_at`, `closes_tz`; update only `title`, `participant_target`, only while `draft` |
 | `public.variants`    | `id`, `study_id`, `position`, `content`                                                                                                 | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only                                           |
-| `public.study_links` | `id`, `study_id`, `token`, `used`                                                                                                       | select `id, study_id, token` of own studies; no access to `used`                                                                                 |
+| `public.study_links` | `id`, `study_id`, `token`, `position`, `used`                                                                                           | select `id, study_id, token, position` of own studies; no access to `used`                                                                       |
 | `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                                             |
 | `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                                             |
 
-`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` and `update_study_draft` update them (no column update grant), but the column insert grant remains, so an author inserting a row directly can store a zone those functions would refuse. A page formatting a zone it cannot handle falls back to UTC, and the edit form then sends UTC back with the UTC value (`inputZone`). Deleting a study cascades to its variants, links, votes and comments. Deleting an `active` study (allowed in any status by the delete policy) breaks its links: they answer like an unknown token, so `get_ballot` → `null` („Badanie jest zakończone”) and `cast_vote` → `study_ended`. `anon` has no table privileges.
+`studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` and `update_study_draft` update them (no column update grant), but the column insert grant remains, so an author inserting a row directly can store a zone those functions would refuse. A page formatting a zone it cannot handle falls back to UTC, and the edit form then sends UTC back with the UTC value (`inputZone`). `study_links.position` is 1…total per study (`unique (study_id, position)`): `start_study` assigns 1…N, `add_study_links` appends after the current maximum, and an insert that omits it (test fixtures) gets the next free number from the `study_links_set_position` trigger. Deleting a study cascades to its variants, links, votes and comments. Deleting an `active` study (allowed in any status by the delete policy) breaks its links: they answer like an unknown token, so `get_ballot` → `null` („Badanie jest zakończone”) and `cast_vote` → `study_ended`. `anon` has no table privileges.
 
 ## Limits
 
-- **N (`studies.participant_target`): 1–100**, enforced by the check constraint `studies_participant_target_check`. N is the total number of links a study ever gets: anything that adds links later (S-07) must keep the total within 100.
+- **N (`studies.participant_target`): 1–100**, enforced by the check constraint `studies_participant_target_check`. N is the total number of links a study ever gets: anything that adds links later (S-07) must keep the total within 100. N rises with every addition: `add_study_links` sets it to the live link count after the insert.
 - **Variants per study: 2–6.** Not a table constraint (drafts are edited row by row); enforced by `create_study`, `update_study_draft` and again by `start_study`.
 - Title 1–200 and variant content 1–2000 characters after trimming (table check constraints).
 
@@ -95,7 +95,7 @@ Callable by `authenticated` only (`security definer`). The only write path for e
 
 ## `public.start_study(p_study_id uuid) returns void`
 
-Callable by `authenticated` only (`security definer`). Moves the caller's `draft` study to `active` and inserts exactly `participant_target` rows into `study_links` (tokens from the column default: 32 hex chars). Locks the study row first, so concurrent starts cannot generate two sets of links; on any error nothing is inserted or changed.
+Callable by `authenticated` only (`security definer`). Moves the caller's `draft` study to `active` and inserts exactly `participant_target` rows into `study_links` at `position` 1…N (tokens from the column default: 32 hex chars). Locks the study row first, so concurrent starts cannot generate two sets of links; on any error nothing is inserted or changed.
 
 - Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
 - Raises `55000` when the study is not `draft` (already started or closed).
@@ -122,6 +122,18 @@ Callable by `authenticated` only (`security definer`). Closes the caller's effec
 
 - Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
 - Raises `55000` when the study is not effectively active: `draft`, already `closed`, or past its deadline.
+
+## `public.add_study_links(p_study_id uuid, p_count integer) returns void`
+
+Callable by `authenticated` only (`security definer`). Appends `p_count` links to the caller's effectively active study (change `generate-extra-links`, S-07). Locks the study row first (`FOR NO KEY UPDATE`), before reading the status or the links, so it is serialized with `cast_vote`'s last-link auto-close and with `close_study`: either the links are added first (the vote then sees unused links and does not close the study), or the close commits first (the add then raises `55000`). Links are never added to a closed study (`supabase/tests/generate_extra_links_race.test.sql`).
+
+- New links get `position` max + 1 … max + `p_count` and tokens from the column default.
+- **N semantics:** `participant_target` becomes the live link count before the call plus `p_count`, so after any addition N equals the study's number of links.
+- Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
+- Raises `55000` when the study is not effectively active: `draft`, `closed`, or past its deadline.
+- Raises `22023` when `p_count` is null or below 1.
+- Raises `23514` (`studies_participant_target_check`) when the new N would exceed 100.
+- Nothing changes when it raises.
 
 ## `public.get_ballot(p_token text) returns jsonb`
 

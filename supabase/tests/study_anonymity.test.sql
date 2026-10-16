@@ -103,9 +103,9 @@ select throws_ok(
 );
 
 select is(
-  (select count(*)::int from (select id, study_id, token from public.study_links) l),
+  (select count(*)::int from (select id, study_id, token, position from public.study_links) l),
   4,
-  'author can select study_links (id, study_id, token)'
+  'author can select study_links (id, study_id, token, position)'
 );
 
 select is(
