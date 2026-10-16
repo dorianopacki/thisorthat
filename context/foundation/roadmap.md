@@ -51,7 +51,7 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 | S-03 | `live-results-and-comments` | Autor widzi na żywo ranking (z remisami), anonimowe komentarze przy wariantach i postęp „X z N"         | S-02          | US-01, FR-011, FR-012, FR-013                   | done        |
 | S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done        |
 | S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | in-progress |
-| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | in-progress |
+| S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | done        |
 | S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | proposed    |
 | S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed    |
 
@@ -171,7 +171,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Usunięcie trwającego badania psuje linki, które uczestnicy już dostali — PRD akceptuje to świadomie i domyka komunikatem z FR-010. Edycja musi być twardo zablokowana poza stanem szkicu, inaczej autor zmieniłby warianty pod oddanymi już głosami.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-07: Autor dogenerowuje dodatkowe linki
 
@@ -243,5 +243,6 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **S-02: Uczestnik bez konta może otworzyć otrzymany link, zobaczyć warianty, wybrać jeden, opcjonalnie dopisać komentarz przy każdym wariancie i po wysłaniu zobaczyć podziękowanie; po ponownym otwarciu zużytego linku widzi „Twój głos został już oddany".** — Archived 2026-10-06 → `context/archive/2026-10-05-one-time-link-voting/`. Lesson: —.
 - **S-03: Autor może oglądać ranking wariantów według liczby głosów (warianty z równą liczbą głosów dzielą miejsce), anonimowe komentarze pogrupowane przy wariantach oraz postęp „odpowiedziało X z N", aktualizowane w trakcie trwania badania.** — Archived 2026-10-06 → `context/archive/2026-10-06-live-results-and-comments/`. Lesson: —.
 - **S-04: Badanie zamyka się automatycznie po wykorzystaniu wszystkich N linków; autor może je zamknąć ręcznie w dowolnym momencie albo ustawić termin (dzień + godzina w swojej strefie czasowej), po którym badanie się zamyka. Zamknięte badanie nie przyjmuje głosów, a uczestnik widzi „Badanie jest zakończone"; wyniki pozostają widoczne dla autora.** — Archived 2026-10-15 → `context/archive/2026-10-15-study-closing-rules/`. Lesson: —.
+- **S-06: Autor może edytować badanie, dopóki jest w stanie szkicu, oraz usunąć badanie na dowolnym etapie; uczestnik z linkiem do usuniętego badania widzi „Badanie jest zakończone".** — Archived 2026-10-16 → `context/archive/2026-10-16-edit-and-delete-study/`. Lesson: —.
 
 (Empty on first generation. `/10x-archive` appends entries here.)
