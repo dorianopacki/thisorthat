@@ -293,28 +293,28 @@ Forward-only migration. It backfills `position` for existing links in uuid order
 
 #### Automated
 
-- [x] 1.1 Migration applies on a fresh local database: `npx supabase db reset`
-- [x] 1.2 All pgTAP tests pass, including `generate_extra_links.test.sql` and the race test: `npx supabase test db`
-- [x] 1.3 Generated types contain `add_study_links` and `study_links.position`: `npx supabase gen types typescript --local` diff is committed
-- [x] 1.4 Lint passes: `npm run lint`
-- [x] 1.5 Build/type check passes: `npm run build`
+- [x] 1.1 Migration applies on a fresh local database: `npx supabase db reset` — e3a607e
+- [x] 1.2 All pgTAP tests pass, including `generate_extra_links.test.sql` and the race test: `npx supabase test db` — e3a607e
+- [x] 1.3 Generated types contain `add_study_links` and `study_links.position`: `npx supabase gen types typescript --local` diff is committed — e3a607e
+- [x] 1.4 Lint passes: `npm run lint` — e3a607e
+- [x] 1.5 Build/type check passes: `npm run build` — e3a607e
 
 #### Manual
 
-- [x] 1.6 `contract-surfaces.md` reads consistently: the anonymity rule, the tables, limits and lock order all mention the new writer and column
+- [x] 1.6 `contract-surfaces.md` reads consistently: the anonymity rule, the tables, limits and lock order all mention the new writer and column — e3a607e
 
 ### Phase 2: Endpoint and study page
 
 #### Automated
 
-- [ ] 2.1 HTTP tests pass: `npm run test:http`
-- [ ] 2.2 Unit tests pass: `npm run test:unit`
-- [ ] 2.3 pgTAP still passes: `npx supabase test db`
-- [ ] 2.4 Lint passes: `npm run lint`
-- [ ] 2.5 Build passes: `npm run build`
+- [x] 2.1 HTTP tests pass: `npm run test:http`
+- [x] 2.2 Unit tests pass: `npm run test:unit`
+- [x] 2.3 pgTAP still passes: `npx supabase test db`
+- [x] 2.4 Lint passes: `npm run lint`
+- [x] 2.5 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.6 On a phone-width screen, the add-links form, the „Nowe linki” block and „Kopiuj nowe” are usable, and the copied text contains only the new URLs, one per line
-- [ ] 2.7 After adding links, reloading the page drops the „Nowe linki” block, and the new links remain last in the numbered list
-- [ ] 2.8 A closed study's page shows no add-links form
+- [x] 2.6 On a phone-width screen, the add-links form, the „Nowe linki” block and „Kopiuj nowe” are usable, and the copied text contains only the new URLs, one per line
+- [x] 2.7 After adding links, reloading the page drops the „Nowe linki” block, and the new links remain last in the numbered list
+- [x] 2.8 A closed study's page shows no add-links form

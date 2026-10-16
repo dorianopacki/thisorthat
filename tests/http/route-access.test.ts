@@ -38,6 +38,7 @@ const PROBES: Readonly<Record<string, readonly Probe[]>> = {
   "/api/studies": [{ method: "POST", form: { title: "Anonymous", participant_target: "2", variant: ["A", "B"] } }],
   "/api/studies/[id]/start": [{ method: "POST" }],
   "/api/studies/[id]/close": [{ method: "POST" }],
+  "/api/studies/[id]/links": [{ method: "POST", form: { count: "1" } }],
   "/api/studies/[id]/results": [{ method: "GET" }],
   "/api/studies/[id]/update": [
     {
