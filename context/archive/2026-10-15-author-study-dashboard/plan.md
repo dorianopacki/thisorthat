@@ -267,4 +267,4 @@ Forward-only new function, with no data changes. Rollback = a forward migration 
 - [x] 2.7 Dashboard shows a draft as Szkic with Planowane N uczestników, an active study as Trwa with Odpowiedziało X z N, and a closed or past-deadline study as Zakończone — f2db4f6
 - [x] 2.8 Progress on the dashboard matches Odpowiedziało X z N on the study page after a vote — f2db4f6
 - [x] 2.9 No English template text or duplicate Sign out remains; the page works at phone width — f2db4f6
-- [ ] 2.10 Migration pushed to the production database with npx supabase db push before or with the merge
+- [x] 2.10 Migration pushed to the production database with npx supabase db push before or with the merge
