@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
-import { toLocalInputValue } from "@/lib/study-deadline";
+import { inputZone, toLocalInputValue } from "@/lib/study-deadline";
 import StudyWizard, { type StudyWizardInitial } from "@/components/studies/StudyWizard";
 
 // Draft edit (S-06): the creation form prefilled with the draft, saved through
@@ -49,7 +49,7 @@ if (study?.status === "draft") {
     participantTarget: study.participant_target,
     variants: variants.map((variant) => variant.content),
     closesLocal: hasDeadline ? toLocalInputValue(study.closes_at ?? "", study.closes_tz ?? "") : "",
-    closesTz: hasDeadline ? study.closes_tz : null,
+    closesTz: hasDeadline ? inputZone(study.closes_tz ?? "") : null,
   };
 }
 

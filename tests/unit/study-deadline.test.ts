@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDeadline, toLocalInputValue } from "@/lib/study-deadline";
+import { formatDeadline, inputZone, toLocalInputValue } from "@/lib/study-deadline";
 
 // The deadline is shown in the zone the author set it in (studies.closes_tz), not in the server's
 // zone: Workers run in UTC.
@@ -58,5 +58,15 @@ describe("toLocalInputValue", () => {
 
   it("pads midnight as 00, not 24", () => {
     expect(toLocalInputValue("2030-06-14T22:05:00Z", "Europe/Warsaw")).toBe("2030-06-15T00:05");
+  });
+});
+
+describe("inputZone", () => {
+  it("keeps a zone Intl can format", () => {
+    expect(inputZone("Europe/Warsaw")).toBe("Europe/Warsaw");
+  });
+
+  it("is UTC for a zone Intl cannot format, matching the value toLocalInputValue falls back to", () => {
+    expect(inputZone("posix/Europe/Warsaw")).toBe("UTC");
   });
 });

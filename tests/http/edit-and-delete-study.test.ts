@@ -240,6 +240,8 @@ describe("started study delete (owner)", () => {
       form: { variant_id: randomUUID() },
     });
     expect(response.status, describeResponse(response)).toBe(302);
+    // Only study_ended redirects to the bare link: cast_vote answers it before validating the variant,
+    // so on a study that still existed this random id would come back with ?error= instead.
     expect(redirectTarget(response)).toBe(`/v/${token}`);
   });
 });

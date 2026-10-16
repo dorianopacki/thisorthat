@@ -24,6 +24,19 @@ export function formatDeadline(closesAt: string, closesTz: string): string {
 }
 
 /**
+ * The zone `toLocalInputValue` actually formats in: the stored zone, or UTC when Intl cannot format
+ * it. The edit form sends this zone back with the prefilled value, so the pair always agrees.
+ */
+export function inputZone(closesTz: string): string {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: closesTz });
+    return closesTz;
+  } catch {
+    return "UTC";
+  }
+}
+
+/**
  * The stored instant as the `YYYY-MM-DDTHH:mm` value of a datetime-local input, in the zone the author
  * set it in — the edit form prefills it and sends the same zone back, so an unchanged deadline
  * round-trips (Postgres stores `closes_local at time zone closes_tz`). Workers run in UTC, so the zone
@@ -39,12 +52,7 @@ export function toLocalInputValue(closesAt: string, closesTz: string): string {
     minute: "2-digit",
     hourCycle: "h23",
   };
-  let parts: Intl.DateTimeFormatPart[];
-  try {
-    parts = new Intl.DateTimeFormat("en-US", { ...options, timeZone: closesTz }).formatToParts(instant);
-  } catch {
-    parts = new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).formatToParts(instant);
-  }
+  const parts = new Intl.DateTimeFormat("en-US", { ...options, timeZone: inputZone(closesTz) }).formatToParts(instant);
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }

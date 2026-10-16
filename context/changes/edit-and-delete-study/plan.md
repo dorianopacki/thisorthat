@@ -237,7 +237,7 @@ Behaviour:
 
 **Intent**: Validate the form like the create endpoint and call `update_study_draft`.
 
-**Contract**: `POST`, with form fields identical to create (`title`, `participant_target`, `variant[]`, `closes_local`, `closes_tz`). The same CRLF normalization and server `validate()` apply; move that function into a shared module under `src/lib/` rather than copying it.
+**Contract**: `POST`, with form fields identical to create (`title`, `participant_target`, `variant[]`, `closes_local`, `closes_tz`). The same CRLF normalization and server `validate()` apply; move that function into a shared module under `src/lib/` rather than copying it. _Addendum (impl review F2): the shared module `src/lib/study-form.ts` also holds form reading, the RPC arguments and the error-message mapping, so create and update share one copy of each._
 
 Calls `rpc("update_study_draft", { p_study_id, …, p_closes_local/p_closes_tz only when closes_local is set })`, then maps:
 
@@ -468,4 +468,4 @@ A forward-only migration that adds a function and touches no data. Push to produ
 
 - [x] 3.6 At phone width, „Usuń badanie” on a draft, an active and a closed study shows the matching warning; „Anuluj” returns to the first step — bd0cd6a
 - [x] 3.7 Deleting an active study lands on the dashboard with „Badanie zostało usunięte.”, and one of its links opened in another browser shows „Badanie jest zakończone” — bd0cd6a
-- [ ] 3.8 Before merge, the migration is pushed to production (`npx supabase db push`), because CI does not apply migrations
+- [x] 3.8 Before merge, the migration is pushed to production (`npx supabase db push`), because CI does not apply migrations — pushed 2026-10-16
