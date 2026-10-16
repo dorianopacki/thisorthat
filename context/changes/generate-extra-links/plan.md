@@ -307,14 +307,14 @@ Forward-only migration. It backfills `position` for existing links in uuid order
 
 #### Automated
 
-- [x] 2.1 HTTP tests pass: `npm run test:http`
-- [x] 2.2 Unit tests pass: `npm run test:unit`
-- [x] 2.3 pgTAP still passes: `npx supabase test db`
-- [x] 2.4 Lint passes: `npm run lint`
-- [x] 2.5 Build passes: `npm run build`
+- [x] 2.1 HTTP tests pass: `npm run test:http` — b5209fb
+- [x] 2.2 Unit tests pass: `npm run test:unit` — b5209fb
+- [x] 2.3 pgTAP still passes: `npx supabase test db` — b5209fb
+- [x] 2.4 Lint passes: `npm run lint` — b5209fb
+- [x] 2.5 Build passes: `npm run build` — b5209fb
 
 #### Manual
 
-- [x] 2.6 On a phone-width screen, the add-links form, the „Nowe linki” block and „Kopiuj nowe” are usable, and the copied text contains only the new URLs, one per line
-- [x] 2.7 After adding links, reloading the page drops the „Nowe linki” block, and the new links remain last in the numbered list
-- [x] 2.8 A closed study's page shows no add-links form
+- [x] 2.6 On a phone-width screen, the add-links form, the „Nowe linki” block and „Kopiuj nowe” are usable, and the copied text contains only the new URLs, one per line — b5209fb
+- [x] 2.7 After adding links, reloading the page drops the „Nowe linki” block, and the new links remain last in the numbered list — b5209fb
+- [x] 2.8 A closed study's page shows no add-links form — b5209fb
