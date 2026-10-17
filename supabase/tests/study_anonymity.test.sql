@@ -119,16 +119,16 @@ select is(
   (select array_agg(distinct k order by k)
      from jsonb_array_elements(public.get_study_results('a0000000-0000-0000-0000-000000000001') -> 'variants') as v,
           jsonb_object_keys(v) as k),
-  array['comments', 'content', 'position', 'variant_id', 'vote_count'],
-  'get_study_results per-variant keys are exactly variant_id, position, content, vote_count, comments'
+  array['comments', 'content', 'image_path', 'kind', 'position', 'variant_id', 'vote_count'],
+  'get_study_results per-variant keys are exactly variant_id, position, kind, content, image_path, vote_count, comments'
 );
 
 select is(
   (select count(*)::int
      from jsonb_array_elements(public.get_study_results('a0000000-0000-0000-0000-000000000001') -> 'variants') as v
-    where (select count(*) from jsonb_object_keys(v)) <> 5),
+    where (select count(*) from jsonb_object_keys(v)) <> 7),
   0,
-  'every variant object has exactly five keys'
+  'every variant object has exactly seven keys'
 );
 
 select is(

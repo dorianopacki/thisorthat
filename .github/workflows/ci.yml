@@ -46,7 +46,7 @@ jobs:
       - run: npm run test:unit
       - name: Start local Supabase
         run: |
-          npx supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
+          npx supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
           npx supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' > supabase.env
       - run: npx supabase test db
       - name: Configure secrets for build and preview

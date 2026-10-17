@@ -43,8 +43,8 @@ select is(
   '{
      "title": "Active",
      "variants": [
-       { "variant_id": "b0000000-0000-0000-0000-000000000001", "content": "Left" },
-       { "variant_id": "b0000000-0000-0000-0000-000000000002", "content": "Right" }
+       { "variant_id": "b0000000-0000-0000-0000-000000000001", "kind": "text", "content": "Left", "image_path": null },
+       { "variant_id": "b0000000-0000-0000-0000-000000000002", "kind": "text", "content": "Right", "image_path": null }
      ]
    }'::jsonb,
   'anon: unused active token returns the title and variants in position order'
@@ -60,16 +60,16 @@ select is(
   (select array_agg(distinct k order by k)
      from jsonb_array_elements(public.get_ballot('gb-token-1') -> 'variants') as v,
           jsonb_object_keys(v) as k),
-  array['content', 'variant_id'],
-  'per-variant keys are exactly variant_id, content'
+  array['content', 'image_path', 'kind', 'variant_id'],
+  'per-variant keys are exactly variant_id, kind, content, image_path'
 );
 
 select is(
   (select count(*)::int
      from jsonb_array_elements(public.get_ballot('gb-token-1') -> 'variants') as v
-    where (select count(*) from jsonb_object_keys(v)) <> 2),
+    where (select count(*) from jsonb_object_keys(v)) <> 4),
   0,
-  'every variant object has exactly two keys'
+  'every variant object has exactly four keys'
 );
 
 -- Remember the pre-vote output of token 1 for the no-oracle comparison.

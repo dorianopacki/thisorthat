@@ -75,12 +75,15 @@ export function validateStudyForm({ title, participantTarget, variants, closesLo
   return null;
 }
 
-/** The form as create_study / update_study_draft arguments; the deadline pair only when a deadline is set. */
+/**
+ * The form as create_study / update_study_draft arguments (the jsonb `p_variant_items` signatures);
+ * the deadline pair only when a deadline is set.
+ */
 export function studyRpcArgs({ title, participantTarget, variants, closesLocal, closesTz }: StudyForm) {
   return {
     p_title: title,
     p_participant_target: Number(participantTarget),
-    p_variants: variants,
+    p_variant_items: variants.map((content) => ({ kind: "text" as const, content, image_path: null })),
     ...(closesLocal ? { p_closes_local: closesLocal, p_closes_tz: closesTz } : {}),
   };
 }
