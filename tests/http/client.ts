@@ -11,9 +11,15 @@ import https from "node:https";
 const BASE = new URL(process.env.TEST_BASE_URL ?? "http://localhost:4321");
 export const BASE_URL = BASE.origin;
 
-const PASSWORD = "Http-Test-Passw0rd!";
+/** Every test account's password, for a test that signs in to Supabase directly as a fixture author. */
+export const TEST_PASSWORD = "Http-Test-Passw0rd!";
+const PASSWORD = TEST_PASSWORD;
 
-export type Form = Readonly<Record<string, string | readonly string[]>>;
+/** Form fields; a form with any File value is posted as multipart/form-data, otherwise urlencoded. */
+export type Form = Readonly<Record<string, string | readonly string[] | File>>;
+
+/** A variant as the wizard posts it: text, a new image with its description, or a kept image path. */
+export type VariantInput = string | { description: string; image: File } | { description: string; image_path: string };
 
 export interface RequestOptions {
   method?: string;
@@ -60,15 +66,48 @@ export function describeResponse(response: HttpResponse): string {
   return `${String(response.status)} ${response.location}`.trim();
 }
 
-function encodeForm(form: Form): string {
-  const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(form)) {
-    for (const item of typeof value === "string" ? [value] : value) params.append(name, item);
-  }
-  return params.toString();
+/** The wizard's per-position variant fields (`variant.<i>.kind`, `.content`, `.image`, `.image_path`). */
+export function variantFields(variants: readonly VariantInput[]): Record<string, string | File> {
+  const fields: Record<string, string | File> = {};
+  variants.forEach((variant, i) => {
+    const prefix = `variant.${String(i)}`;
+    if (typeof variant === "string") {
+      fields[`${prefix}.kind`] = "text";
+      fields[`${prefix}.content`] = variant;
+      return;
+    }
+    fields[`${prefix}.kind`] = "image";
+    fields[`${prefix}.content`] = variant.description;
+    if ("image" in variant) fields[`${prefix}.image`] = variant.image;
+    else fields[`${prefix}.image_path`] = variant.image_path;
+  });
+  return fields;
 }
 
-function send(path: string, method: string, headers: Record<string, string>, body?: string): Promise<HttpResponse> {
+async function encodeForm(form: Form): Promise<{ body: Buffer; contentType: string }> {
+  const entries = Object.entries(form);
+  if (entries.some(([, value]) => value instanceof File)) {
+    const data = new FormData();
+    for (const [name, value] of entries) {
+      if (value instanceof File) data.append(name, value);
+      else for (const item of typeof value === "string" ? [value] : value) data.append(name, item);
+    }
+    // Request serializes the multipart body and picks its boundary.
+    const encoded = new Request(BASE_URL, { method: "POST", body: data });
+    return {
+      body: Buffer.from(await encoded.arrayBuffer()),
+      contentType: encoded.headers.get("content-type") ?? "",
+    };
+  }
+  const params = new URLSearchParams();
+  for (const [name, value] of entries) {
+    if (value instanceof File) continue;
+    for (const item of typeof value === "string" ? [value] : value) params.append(name, item);
+  }
+  return { body: Buffer.from(params.toString()), contentType: "application/x-www-form-urlencoded" };
+}
+
+function send(path: string, method: string, headers: Record<string, string>, body?: Buffer): Promise<HttpResponse> {
   const transport = BASE.protocol === "https:" ? https : http;
   return new Promise((resolve, reject) => {
     const req = transport.request(
@@ -112,9 +151,9 @@ export function newClient(): Client {
     async request(path, { method = "GET", form } = {}) {
       const headers: Record<string, string> = { Origin: BASE_URL };
       if (jar.size) headers.Cookie = [...jar].map(([k, v]) => `${k}=${v}`).join("; ");
-      const body = form ? encodeForm(form) : undefined;
-      if (body !== undefined) headers["Content-Type"] = "application/x-www-form-urlencoded";
-      const response = await send(path, method, headers, body);
+      const encoded = form ? await encodeForm(form) : undefined;
+      if (encoded) headers["Content-Type"] = encoded.contentType;
+      const response = await send(path, method, headers, encoded?.body);
       storeCookies(response.setCookies);
       return response;
     },
@@ -146,10 +185,10 @@ export async function newAuthor(): Promise<Author> {
 }
 
 /** Creates a study through POST /api/studies and returns its id (from the redirect to /studies/<id>). */
-export async function createStudy(author: Client, title: string, variants: readonly string[] = ["A", "B"]) {
+export async function createStudy(author: Client, title: string, variants: readonly VariantInput[] = ["A", "B"]) {
   const response = await author.request("/api/studies", {
     method: "POST",
-    form: { title, participant_target: String(variants.length), variant: variants },
+    form: { title, participant_target: String(variants.length), ...variantFields(variants) },
   });
   const match = /^\/studies\/([^/?]+)$/.exec(redirectTarget(response));
   if (response.status !== 302 || !match?.[1]) {
@@ -159,8 +198,12 @@ export async function createStudy(author: Client, title: string, variants: reado
 }
 
 /** Creates and starts a study as `author`, then reads its participant tokens from the owner's page. */
-export async function createStartedStudy(author: Client, title = `Started ${uniqueSuffix()}`): Promise<StartedStudy> {
-  const id = await createStudy(author, title);
+export async function createStartedStudy(
+  author: Client,
+  title = `Started ${uniqueSuffix()}`,
+  variants: readonly VariantInput[] = ["A", "B"],
+): Promise<StartedStudy> {
+  const id = await createStudy(author, title, variants);
 
   const start = await author.request(`/api/studies/${id}/start`, { method: "POST" });
   if (start.status !== 302 || redirectTarget(start) !== `/studies/${id}`) {

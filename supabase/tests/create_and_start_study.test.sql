@@ -3,7 +3,7 @@
 -- Fixtures are inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(39);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -142,7 +142,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.create_study('No variants', 3, null) $$,
+  $$ select public.create_study('No variants', 3, null::text[]) $$,
   '22023',
   null,
   'create_study with null variants raises 22023'
@@ -154,6 +154,77 @@ select is(
   (select count(*)::int from public.studies where author_id = '11111111-1111-1111-1111-111111111111'),
   4,
   'rejected create_study calls inserted no study'
+);
+
+-- ---------------------------------------------------------------------------
+-- create_study (jsonb p_variant_items): the signature the app calls (author A)
+-- ---------------------------------------------------------------------------
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '11111111-1111-1111-1111-111111111111', 'role', 'authenticated')::text,
+  true
+);
+
+-- Named arguments, as PostgREST calls it.
+select set_config(
+  'test.jsonb_study_id',
+  public.create_study(
+    p_title => '  Jsonb study  ',
+    p_participant_target => 3,
+    p_variant_items => '[{"kind": "text", "content": "  Left  ", "image_path": null},
+                         {"kind": "text", "content": " Right"}]'::jsonb
+  )::text,
+  true
+);
+
+select isnt(nullif(current_setting('test.jsonb_study_id', true), ''), null, 'jsonb create_study returns a study id');
+
+select throws_ok(
+  $$ select public.create_study('Jsonb too few', 3, '[{"kind": "text", "content": "Only"}]'::jsonb) $$,
+  '22023',
+  null,
+  'jsonb create_study with 1 variant raises 22023'
+);
+
+select throws_ok(
+  $$ select public.create_study('Jsonb blank', 3,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "   "}]'::jsonb) $$,
+  '22023',
+  null,
+  'jsonb create_study with a blank variant raises 22023'
+);
+
+select throws_ok(
+  $$ select public.create_study('Jsonb null', 3, null::jsonb) $$,
+  '22023',
+  null,
+  'jsonb create_study with null variants raises 22023'
+);
+
+select throws_ok(
+  $$ select public.create_study('Jsonb long', 3,
+       jsonb_build_array(jsonb_build_object('kind', 'text', 'content', 'Left'),
+                         jsonb_build_object('kind', 'text', 'content', repeat('v', 2001)))) $$,
+  '23514',
+  null,
+  'jsonb create_study with a 2001-character variant raises 23514'
+);
+
+reset role;
+
+select is(
+  (select array_agg(position || ':' || kind || ':' || content || ':' || coalesce(image_path, '-') order by position)
+     from public.variants where study_id = current_setting('test.jsonb_study_id')::uuid),
+  array['0:text:Left:-', '1:text:Right:-'],
+  'jsonb create_study stores text variants in order, trimmed, without an image'
+);
+
+select is(
+  (select count(*)::int from public.studies where author_id = '11111111-1111-1111-1111-111111111111'),
+  5,
+  'rejected jsonb create_study calls inserted no study'
 );
 
 -- ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 -- as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(54);
+select plan(62);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (uuid prefixes 5555/6666 users, f1 studies, f2 variants, f3 links)
@@ -134,6 +134,11 @@ select ok(
   'authenticated can execute update_study_draft'
 );
 
+select ok(
+  has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, jsonb, timestamp, text)', 'execute'),
+  'authenticated can execute update_study_draft (jsonb)'
+);
+
 -- ---------------------------------------------------------------------------
 -- Owner A edits a draft
 -- ---------------------------------------------------------------------------
@@ -248,6 +253,49 @@ select ok(
   (select closes_at is null and closes_tz is null
      from public.studies where id = 'f1000000-0000-0000-0000-000000000001'),
   'A: cleared deadline leaves closes_at and closes_tz null'
+);
+
+-- The jsonb signature (named arguments, as PostgREST calls it)
+
+select lives_ok(
+  $$ select public.update_study_draft(
+       p_study_id => 'f1000000-0000-0000-0000-000000000001',
+       p_title => 'Jsonb title',
+       p_participant_target => 6,
+       p_variant_items => '[{"kind": "text", "content": " J1 ", "image_path": null},
+                            {"kind": "text", "content": "J2"},
+                            {"kind": "text", "content": "J3"}]'::jsonb,
+       p_closes_local => '2099-06-15 18:00',
+       p_closes_tz => 'Europe/Warsaw') $$,
+  'A: jsonb update_study_draft on own draft succeeds'
+);
+
+select is(
+  (select array_agg(position || '|' || kind || '|' || content || '|' || coalesce(image_path, '-') order by position)
+     from public.variants where study_id = 'f1000000-0000-0000-0000-000000000001'),
+  array['0|text|J1|-', '1|text|J2|-', '2|text|J3|-'],
+  'A: jsonb update replaced the variants with text variants in order, trimmed'
+);
+
+select is(
+  (select title || '|' || participant_target || '|' || closes_at || '|' || closes_tz
+     from public.studies where id = 'f1000000-0000-0000-0000-000000000001'),
+  'Jsonb title|6|' || ('2099-06-15 16:00:00+00'::timestamptz)::text || '|Europe/Warsaw',
+  'A: jsonb update replaced title, N and deadline'
+);
+
+select lives_ok(
+  $$ select public.update_study_draft(
+       'f1000000-0000-0000-0000-000000000001', 'New title', 7, array['V6', 'V1'],
+       null, null) $$,
+  'A: the text[] wrapper still replaces the draft after a jsonb update'
+);
+
+select is(
+  (select array_agg(position || '|' || kind || '|' || content || '|' || coalesce(image_path, '-') order by position)
+     from public.variants where study_id = 'f1000000-0000-0000-0000-000000000001'),
+  array['0|text|V6|-', '1|text|V1|-'],
+  'A: the text[] wrapper stores text variants without an image'
 );
 
 -- ---------------------------------------------------------------------------
@@ -368,6 +416,22 @@ select throws_ok(
   '23514',
   null,
   'validation: a 2001-character variant raises 23514'
+);
+
+select throws_ok(
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Only"}]'::jsonb) $$,
+  '22023',
+  null,
+  'validation (jsonb): 1 variant raises 22023'
+);
+
+select throws_ok(
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": " "}]'::jsonb) $$,
+  '22023',
+  null,
+  'validation (jsonb): a blank variant raises 22023'
 );
 
 reset role;

@@ -29,6 +29,15 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"], storageState: "playwright/.auth/user.json" },
       dependencies: ["setup"],
+      // The image ballot is a phone risk; it runs only in mobile-chrome.
+      testIgnore: /image-variants\.spec\.ts/,
+    },
+    {
+      // S-08: the image ballot at phone width (Pixel 7). Only the image spec runs here.
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 7"], storageState: "playwright/.auth/user.json" },
+      dependencies: ["setup"],
+      testMatch: /image-variants\.spec\.ts/,
     },
   ],
   webServer: {

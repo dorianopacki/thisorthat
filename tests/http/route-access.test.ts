@@ -11,6 +11,7 @@ import {
   type Form,
   type HttpResponse,
   type StartedStudy,
+  variantFields,
 } from "./client";
 
 const SIGN_IN = "/auth/signin";
@@ -35,7 +36,9 @@ const PROBES: Readonly<Record<string, readonly Probe[]>> = {
   "/studies/new": [{ method: "GET" }],
   "/studies/[id]": [{ method: "GET" }],
   "/studies/[id]/edit": [{ method: "GET" }],
-  "/api/studies": [{ method: "POST", form: { title: "Anonymous", participant_target: "2", variant: ["A", "B"] } }],
+  "/api/studies": [
+    { method: "POST", form: { title: "Anonymous", participant_target: "2", ...variantFields(["A", "B"]) } },
+  ],
   "/api/studies/[id]/start": [{ method: "POST" }],
   "/api/studies/[id]/close": [{ method: "POST" }],
   "/api/studies/[id]/links": [{ method: "POST", form: { count: "1" } }],
@@ -46,7 +49,7 @@ const PROBES: Readonly<Record<string, readonly Probe[]>> = {
       form: {
         title: "Anonymous",
         participant_target: "2",
-        variant: ["A", "B"],
+        ...variantFields(["A", "B"]),
         closes_local: "2099-06-15T18:00",
         closes_tz: "Europe/Warsaw",
       },

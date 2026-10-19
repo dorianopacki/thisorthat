@@ -18,6 +18,8 @@ export default defineConfig({
     schema: {
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
       SUPABASE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
+      // Server-only; used solely by src/lib/supabase-admin.ts to sign participant ballot images.
+      SUPABASE_SECRET_KEY: envField.string({ context: "server", access: "secret", optional: true }),
     },
   },
 });

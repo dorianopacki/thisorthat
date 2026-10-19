@@ -11,6 +11,7 @@ import {
   type Author,
   type Form,
   type StartedStudy,
+  variantFields,
 } from "./client";
 
 // edit-and-delete-study (S-06), app side: the owner's draft edit through the edit page and
@@ -28,7 +29,7 @@ function editForm(title: string, variants: readonly string[], deadline?: { local
   return {
     title,
     participant_target: "3",
-    variant: variants,
+    ...variantFields(variants),
     closes_local: deadline?.local ?? "",
     closes_tz: deadline?.tz ?? "",
   };

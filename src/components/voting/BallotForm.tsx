@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 
 interface Variant {
   variant_id: string;
+  kind: "text" | "image";
+  /** The text, or for an image variant its description (the image's alt text and the radio's name). */
   content: string;
+  /** Short-lived signed URL, present for an image variant. */
+  image_url?: string;
 }
 
 interface Props {
@@ -80,13 +84,14 @@ export default function BallotForm({ token, variants, serverError }: Props) {
           const error = errors[id];
           const optionId = `variant-${id}`;
           const commentId = `comment-${id}`;
+          const isImage = variant.kind === "image";
 
           return (
             <div key={id}>
               <label
                 htmlFor={optionId}
                 className={cn(
-                  "flex w-full cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-purple-400",
+                  "flex w-full min-w-0 cursor-pointer flex-wrap items-start gap-3 rounded-lg border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-purple-400",
                   isSelected
                     ? "border-purple-400 bg-purple-500/25 ring-1 ring-purple-400"
                     : "border-white/20 bg-white/5 hover:bg-white/10",
@@ -101,12 +106,25 @@ export default function BallotForm({ token, variants, serverError }: Props) {
                   onChange={() => {
                     setSelected(id);
                   }}
+                  // The image's alt and „Wariant N” would otherwise join the name; it is the description.
+                  aria-label={isImage ? variant.content : undefined}
                   className="mt-1 size-5 shrink-0 accent-purple-500"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="mb-1 block text-xs text-blue-100/60">Wariant {index + 1}</span>
-                  <span className="block text-sm break-words whitespace-pre-wrap">{variant.content}</span>
+                  <span className={cn("block text-xs text-blue-100/60", !isImage && "mb-1")}>Wariant {index + 1}</span>
+                  {!isImage && <span className="block text-sm break-words whitespace-pre-wrap">{variant.content}</span>}
                 </span>
+                {isImage && (
+                  // Full card width on its own row; the page signs every image or shows the error screen.
+                  <img
+                    src={variant.image_url}
+                    alt={variant.content}
+                    loading="eager"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className="block h-auto w-full max-w-full basis-full rounded-md"
+                  />
+                )}
               </label>
 
               <button

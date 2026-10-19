@@ -15,6 +15,7 @@ import { MAX_PARTICIPANTS } from "@/lib/study-limits";
 import { formatDeadline } from "@/lib/study-deadline";
 import { STATUS_LABELS } from "@/lib/study-status";
 import { parseStudyResults, type StudyResults as StudyResultsData } from "@/lib/study-results";
+import { signVariantImages } from "@/lib/variant-images";
 
 // No top-level `return` here: typescript-eslint's no-misused-promises crashes on a return
 // outside a function, so a missing study sets the 404 status and renders a short message.
@@ -41,13 +42,18 @@ if (studyError && studyError.code !== "22P02") {
   throw new Error("Nie udało się wczytać badania.");
 }
 
-let variants: { id: string; position: number; content: string }[] = [];
+let variants: { id: string; position: number; kind: "text" | "image"; content: string; image_path: string | null }[] =
+  [];
+// Draft image variants, signed with the author's own session (Storage RLS: own objects only).
+let imageUrls = new Map<string, string>();
 let results: StudyResultsData | null = null;
+// Results image URLs by variant_id, signed once per page load; the island's polls never re-sign.
+let resultImageUrls: Record<string, string> = {};
 let urls: string[] = [];
 if (study?.status === "draft") {
   const { data, error: variantsError } = await supabase
     .from("variants")
-    .select("id, position, content")
+    .select("id, position, kind, content, image_path")
     .eq("study_id", study.id)
     .order("position", { ascending: true });
 
@@ -55,6 +61,10 @@ if (study?.status === "draft") {
     throw new Error("Nie udało się wczytać wariantów badania.");
   }
   variants = data;
+  imageUrls = await signVariantImages(
+    supabase,
+    data.flatMap((v) => (v.kind === "image" && v.image_path ? [v.image_path] : [])),
+  );
 } else if (study) {
   // Votes and comments reach the author only as aggregates (docs/reference/contract-surfaces.md#anonymity-rule).
   const { data, error: resultsError } = await supabase.rpc("get_study_results", { p_study_id: study.id });
@@ -66,6 +76,17 @@ if (study?.status === "draft") {
     if (!results) {
       throw new Error("Nie udało się odczytać wyników badania.");
     }
+    // Author session, like the draft view; a path that fails to sign leaves that variant text-only.
+    const signed = await signVariantImages(
+      supabase,
+      results.variants.flatMap((v) => (v.kind === "image" && v.image_path ? [v.image_path] : [])),
+    );
+    resultImageUrls = Object.fromEntries(
+      results.variants.flatMap((v) => {
+        const url = v.image_path ? signed.get(v.image_path) : undefined;
+        return url ? [[v.variant_id, url]] : [];
+      }),
+    );
   }
 
   // Links exist once the study has started, numbered by `position` (added links come last). Select only
@@ -134,7 +155,7 @@ const linksLeft = MAX_PARTICIPANTS - urls.length;
             </p>
           )}
           {results ? (
-            <StudyResults studyId={shown.id} initial={results} client:load />
+            <StudyResults studyId={shown.id} initial={results} imageUrls={resultImageUrls} client:load />
           ) : (
             <>
               <h2 class="mb-2 text-sm text-blue-100/80">Warianty</h2>
@@ -142,7 +163,26 @@ const linksLeft = MAX_PARTICIPANTS - urls.length;
                 {variants.map((variant, index) => (
                   <li class="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm">
                     <span class="mb-1 block text-xs text-blue-100/60">Wariant {index + 1}</span>
-                    <span class="break-words whitespace-pre-wrap">{variant.content}</span>
+                    {variant.kind === "image" ? (
+                      <>
+                        {variant.image_path && imageUrls.get(variant.image_path) ? (
+                          <img
+                            src={imageUrls.get(variant.image_path)}
+                            alt={variant.content}
+                            class="mb-1 h-auto w-full rounded"
+                            loading="lazy"
+                            decoding="async"
+                            referrerpolicy="no-referrer"
+                          />
+                        ) : (
+                          <span class="mb-1 block text-xs text-red-300">Nie udało się wczytać grafiki.</span>
+                        )}
+                        <span class="block text-xs text-blue-100/60">Opis grafiki</span>
+                        <span class="break-words whitespace-pre-wrap">{variant.content}</span>
+                      </>
+                    ) : (
+                      <span class="break-words whitespace-pre-wrap">{variant.content}</span>
+                    )}
                   </li>
                 ))}
               </ol>

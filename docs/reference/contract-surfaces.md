@@ -2,7 +2,7 @@
 
 Load-bearing names that later slices build on. Renaming or reshaping any of them is a breaking change: it needs a forward-fix migration, regenerated types (`npx supabase gen types typescript --local > src/lib/database.types.ts`) and updated pgTAP tests in `supabase/tests/`.
 
-Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`), plus `20261015221845_edit_and_delete_study.sql` (change `edit-and-delete-study`), plus `20261016181615_generate_extra_links.sql` (change `generate-extra-links`). Applied migrations are never edited; change behaviour with a new forward migration.
+Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `20261002124043_cast_vote_comment_uuid_errcode.sql` (change `study-data-model`), plus `20261005075735_create_and_start_study.sql` (change `create-and-start-study`) `20261005132123_one_time_link_voting.sql` (change `one-time-link-voting`) and `20261015130000_study_closing_rules.sql` `20261015150000_study_closing_vote_path.sql` and `20261015170000_study_deadline_zone_hardening.sql` (change `study-closing-rules`), plus `20261015210000_author_study_dashboard.sql` (change `author-study-dashboard`), plus `20261015221845_edit_and_delete_study.sql` (change `edit-and-delete-study`), plus `20261016181615_generate_extra_links.sql` (change `generate-extra-links`), plus `20261017120000_image_variants.sql` (change `image-variants`). Applied migrations are never edited; change behaviour with a new forward migration.
 
 ## Anonymity rule
 
@@ -17,6 +17,10 @@ Source of truth: `supabase/migrations/20261002095727_study_data_model.sql` and `
 ## Enum `public.study_status`
 
 `draft` | `active` | `closed`
+
+## Enum `public.variant_kind`
+
+`text` | `image`
 
 ## Closing rule
 
@@ -43,10 +47,12 @@ PostgREST computed field over `studies` (`select("…, effective_status")`), del
 | Table                | Columns                                                                                                                                 | Author access (`authenticated`)                                                                                                                  |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `public.studies`     | `id`, `author_id` (default `auth.uid()`), `title`, `participant_target`, `status`, `closes_at`, `closes_tz`, `created_at`, `updated_at` | select/delete own; insert `title`, `participant_target`, `closes_at`, `closes_tz`; update only `title`, `participant_target`, only while `draft` |
-| `public.variants`    | `id`, `study_id`, `position`, `content`                                                                                                 | select own; insert `study_id, position, content`, update `position, content`, delete: own `draft` only                                           |
+| `public.variants`    | `id`, `study_id`, `position`, `kind`, `content`, `image_path`                                                                           | select own; insert `study_id, position, kind, content, image_path`, update `position, kind, content, image_path`, delete: own `draft` only       |
 | `public.study_links` | `id`, `study_id`, `token`, `position`, `used`                                                                                           | select `id, study_id, token, position` of own studies; no access to `used`                                                                       |
 | `public.votes`       | `id`, `study_id`, `variant_id`                                                                                                          | none                                                                                                                                             |
 | `public.comments`    | `id`, `study_id`, `variant_id`, `body`                                                                                                  | none                                                                                                                                             |
+
+A variant is either **text** (`kind = 'text'`, `content` is the text, `image_path` null) or an **image** (`kind = 'image'`, `content` is its description, `image_path` the object name in the [`variant-images`](#storage-variant-images) bucket), enforced by `variants_kind_image_check`. One object backs at most one variant across all studies (partial unique index `variants_image_path_key`); the write RPCs refuse a reused path with `23514` before the index's `23505` can fire. Existing variants are `text` (column default).
 
 `studies.status` is in no column grant: only `security definer` functions change it. `closes_at` (absolute instant) and `closes_tz` (the author's IANA zone, for display only) are both set or both null (`studies_closes_pair_check`). Only `create_study` and `update_study_draft` update them (no column update grant), but the column insert grant remains, so an author inserting a row directly can store a zone those functions would refuse. A page formatting a zone it cannot handle falls back to UTC, and the edit form then sends UTC back with the UTC value (`inputZone`). `study_links.position` is 1…total per study (`unique (study_id, position)`): `start_study` assigns 1…N, `add_study_links` appends after the current maximum, and an insert that omits it (test fixtures) gets the next free number from the `study_links_set_position` trigger. Deleting a study cascades to its variants, links, votes and comments. Deleting an `active` study (allowed in any status by the delete policy) breaks its links: they answer like an unknown token, so `get_ballot` → `null` („Badanie jest zakończone”) and `cast_vote` → `study_ended`. `anon` has no table privileges.
 
@@ -55,6 +61,7 @@ PostgREST computed field over `studies` (`select("…, effective_status")`), del
 - **N (`studies.participant_target`): 1–100**, enforced by the check constraint `studies_participant_target_check`. N is the total number of links a study ever gets: anything that adds links later (S-07) must keep the total within 100. N rises with every addition: `add_study_links` sets it to the live link count after the insert.
 - **Variants per study: 2–6.** Not a table constraint (drafts are edited row by row); enforced by `create_study`, `update_study_draft` and again by `start_study`.
 - Title 1–200 and variant content 1–2000 characters after trimming (table check constraints).
+- **Image variants:** description (`content`) 1–200 characters after trimming (`variants_kind_image_check`); stored file at most 1 MiB (1 048 576 bytes), `image/webp` or `image/jpeg` only (bucket limits); object name `<uuid>.webp` or `<uuid>.jpg`. Text and image variants share the 2–6 count.
 
 ## Vote URL
 
@@ -72,26 +79,33 @@ The page (`src/pages/v/[token].astro`, S-02) picks its screen in this order:
 - Variants are shown in an order shuffled per link, deterministic from the token (stable across reloads, nothing stored).
 - The page and every endpoint redirect send `Cache-Control: no-store`, `X-Robots-Tag: noindex` and `Referrer-Policy: same-origin`. Not `no-referrer`: with it the browser sends `Origin: null` on the vote POST and Astro's `checkOrigin` rejects it with 403. `same-origin` still keeps the token out of cross-site `Referer`.
 
-## `public.create_study(p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns uuid`
+## `public.create_study(p_title text, p_participant_target integer, p_variant_items jsonb, p_closes_local timestamp default null, p_closes_tz text default null) returns uuid`
 
 Callable by `authenticated` only (`security invoker`: runs under the caller's grants and RLS). Creates a `draft` study owned by `auth.uid()` with one variant per array entry at `position` 0, 1, … in array order; title and variant contents are trimmed. Returns the study id.
 
-- Raises `22023` when `p_variants` has fewer than 2 or more than 6 entries, or any entry is null or blank after trimming.
-- Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, or a variant is over 2000 characters.
+- `p_variant_items`: JSON array of `{ "kind": "text" | "image", "content": text, "image_path": text | null }`. For `text`, `image_path` must be null; for `image`, `content` is the description and `image_path` names an object in `variant-images` that exists and is owned by the caller (`owner_id = auth.uid()`).
+- The parameter is deliberately not called `p_variants`: PostgREST picks an overload by argument names only, so two overloads sharing every name are ambiguous (`PGRST203`).
+- Raises `22023` when `p_variant_items` is not an array of 2 to 6 entries, or any entry's `content` is null or blank after trimming.
+- Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, a variant is over 2000 characters, or for any variant-shape violation: an entry that is not an object, an unknown `kind`, a non-string `content` / `image_path`, a text variant with an `image_path`, an image variant without a valid `image_path` or with a description over 200 characters, an `image_path` used twice in the payload or already used by another variant, or an image that is missing or not the caller's.
 - Optional deadline: the author's local date and time `p_closes_local` plus the IANA zone `p_closes_tz` (from the browser). Stored as `closes_at = p_closes_local at time zone p_closes_tz`. Postgres resolves DST: a local time in the spring gap (e.g. 2027-03-28 02:30 Europe/Warsaw) is read with the offset before the jump (+01). The doubled autumn hour (2027-10-31 02:30) is read with the offset after the jump back (+01).
 - Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names` or is one Intl cannot format (`posix/…`, `right/…`, `Factory`, `localtime`, `posixrules`), or the deadline is not in the future.
 - Nothing is inserted when it raises.
 
-## `public.update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns void`
+**Temporary `text[]` wrapper:** `create_study(p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns uuid` (`security invoker`, `authenticated` only) maps every entry to `{kind: 'text', content, image_path: null}` and calls the `jsonb` version, so the app deployed before `image-variants` keeps working between `db push` and deploy. It is dropped in a follow-up migration; new code must call `p_variant_items`.
+
+## `public.update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variant_items jsonb, p_closes_local timestamp default null, p_closes_tz text default null) returns void`
 
 Callable by `authenticated` only (`security definer`). The only write path for editing a draft, including its deadline (change `edit-and-delete-study`, S-06). Locks the study row first (`FOR UPDATE`, filtered by `auth.uid()`), so it is serialized with `start_study`: variants never change under a started study.
 
 - **Replace semantics:** the whole draft is replaced. Title (trimmed), N and the deadline are overwritten; omitting both deadline arguments (null/null) clears the deadline. All variants are deleted and the new list is inserted at `position` 0, 1, … in array order with trimmed contents (new variant ids).
+- `p_variant_items` has the same element shape and rules as in `create_study`. An `image_path` already held by one of this draft's current variants may be kept; one held by any other study's variant is refused. The function does not touch storage: removing objects that are no longer referenced is the caller's job (Storage API).
 - Raises `P0002` when the caller owns no study with this id (unknown, someone else's, or no `auth.uid()`).
 - Raises `55000` when the study is not `draft` (active or closed).
 - Raises `22023` for the same variant and deadline rules as `create_study` (2–6 variants, none null or blank; both or neither deadline value; an Intl-formattable zone from `pg_timezone_names`; a deadline in the future). The deadline is stored as `p_closes_local at time zone p_closes_tz`.
-- Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, or a variant is over 2000 characters.
+- Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, a variant is over 2000 characters, or for the same variant-shape, image ownership and path-reuse rules as `create_study`.
 - Nothing changes when it raises.
+
+**Temporary `text[]` wrapper:** `update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns void` (`security invoker`, `authenticated` only) maps every entry to a text variant and calls the `jsonb` version. Dropped in the same follow-up migration as the `create_study` wrapper.
 
 ## `public.start_study(p_study_id uuid) returns void`
 
@@ -146,12 +160,12 @@ Callable by `anon` and `authenticated` (`security definer`, `stable`). The parti
 ```json
 {
   "title": "text",
-  "variants": [{ "variant_id": "uuid", "content": "text" }]
+  "variants": [{ "variant_id": "uuid", "kind": "text | image", "content": "text", "image_path": "text | null" }]
 }
 ```
 
 - `variants` ordered by `position` (the page reorders them per link).
-- Top-level keys are exactly `title, variants`; per-variant keys are exactly `variant_id, content`.
+- Top-level keys are exactly `title, variants`; per-variant keys are exactly `variant_id, kind, content, image_path`. For an image variant `content` is the description (the image's alt text) and `image_path` is the object name the page signs (see [Storage](#storage-variant-images)); for text `image_path` is null.
 
 ## `public.get_study_results(p_study_id uuid) returns jsonb`
 
@@ -166,7 +180,9 @@ Callable by `authenticated` only. Returns `null` when the caller does not own th
     {
       "variant_id": "uuid",
       "position": 0,
+      "kind": "text | image",
       "content": "text",
+      "image_path": "text | null",
       "vote_count": 0,
       "comments": ["body", "..."]
     }
@@ -177,7 +193,24 @@ Callable by `authenticated` only. Returns `null` when the caller does not own th
 - `status` is the effective status (see [Closing rule](#closing-rule)): a study past its deadline reads `closed`.
 - `responded`: count of used links; `total`: count of links.
 - `variants` ordered by `position`; `comments` sorted by body (never insertion order).
-- Top-level keys are exactly `status, responded, total, variants`; per-variant keys are exactly `variant_id, position, content, vote_count, comments`.
+- Top-level keys are exactly `status, responded, total, variants`; per-variant keys are exactly `variant_id, position, kind, content, image_path, vote_count, comments`.
+
+## Storage: `variant-images`
+
+The only bucket. Created by migration (`insert into storage.buckets`), not by `config.toml`, so local, CI and production share one definition.
+
+- **Private** (`public = false`): no public URL. Files are served only through signed URLs.
+- `file_size_limit = 1048576` (1 MiB), `allowed_mime_types = {image/webp, image/jpeg}`.
+- **Naming:** `<uuid>.webp` or `<uuid>.jpg` at the bucket root (`^[0-9a-f-]{36}\.(webp|jpg)$`). The name appears in participant-visible signed URLs, so it never contains the author id or any study data. Ownership is `storage.objects.owner_id`, set by the Storage API to the uploader's `auth.uid()`.
+- **Variant → object ownership:** on every write path, not only the RPCs, a variant's `image_path` must name an object owned by its study's author. The trigger `variants_image_owner_check` (BEFORE INSERT / UPDATE OF image_path, study_id; security definer) raises `23514` otherwise. `authenticated` may insert `kind`/`image_path` (create_study is security invoker) but has no direct UPDATE on them.
+- **Referenced objects are immutable:** the insert and delete policies also require `not private.variant_image_in_use(name)` (security definer, in the non-exposed `private` schema). While a variant references an object, nobody can delete it or create another object under its name. App cleanup removes only objects that are no longer referenced.
+- **Policies on `storage.objects`**, all `to authenticated` and scoped to `bucket_id = 'variant-images'`:
+  - insert: only with a name matching the pattern;
+  - select and delete: only own objects (`owner_id = auth.uid()::text`);
+  - no update policy and nothing for `anon`. Another author's objects are invisible, so they cannot be signed, read or deleted.
+- Direct SQL `DELETE` on `storage.objects` is blocked by Storage's `protect_objects_delete` trigger; objects are removed only through the Storage API (`remove`).
+- **Signed URL TTLs:** participant ballot 600 s; author views (draft, edit, results) 3600 s.
+- **Secret-key ordering rule:** `SUPABASE_SECRET_KEY` is used in exactly one place, signing participant image paths on `/v/<token>`, and only **after** `get_ballot` returned a non-null ballot. A closed, deleted or unknown token gets no image URL. Author views sign with the author's own session.
 
 ## `public.list_author_studies() returns table (id uuid, title text, status study_status, participant_target integer, responded integer, total integer, created_at timestamptz)`
 

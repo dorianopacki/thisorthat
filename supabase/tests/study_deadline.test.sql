@@ -6,7 +6,7 @@
 -- Fixtures are inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(33);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures
@@ -148,6 +148,34 @@ select is(
   (select closes_at from public.studies where id = current_setting('test.none')::uuid),
   null,
   'create_study: no deadline leaves closes_at null'
+);
+
+-- The jsonb signature applies the same deadline rule.
+select set_config(
+  'test.jsonb_summer',
+  public.create_study(
+    p_title => 'Jsonb summer',
+    p_participant_target => 2,
+    p_variant_items => '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+    p_closes_local => '2099-06-15 18:00',
+    p_closes_tz => 'Europe/Warsaw'
+  )::text,
+  true
+);
+
+select is(
+  (select closes_at from public.studies where id = current_setting('test.jsonb_summer')::uuid),
+  '2099-06-15 16:00:00+00'::timestamptz,
+  'jsonb create_study: 18:00 Warsaw summer time is 16:00 UTC'
+);
+
+select throws_ok(
+  $$ select public.create_study('Jsonb past', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2020-01-01 12:00', 'Europe/Warsaw') $$,
+  '22023',
+  null,
+  'jsonb create_study: a deadline in the past'
 );
 
 select throws_ok(

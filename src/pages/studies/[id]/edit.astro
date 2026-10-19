@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
 import { inputZone, toLocalInputValue } from "@/lib/study-deadline";
+import { signVariantImages } from "@/lib/variant-images";
 import StudyWizard, { type StudyWizardInitial } from "@/components/studies/StudyWizard";
 
 // Draft edit (S-06): the creation form prefilled with the draft, saved through
@@ -34,7 +35,7 @@ let initial: StudyWizardInitial | null = null;
 if (study?.status === "draft") {
   const { data: variants, error: variantsError } = await supabase
     .from("variants")
-    .select("content")
+    .select("kind, content, image_path")
     .eq("study_id", study.id)
     .order("position", { ascending: true });
 
@@ -42,12 +43,28 @@ if (study?.status === "draft") {
     throw new Error("Nie udało się wczytać wariantów badania.");
   }
 
+  // Image variants keep their stored path (sent back as variant.<i>.image_path) and show a preview
+  // signed with the author's own session.
+  const imageUrls = await signVariantImages(
+    supabase,
+    variants.flatMap((v) => (v.kind === "image" && v.image_path ? [v.image_path] : [])),
+  );
+
   // The deadline is shown in the zone it was set in and sent back in that zone (closesTz).
   const hasDeadline = Boolean(study.closes_at && study.closes_tz);
   initial = {
     title: study.title,
     participantTarget: study.participant_target,
-    variants: variants.map((variant) => variant.content),
+    variants: variants.map((variant) =>
+      variant.kind === "image" && variant.image_path
+        ? {
+            kind: "image",
+            content: variant.content,
+            image_path: variant.image_path,
+            preview_url: imageUrls.get(variant.image_path),
+          }
+        : { kind: "text", content: variant.content },
+    ),
     closesLocal: hasDeadline ? toLocalInputValue(study.closes_at ?? "", study.closes_tz ?? "") : "",
     closesTz: hasDeadline ? inputZone(study.closes_tz ?? "") : null,
   };

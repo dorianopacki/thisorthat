@@ -8,6 +8,7 @@ import {
   uniqueSuffix,
   type Author,
   type StartedStudy,
+  variantFields,
 } from "./client";
 
 // study-closing-rules (S-04), app side: the manual close endpoint and the deadline entered in the
@@ -56,6 +57,8 @@ describe("manual close (owner)", () => {
     const response = await newClient().request(`/v/${study.tokens[0] ?? ""}`);
     expect(response.status, describeResponse(response)).toBe(200);
     expect(response.body).toContain("Badanie jest zakończone");
+    // No signed image URL leaves the server once get_ballot answers null.
+    expect(response.body).not.toContain("/object/sign/");
   });
 
   it("closing again redirects to the study page without ?error=", async () => {
@@ -75,7 +78,13 @@ describe("deadline from the wizard", () => {
   function createWithDeadline(title: string, closesLocal: string, closesTz = "Europe/Warsaw") {
     return owner.request("/api/studies", {
       method: "POST",
-      form: { title, participant_target: "2", variant: ["A", "B"], closes_local: closesLocal, closes_tz: closesTz },
+      form: {
+        title,
+        participant_target: "2",
+        ...variantFields(["A", "B"]),
+        closes_local: closesLocal,
+        closes_tz: closesTz,
+      },
     });
   }
 
