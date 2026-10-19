@@ -472,24 +472,24 @@ Images are served by the Supabase CDN, not the Worker. The Worker only parses mu
 
 #### Automated
 
-- [x] 3.1 Unit tests pass, including the admin-import guard
-- [x] 3.2 HTTP tests pass, including ballot-signing and closed-study cases
-- [x] 3.3 Static checks pass
+- [x] 3.1 Unit tests pass, including the admin-import guard — 57e4f5a
+- [x] 3.2 HTTP tests pass, including ballot-signing and closed-study cases — 57e4f5a
+- [x] 3.3 Static checks pass — 57e4f5a
 
 #### Manual
 
-- [x] 3.4 Phone ballot shows full-width images, no horizontal scroll, voting works
-- [x] 3.5 Closed study shows the closed message and old image URL expires
-- [x] 3.6 Results thumbnails stay stable across 10 s polls
+- [x] 3.4 Phone ballot shows full-width images, no horizontal scroll, voting works — 57e4f5a
+- [x] 3.5 Closed study shows the closed message and old image URL expires — 57e4f5a
+- [x] 3.6 Results thumbnails stay stable across 10 s polls — 57e4f5a
 
 ### Phase 4: E2E on a phone
 
 #### Automated
 
-- [ ] 4.1 Mobile spec passes on mobile-chrome
-- [ ] 4.2 Full E2E suite passes
-- [ ] 4.3 Deliberate break: removing img alt fails the spec
+- [x] 4.1 Mobile spec passes on mobile-chrome
+- [x] 4.2 Full E2E suite passes
+- [x] 4.3 Deliberate break: removing img alt fails the spec
 
 #### Manual
 
-- [ ] 4.4 Mobile trace shows images rendered at phone width
+- [x] 4.4 Mobile trace shows images rendered at phone width

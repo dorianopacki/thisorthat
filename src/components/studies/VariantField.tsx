@@ -184,8 +184,8 @@ export function VariantField({
         <div>
           <label htmlFor={`${id}-image`} className="mb-1 block text-xs text-blue-100/60">
             {keptImagePath || imageStatus === "ready"
-              ? "Zmień grafikę (JPEG, PNG lub WebP)"
-              : "Grafika (JPEG, PNG lub WebP)"}
+              ? `Zmień grafikę wariantu ${String(number)} (JPEG, PNG lub WebP)`
+              : `Grafika wariantu ${String(number)} (JPEG, PNG lub WebP)`}
           </label>
           <input
             id={`${id}-image`}
