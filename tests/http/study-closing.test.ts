@@ -8,6 +8,7 @@ import {
   uniqueSuffix,
   type Author,
   type StartedStudy,
+  variantFields,
 } from "./client";
 
 // study-closing-rules (S-04), app side: the manual close endpoint and the deadline entered in the
@@ -75,7 +76,13 @@ describe("deadline from the wizard", () => {
   function createWithDeadline(title: string, closesLocal: string, closesTz = "Europe/Warsaw") {
     return owner.request("/api/studies", {
       method: "POST",
-      form: { title, participant_target: "2", variant: ["A", "B"], closes_local: closesLocal, closes_tz: closesTz },
+      form: {
+        title,
+        participant_target: "2",
+        ...variantFields(["A", "B"]),
+        closes_local: closesLocal,
+        closes_tz: closesTz,
+      },
     });
   }
 

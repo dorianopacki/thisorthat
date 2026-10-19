@@ -3,8 +3,9 @@ import { CalendarClock, FilePlus, Plus, Save, Type, Users } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
-import { VariantField } from "@/components/studies/VariantField";
+import { VariantField, type VariantImageStatus, type VariantKind } from "@/components/studies/VariantField";
 import {
+  MAX_IMAGE_DESCRIPTION_LENGTH,
   MAX_PARTICIPANTS,
   MAX_TITLE_LENGTH,
   MAX_VARIANT_LENGTH,
@@ -20,11 +21,21 @@ const subscribeToNothing = () => () => undefined;
 const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 const noTimeZone = () => "";
 
+/** One variant of a draft being edited. For an image, `content` is its description. */
+export interface StudyWizardInitialVariant {
+  kind: VariantKind;
+  content: string;
+  /** The stored object name, posted back as `variant.<i>.image_path` to keep the image. */
+  image_path?: string;
+  /** A signed URL of the stored image, for the preview. */
+  preview_url?: string;
+}
+
 /** A draft being edited: its current values, with the deadline as datetime-local text in its stored zone. */
 export interface StudyWizardInitial {
   title: string;
   participantTarget: number;
-  variants: string[];
+  variants: StudyWizardInitialVariant[];
   closesLocal: string;
   closesTz: string | null;
 }
@@ -39,9 +50,28 @@ interface Props {
   initial?: StudyWizardInitial;
 }
 
+// `text` and `description` are kept apart, so switching kind back and forth loses neither.
 interface Variant {
   key: number;
-  value: string;
+  kind: VariantKind;
+  text: string;
+  description: string;
+  keptImagePath?: string;
+  keptPreviewUrl?: string;
+  imageStatus: VariantImageStatus;
+}
+
+function toVariant(initial: StudyWizardInitialVariant | undefined, key: number): Variant {
+  const isImage = initial?.kind === "image";
+  return {
+    key,
+    kind: initial?.kind ?? "text",
+    text: isImage ? "" : (initial?.content ?? ""),
+    description: isImage ? initial.content : "",
+    keptImagePath: initial?.image_path,
+    keptPreviewUrl: initial?.preview_url,
+    imageStatus: "none",
+  };
 }
 
 interface Errors {
@@ -63,7 +93,9 @@ export default function StudyWizard({
   const [participantTarget, setParticipantTarget] = useState(initial ? String(initial.participantTarget) : "");
   // Keys 0..n-1 for the starting variants; nextKey continues after them, so added ones stay unique.
   const [variants, setVariants] = useState<Variant[]>(() =>
-    (initial?.variants ?? Array.from({ length: MIN_VARIANTS }, () => "")).map((value, key) => ({ key, value })),
+    initial
+      ? initial.variants.map((v, key) => toVariant(v, key))
+      : Array.from({ length: MIN_VARIANTS }, (_, key) => toVariant(undefined, key)),
   );
   const nextKey = useRef(variants.length);
   // Optional deadline: local date-time from a datetime-local input plus an IANA zone, which the server
@@ -75,6 +107,8 @@ export default function StudyWizard({
   const closesTz = initial?.closesTz ?? browserTz;
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
+  // An image is resized when picked; until every resize is done the form cannot be sent.
+  const resizing = variants.some((v) => v.kind === "image" && v.imageStatus === "pending");
 
   // A page restored from the back/forward cache keeps its React state; re-enable the button.
   useEffect(() => {
@@ -108,12 +142,22 @@ export default function StudyWizard({
       next.variantCount = `Badanie musi mieć od ${String(MIN_VARIANTS)} do ${String(MAX_VARIANTS)} wariantów.`;
     }
 
-    const variantErrors = variants.map(({ value }) => {
-      const trimmed = value.trim();
-      if (!trimmed) return "Wariant nie może być pusty.";
-      if (charLength(trimmed) > MAX_VARIANT_LENGTH) {
-        return `Wariant może mieć najwyżej ${String(MAX_VARIANT_LENGTH)} znaków.`;
+    // Mirrors validateStudyForm (src/lib/study-form.ts); the server also checks the file's bytes and size.
+    const variantErrors = variants.map((v) => {
+      if (v.kind === "text") {
+        const trimmed = v.text.trim();
+        if (!trimmed) return "Wariant nie może być pusty.";
+        if (charLength(trimmed) > MAX_VARIANT_LENGTH) {
+          return `Wariant może mieć najwyżej ${String(MAX_VARIANT_LENGTH)} znaków.`;
+        }
+        return undefined;
       }
+      const trimmed = v.description.trim();
+      if (!trimmed) return "Opis grafiki nie może być pusty.";
+      if (charLength(trimmed) > MAX_IMAGE_DESCRIPTION_LENGTH) {
+        return `Opis grafiki może mieć najwyżej ${String(MAX_IMAGE_DESCRIPTION_LENGTH)} znaków.`;
+      }
+      if (v.imageStatus !== "ready" && !v.keptImagePath) return "Dodaj grafikę do wariantu.";
       return undefined;
     });
     if (variantErrors.some(Boolean)) next.variants = variantErrors;
@@ -128,18 +172,23 @@ export default function StudyWizard({
     return Object.keys(next).length === 0;
   }
 
-  function updateVariant(index: number, value: string) {
-    setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, value } : v)));
-    if (errors.variants?.[index]) {
-      setErrors((prev) => ({ ...prev, variants: prev.variants?.map((e, i) => (i === index ? undefined : e)) }));
-    }
+  function setVariantError(index: number, error: string | undefined) {
+    setErrors((prev) => {
+      const list = prev.variants ?? variants.map(() => undefined);
+      return { ...prev, variants: list.map((e, i) => (i === index ? error : e)) };
+    });
+  }
+
+  function updateVariant(index: number, patch: Partial<Omit<Variant, "key">>) {
+    setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, ...patch } : v)));
+    if (errors.variants?.[index]) setVariantError(index, undefined);
   }
 
   function addVariant() {
     if (variants.length >= MAX_VARIANTS) return;
     const key = nextKey.current;
     nextKey.current += 1;
-    setVariants((prev) => [...prev, { key, value: "" }]);
+    setVariants((prev) => [...prev, toVariant(undefined, key)]);
     setErrors((prev) => ({
       ...prev,
       variantCount: undefined,
@@ -158,7 +207,7 @@ export default function StudyWizard({
   }
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    if (submitting || !validate()) {
+    if (submitting || resizing || !validate()) {
       e.preventDefault();
       return;
     }
@@ -166,7 +215,14 @@ export default function StudyWizard({
   }
 
   return (
-    <form method="POST" action={action} className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form
+      method="POST"
+      action={action}
+      encType="multipart/form-data"
+      className="space-y-4"
+      onSubmit={handleSubmit}
+      noValidate
+    >
       <FormField
         id="title"
         label="Tytuł badania"
@@ -204,9 +260,24 @@ export default function StudyWizard({
             key={variant.key}
             id={`variant-${String(variant.key)}`}
             index={index}
-            value={variant.value}
-            onChange={(v) => {
-              updateVariant(index, v);
+            kind={variant.kind}
+            onKindChange={(kind) => {
+              updateVariant(index, { kind });
+            }}
+            text={variant.text}
+            onTextChange={(text) => {
+              updateVariant(index, { text });
+            }}
+            description={variant.description}
+            onDescriptionChange={(description) => {
+              updateVariant(index, { description });
+            }}
+            keptImagePath={variant.keptImagePath}
+            keptPreviewUrl={variant.keptPreviewUrl}
+            imageStatus={variant.imageStatus}
+            onImageStatusChange={(imageStatus, error) => {
+              setVariants((prev) => prev.map((v) => (v.key === variant.key ? { ...v, imageStatus } : v)));
+              setVariantError(index, error);
             }}
             onRemove={() => {
               removeVariant(index);
@@ -251,6 +322,7 @@ export default function StudyWizard({
 
       <SubmitButton
         pending={submitting}
+        disabled={resizing}
         pendingText={pendingText}
         icon={initial ? <Save className="size-4" /> : <FilePlus className="size-4" />}
       >

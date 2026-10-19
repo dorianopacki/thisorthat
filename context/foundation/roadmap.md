@@ -3,7 +3,7 @@ project: "ThisOrThat"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-16
+updated: 2026-10-17
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -53,7 +53,7 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 | S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | in-progress |
 | S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | done        |
 | S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | in-progress |
-| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | proposed    |
+| S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | in-progress |
 
 ## Streams
 
@@ -196,7 +196,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Jaki jest limit liczby i rozmiaru wgrywanych grafik na badanie? — Owner: user. Block: no. (Wiąże się z pytaniem 2 w `## Open Roadmap Questions`.)
 - **Risk:** Jedyny plasterek dokładający magazyn plików — celowo wchodzi tu, a nie do `F-01`, bo wcześniej nic go nie potrzebuje. Trudna część to dostęp: niepublikowane grafiki muszą być chronione tą samą regułą co reszta badania, więc publiczny odczyt z magazynu jest wykluczony. Przy celu `speed` to najsłabszy kandydat ze ścieżki koniecznej — jeśli termin zacznie uwierać, to pierwszy element do rozmowy z autorem PRD.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 

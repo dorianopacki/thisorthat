@@ -442,31 +442,31 @@ Images are served by the Supabase CDN, not the Worker. The Worker only parses mu
 
 #### Automated
 
-- [x] 1.1 Migration applies on a fresh local stack
-- [x] 1.2 pgTAP suite passes, including image_variants.test.sql
-- [x] 1.3 Types regenerate with no diff after commit
-- [x] 1.4 Static checks pass
-- [x] 1.5 Existing HTTP and unit suites pass unchanged
+- [x] 1.1 Migration applies on a fresh local stack — 004237b
+- [x] 1.2 pgTAP suite passes, including image_variants.test.sql — 004237b
+- [x] 1.3 Types regenerate with no diff after commit — 004237b
+- [x] 1.4 Static checks pass — 004237b
+- [x] 1.5 Existing HTTP and unit suites pass unchanged — 004237b
 
 #### Manual
 
-- [x] 1.6 variant-images bucket is private with 1 MiB and webp/jpeg limits
-- [x] 1.7 Text-only study create/edit/start behaves as before
+- [x] 1.6 variant-images bucket is private with 1 MiB and webp/jpeg limits — 004237b
+- [x] 1.7 Text-only study create/edit/start behaves as before — 004237b
 
 ### Phase 2: Author: upload, edit, delete
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass, including form and file-sniff tests
-- [ ] 2.2 HTTP tests pass, including image-variants.test.ts
-- [ ] 2.3 pgTAP suite still passes
-- [ ] 2.4 Static checks pass
+- [x] 2.1 Unit tests pass, including form and file-sniff tests
+- [x] 2.2 HTTP tests pass, including image-variants.test.ts
+- [x] 2.3 pgTAP suite still passes
+- [x] 2.4 Static checks pass
 
 #### Manual
 
-- [ ] 2.5 Large phone photo is resized to ≤ 1 MiB, 1600 px, correct orientation
-- [ ] 2.6 Mixed variants create/edit (keep, replace, switch kind) with matching previews
-- [ ] 2.7 Deleting a study removes its storage objects
+- [x] 2.5 Large phone photo is resized to ≤ 1 MiB, 1600 px, correct orientation
+- [x] 2.6 Mixed variants create/edit (keep, replace, switch kind) with matching previews
+- [x] 2.7 Deleting a study removes its storage objects
 
 ### Phase 3: Participant ballot and results
 

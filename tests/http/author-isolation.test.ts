@@ -1,6 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
-import { createStudy, describeResponse, newAuthor, redirectTarget, uniqueSuffix, type Author } from "./client";
+import {
+  createStudy,
+  describeResponse,
+  newAuthor,
+  redirectTarget,
+  uniqueSuffix,
+  variantFields,
+  type Author,
+} from "./client";
+import { exists, signedImages, storageAs, webpFile } from "./storage";
 
 // Author B against author A's study ids. Ownership lives in the database (RLS and the definer
 // functions); these tests prove the app translates "not owned" into a 404 page, a JSON 404 or a
@@ -12,18 +21,29 @@ interface Fixtures {
   authorB: Author;
   activeId: string;
   draftId: string;
-  titles: { active: string; draft: string; own: string };
+  /** A's draft with an image variant, and that image's object name. */
+  imageDraftId: string;
+  imagePath: string;
+  titles: { active: string; draft: string; image: string; own: string };
 }
 
 let fixtures: Fixtures;
 
 beforeAll(async () => {
   const run = uniqueSuffix();
-  const titles = { active: `A active ${run}`, draft: `A draft ${run}`, own: `B own ${run}` };
+  const titles = { active: `A active ${run}`, draft: `A draft ${run}`, image: `A image ${run}`, own: `B own ${run}` };
 
   const authorA = await newAuthor();
   const activeId = await createStudy(authorA, titles.active);
   const draftId = await createStudy(authorA, titles.draft);
+  const imageDraftId = await createStudy(authorA, titles.image, [
+    "A1",
+    { description: `A logo ${run}`, image: webpFile() },
+  ]);
+  const images = signedImages((await authorA.request(`/studies/${imageDraftId}`)).body);
+  if (images.length !== 1)
+    throw new Error(`A's image draft /studies/${imageDraftId} shows ${String(images.length)} signed images`);
+  const [image] = images;
   const start = await authorA.request(`/api/studies/${activeId}/start`, { method: "POST" });
   if (start.status !== 302 || redirectTarget(start) !== `/studies/${activeId}`) {
     throw new Error(
@@ -34,13 +54,14 @@ beforeAll(async () => {
   const authorB = await newAuthor();
   await createStudy(authorB, titles.own);
 
-  fixtures = { authorA, authorB, activeId, draftId, titles };
+  fixtures = { authorA, authorB, activeId, draftId, imageDraftId, imagePath: image.path, titles };
 });
 
 // The ids B tries. Resolved lazily: the A ids exist only after beforeAll.
 const targets: readonly { target: string; id: () => string }[] = [
   { target: "A-active", id: () => fixtures.activeId },
   { target: "A-draft", id: () => fixtures.draftId },
+  { target: "A-image-draft", id: () => fixtures.imageDraftId },
   { target: "unknown uuid", id: () => randomUUID() },
   { target: "non-uuid", id: () => "not-a-uuid" },
 ];
@@ -97,7 +118,7 @@ describe("author B against author A's studies", () => {
         form: {
           title: `B edit ${uniqueSuffix()}`,
           participant_target: "3",
-          variant: ["B1", "B2", "B3"],
+          ...variantFields(["B1", "B2", "B3"]),
           closes_local: "2099-06-15T18:00",
           closes_tz: "Europe/Warsaw",
         },
@@ -129,6 +150,14 @@ describe("author B against author A's studies", () => {
     expect(response.body).toContain(fixtures.titles.own);
     expect(response.body).not.toContain(fixtures.titles.active);
     expect(response.body).not.toContain(fixtures.titles.draft);
+    expect(response.body).not.toContain(fixtures.titles.image);
+  });
+
+  it("B: Storage, through B's own session, neither finds nor signs A's image", async () => {
+    const storage = await storageAs(fixtures.authorB);
+    expect(await exists(storage, fixtures.imagePath)).toBe(false);
+    const { data } = await storage.storage.from("variant-images").createSignedUrl(fixtures.imagePath, 60);
+    expect(data).toBeNull();
   });
 
   it("B: GET /dashboard shows B's draft progress from B's own participant_target", async () => {
@@ -161,6 +190,13 @@ describe("author A controls, after B's requests", () => {
     expect(response.body).toContain(fixtures.titles.draft);
     expect(response.body).not.toContain("B edit ");
     expect(response.body).not.toContain("Zakończy się automatycznie");
+  });
+
+  it("A: A's image object and its signed preview survive B's update and delete attempts", async () => {
+    const response = await fixtures.authorA.request(`/studies/${fixtures.imageDraftId}`);
+    expect(response.status, describeResponse(response)).toBe(200);
+    expect(signedImages(response.body).map((i) => i.path)).toEqual([fixtures.imagePath]);
+    expect(await exists(await storageAs(fixtures.authorA), fixtures.imagePath)).toBe(true);
   });
 
   it("A: GET /studies/<A-active> still answers 200 with its title after B's delete attempts", async () => {
