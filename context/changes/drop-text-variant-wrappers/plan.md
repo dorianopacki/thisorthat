@@ -145,14 +145,14 @@ Push only after the S-08 app version is live; an older deployed app would call t
 
 #### Automated
 
-- [x] 1.1 Migration applies on a fresh local stack
-- [x] 1.2 pgTAP passes with no text[] call left
-- [x] 1.3 Generated types match the committed file
-- [x] 1.4 Static checks pass
-- [x] 1.5 Unit and HTTP suites pass unchanged
+- [x] 1.1 Migration applies on a fresh local stack — cd6afc3
+- [x] 1.2 pgTAP passes with no text[] call left — cd6afc3
+- [x] 1.3 Generated types match the committed file — cd6afc3
+- [x] 1.4 Static checks pass — cd6afc3
+- [x] 1.5 Unit and HTTP suites pass unchanged — cd6afc3
 
 #### Manual
 
-- [x] 1.6 Production runs the S-08 app version before the push
-- [x] 1.7 db push applies only this migration; no new advisor ERROR
-- [x] 1.8 Creating and editing a study in production still works
+- [x] 1.6 Production runs the S-08 app version before the push — cd6afc3
+- [x] 1.7 db push applies only this migration; no new advisor ERROR — cd6afc3
+- [x] 1.8 Creating and editing a study in production still works — cd6afc3
