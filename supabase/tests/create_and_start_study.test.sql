@@ -41,7 +41,8 @@ select set_config(
 
 select set_config(
   'test.study_id',
-  public.create_study('  My study  ', 3, array['  Left  ', ' Right'])::text,
+  public.create_study('  My study  ', 3,
+    '[{"kind": "text", "content": "  Left  "}, {"kind": "text", "content": " Right"}]'::jsonb)::text,
   true
 );
 
@@ -86,63 +87,73 @@ select set_config(
 );
 
 select throws_ok(
-  $$ select public.create_study('Too few', 3, array['Only']) $$,
+  $$ select public.create_study('Too few', 3, '[{"kind": "text", "content": "Only"}]'::jsonb) $$,
   '22023',
   null,
   'create_study with 1 variant raises 22023'
 );
 
 select throws_ok(
-  $$ select public.create_study('Too many', 3, array['1', '2', '3', '4', '5', '6', '7']) $$,
+  $$ select public.create_study('Too many', 3,
+       '[{"kind": "text", "content": "1"}, {"kind": "text", "content": "2"}, {"kind": "text", "content": "3"},
+         {"kind": "text", "content": "4"}, {"kind": "text", "content": "5"}, {"kind": "text", "content": "6"},
+         {"kind": "text", "content": "7"}]'::jsonb) $$,
   '22023',
   null,
   'create_study with 7 variants raises 22023'
 );
 
 select throws_ok(
-  $$ select public.create_study('Blank', 3, array['Left', '   ']) $$,
+  $$ select public.create_study('Blank', 3,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "   "}]'::jsonb) $$,
   '22023',
   null,
   'create_study with a blank variant raises 22023'
 );
 
 select throws_ok(
-  $$ select public.create_study('N zero', 0, array['Left', 'Right']) $$,
+  $$ select public.create_study('N zero', 0,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'create_study with N = 0 raises 23514'
 );
 
 select throws_ok(
-  $$ select public.create_study('N too big', 101, array['Left', 'Right']) $$,
+  $$ select public.create_study('N too big', 101,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'create_study with N = 101 raises 23514'
 );
 
 select throws_ok(
-  $$ select public.create_study('   ', 3, array['Left', 'Right']) $$,
+  $$ select public.create_study('   ', 3,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'create_study with a blank title raises 23514'
 );
 
 select throws_ok(
-  $$ select public.create_study(repeat('t', 201), 3, array['Left', 'Right']) $$,
+  $$ select public.create_study(repeat('t', 201), 3,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'create_study with a 201-character title raises 23514'
 );
 
 select throws_ok(
-  $$ select public.create_study('Long variant', 3, array['Left', repeat('v', 2001)]) $$,
+  $$ select public.create_study('Long variant', 3,
+       jsonb_build_array(jsonb_build_object('kind', 'text', 'content', 'Left'),
+                         jsonb_build_object('kind', 'text', 'content', repeat('v', 2001)))) $$,
   '23514',
   null,
   'create_study with a 2001-character variant raises 23514'
 );
 
 select throws_ok(
-  $$ select public.create_study('No variants', 3, null::text[]) $$,
+  $$ select public.create_study('No variants', 3, null::jsonb) $$,
   '22023',
   null,
   'create_study with null variants raises 22023'
@@ -384,7 +395,8 @@ set local role anon;
 select set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
 
 select throws_ok(
-  $$ select public.create_study('Anon', 3, array['Left', 'Right']) $$,
+  $$ select public.create_study('Anon', 3,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '42501',
   null,
   'anon: permission denied on create_study'

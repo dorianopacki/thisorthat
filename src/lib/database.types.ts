@@ -200,27 +200,16 @@ export type Database = {
         Returns: string;
       };
       close_study: { Args: { p_study_id: string }; Returns: undefined };
-      create_study:
-        | {
-            Args: {
-              p_closes_local?: string;
-              p_closes_tz?: string;
-              p_participant_target: number;
-              p_title: string;
-              p_variant_items: Json;
-            };
-            Returns: string;
-          }
-        | {
-            Args: {
-              p_closes_local?: string;
-              p_closes_tz?: string;
-              p_participant_target: number;
-              p_title: string;
-              p_variants: string[];
-            };
-            Returns: string;
-          };
+      create_study: {
+        Args: {
+          p_closes_local?: string;
+          p_closes_tz?: string;
+          p_participant_target: number;
+          p_title: string;
+          p_variant_items: Json;
+        };
+        Returns: string;
+      };
       effective_status: {
         Args: { s: Database["public"]["Tables"]["studies"]["Row"] };
         Returns: Database["public"]["Enums"]["study_status"];
@@ -247,29 +236,17 @@ export type Database = {
         };
         Returns: Database["public"]["Enums"]["study_status"];
       };
-      update_study_draft:
-        | {
-            Args: {
-              p_closes_local?: string;
-              p_closes_tz?: string;
-              p_participant_target: number;
-              p_study_id: string;
-              p_title: string;
-              p_variant_items: Json;
-            };
-            Returns: undefined;
-          }
-        | {
-            Args: {
-              p_closes_local?: string;
-              p_closes_tz?: string;
-              p_participant_target: number;
-              p_study_id: string;
-              p_title: string;
-              p_variants: string[];
-            };
-            Returns: undefined;
-          };
+      update_study_draft: {
+        Args: {
+          p_closes_local?: string;
+          p_closes_tz?: string;
+          p_participant_target: number;
+          p_study_id: string;
+          p_title: string;
+          p_variant_items: Json;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       study_status: "draft" | "active" | "closed";

@@ -98,22 +98,29 @@ select is(
 
 select set_config(
   'test.summer',
-  public.create_study('Summer', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Europe/Warsaw')::text,
+  public.create_study('Summer', 2,
+    '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+    '2099-06-15 18:00', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
   'test.gap',
-  public.create_study('Spring gap', 2, array['Left', 'Right'], '2099-03-29 02:30', 'Europe/Warsaw')::text,
+  public.create_study('Spring gap', 2,
+    '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+    '2099-03-29 02:30', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
   'test.doubled',
-  public.create_study('Doubled hour', 2, array['Left', 'Right'], '2099-10-25 02:30', 'Europe/Warsaw')::text,
+  public.create_study('Doubled hour', 2,
+    '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+    '2099-10-25 02:30', 'Europe/Warsaw')::text,
   true
 );
 select set_config(
   'test.none',
-  public.create_study('No deadline', 2, array['Left', 'Right'])::text,
+  public.create_study('No deadline', 2,
+    '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb)::text,
   true
 );
 
@@ -179,7 +186,9 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.create_study('Bad zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Mars/Olympus') $$,
+  $$ select public.create_study('Bad zone', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2099-06-15 18:00', 'Mars/Olympus') $$,
   '22023',
   null,
   'create_study: unknown time zone'
@@ -188,35 +197,45 @@ select throws_ok(
 -- pg_timezone_names also lists names Intl rejects (posix/…, Factory); the author page formats the
 -- deadline with Intl, so create_study must refuse them.
 select throws_ok(
-  $$ select public.create_study('Posix zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'posix/Europe/Warsaw') $$,
+  $$ select public.create_study('Posix zone', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2099-06-15 18:00', 'posix/Europe/Warsaw') $$,
   '22023',
   null,
   'create_study: a posix/ zone Intl cannot format'
 );
 
 select throws_ok(
-  $$ select public.create_study('Factory zone', 2, array['Left', 'Right'], '2099-06-15 18:00', 'Factory') $$,
+  $$ select public.create_study('Factory zone', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2099-06-15 18:00', 'Factory') $$,
   '22023',
   null,
   'create_study: the Factory zone'
 );
 
 select throws_ok(
-  $$ select public.create_study('Local only', 2, array['Left', 'Right'], '2099-06-15 18:00', null) $$,
+  $$ select public.create_study('Local only', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2099-06-15 18:00', null) $$,
   '22023',
   null,
   'create_study: local time without a zone'
 );
 
 select throws_ok(
-  $$ select public.create_study('Zone only', 2, array['Left', 'Right'], null, 'Europe/Warsaw') $$,
+  $$ select public.create_study('Zone only', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       null, 'Europe/Warsaw') $$,
   '22023',
   null,
   'create_study: zone without a local time'
 );
 
 select throws_ok(
-  $$ select public.create_study('Past', 2, array['Left', 'Right'], '2020-01-01 12:00', 'Europe/Warsaw') $$,
+  $$ select public.create_study('Past', 2,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
+       '2020-01-01 12:00', 'Europe/Warsaw') $$,
   '22023',
   null,
   'create_study: a deadline in the past'

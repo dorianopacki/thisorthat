@@ -84,14 +84,12 @@ The page (`src/pages/v/[token].astro`, S-02) picks its screen in this order:
 Callable by `authenticated` only (`security invoker`: runs under the caller's grants and RLS). Creates a `draft` study owned by `auth.uid()` with one variant per array entry at `position` 0, 1, … in array order; title and variant contents are trimmed. Returns the study id.
 
 - `p_variant_items`: JSON array of `{ "kind": "text" | "image", "content": text, "image_path": text | null }`. For `text`, `image_path` must be null; for `image`, `content` is the description and `image_path` names an object in `variant-images` that exists and is owned by the caller (`owner_id = auth.uid()`).
-- The parameter is deliberately not called `p_variants`: PostgREST picks an overload by argument names only, so two overloads sharing every name are ambiguous (`PGRST203`).
+- The parameter is not called `p_variants` for historical reasons: during the S-08 rollout a `text[]` overload named `p_variants` existed alongside it, and PostgREST picks an overload by argument names only (`PGRST203`). That overload is gone; the name stays because renaming it would be a contract change.
 - Raises `22023` when `p_variant_items` is not an array of 2 to 6 entries, or any entry's `content` is null or blank after trimming.
 - Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, a variant is over 2000 characters, or for any variant-shape violation: an entry that is not an object, an unknown `kind`, a non-string `content` / `image_path`, a text variant with an `image_path`, an image variant without a valid `image_path` or with a description over 200 characters, an `image_path` used twice in the payload or already used by another variant, or an image that is missing or not the caller's.
 - Optional deadline: the author's local date and time `p_closes_local` plus the IANA zone `p_closes_tz` (from the browser). Stored as `closes_at = p_closes_local at time zone p_closes_tz`. Postgres resolves DST: a local time in the spring gap (e.g. 2027-03-28 02:30 Europe/Warsaw) is read with the offset before the jump (+01). The doubled autumn hour (2027-10-31 02:30) is read with the offset after the jump back (+01).
 - Raises `22023` when only one of `p_closes_local` / `p_closes_tz` is given, the zone is not in `pg_timezone_names` or is one Intl cannot format (`posix/…`, `right/…`, `Factory`, `localtime`, `posixrules`), or the deadline is not in the future.
 - Nothing is inserted when it raises.
-
-**Temporary `text[]` wrapper:** `create_study(p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns uuid` (`security invoker`, `authenticated` only) maps every entry to `{kind: 'text', content, image_path: null}` and calls the `jsonb` version, so the app deployed before `image-variants` keeps working between `db push` and deploy. It is dropped in a follow-up migration; new code must call `p_variant_items`.
 
 ## `public.update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variant_items jsonb, p_closes_local timestamp default null, p_closes_tz text default null) returns void`
 
@@ -104,8 +102,6 @@ Callable by `authenticated` only (`security definer`). The only write path for e
 - Raises `22023` for the same variant and deadline rules as `create_study` (2–6 variants, none null or blank; both or neither deadline value; an Intl-formattable zone from `pg_timezone_names`; a deadline in the future). The deadline is stored as `p_closes_local at time zone p_closes_tz`.
 - Raises `23514` (check violation) when N is outside 1–100, the title is blank or over 200 characters, a variant is over 2000 characters, or for the same variant-shape, image ownership and path-reuse rules as `create_study`.
 - Nothing changes when it raises.
-
-**Temporary `text[]` wrapper:** `update_study_draft(p_study_id uuid, p_title text, p_participant_target integer, p_variants text[], p_closes_local timestamp default null, p_closes_tz text default null) returns void` (`security invoker`, `authenticated` only) maps every entry to a text variant and calls the `jsonb` version. Dropped in the same follow-up migration as the `create_study` wrapper.
 
 ## `public.start_study(p_study_id uuid) returns void`
 
