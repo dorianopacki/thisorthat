@@ -3,7 +3,7 @@ project: "ThisOrThat"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-10-17
+updated: 2026-10-19
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -52,7 +52,7 @@ To, co odróżnia produkt od zwykłego formularza, to dwie rzeczy naraz: kontrol
 | S-04 | `study-closing-rules`       | Autor zamyka badanie — automatycznie po N głosach, ręcznie albo po ustawionym terminie                  | S-02          | US-01, FR-014, FR-015, FR-016, FR-010           | done        |
 | S-05 | `author-study-dashboard`    | Autor widzi listę swoich badań ze statusem i postępem „X z N"                                           | S-02          | FR-002, FR-001                                  | done        |
 | S-06 | `edit-and-delete-study`     | Autor edytuje szkic badania przed startem i usuwa badanie                                               | S-05          | FR-017, FR-018, FR-010                          | done        |
-| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | in-progress |
+| S-07 | `generate-extra-links`      | Autor dogenerowuje dodatkowe linki w trwającym badaniu                                                  | S-01, S-04    | FR-019                                          | done        |
 | S-08 | `image-variants`            | Autor dodaje warianty graficzne, a uczestnik ogląda je na telefonie                                     | S-01, S-02    | FR-003, NFR §mobile, NFR §izolacja              | in-progress |
 
 ## Streams
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Zależy od `S-04`, bo cała treść wymagania to rozróżnienie „trwa" od „zamknięte" — bez istniejącej reguły zamykania nie ma czego egzekwować. Dogenerowanie zmienia N w trakcie, więc postęp „X z N" z `S-03` i automatyczne zamknięcie z `S-04` muszą przeliczać się na bieżąco, a nie na wartości zapamiętanej przy starcie.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-08: Autor używa wariantów graficznych
 
@@ -244,5 +244,6 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **S-03: Autor może oglądać ranking wariantów według liczby głosów (warianty z równą liczbą głosów dzielą miejsce), anonimowe komentarze pogrupowane przy wariantach oraz postęp „odpowiedziało X z N", aktualizowane w trakcie trwania badania.** — Archived 2026-10-06 → `context/archive/2026-10-06-live-results-and-comments/`. Lesson: —.
 - **S-04: Badanie zamyka się automatycznie po wykorzystaniu wszystkich N linków; autor może je zamknąć ręcznie w dowolnym momencie albo ustawić termin (dzień + godzina w swojej strefie czasowej), po którym badanie się zamyka. Zamknięte badanie nie przyjmuje głosów, a uczestnik widzi „Badanie jest zakończone"; wyniki pozostają widoczne dla autora.** — Archived 2026-10-15 → `context/archive/2026-10-15-study-closing-rules/`. Lesson: —.
 - **S-05: Autor po zalogowaniu widzi prostą listę wyłącznie swoich badań ze statusem (szkic / trwa / zamknięte) i postępem „X z N", z której wchodzi w konkretne badanie.** — Archived 2026-10-15 → `context/archive/2026-10-15-author-study-dashboard/`. Lesson: —.
+- **S-07: Autor może dogenerować dodatkowe jednorazowe linki w trwającym badaniu (co podnosi N i przesuwa moment automatycznego zamknięcia); badania zamkniętego nie da się rozszerzyć.** — Archived 2026-10-19 → `context/archive/2026-10-16-generate-extra-links/`. Lesson: —.
 
 (Empty on first generation. `/10x-archive` appends entries here.)

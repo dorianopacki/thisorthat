@@ -1,10 +1,10 @@
 ---
 change_id: generate-extra-links
 title: Autor dogenerowuje dodatkowe linki w trwającym badaniu
-status: impl_reviewed
+status: archived
 created: 2026-10-16
-updated: 2026-10-16
-archived_at: null
+updated: 2026-10-19
+archived_at: 2026-10-19T14:31:22Z
 ---
 
 ## Notes
