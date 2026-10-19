@@ -6,7 +6,7 @@
 -- inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(53);
+select plan(50);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (uuid prefixes 7777/8888 users, e1 studies, e2 variants)
@@ -102,19 +102,30 @@ select throws_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- Both signatures exist; anon can execute none of the write RPCs
+-- Only the jsonb signatures exist; anon can execute none of the write RPCs
 -- ---------------------------------------------------------------------------
 
 select ok(
-  has_function_privilege('authenticated', 'public.create_study(text, integer, jsonb, timestamp, text)', 'execute')
-  and has_function_privilege('authenticated', 'public.create_study(text, integer, text[], timestamp, text)', 'execute'),
-  'authenticated can execute both create_study signatures'
+  has_function_privilege('authenticated', 'public.create_study(text, integer, jsonb, timestamp, text)', 'execute'),
+  'authenticated can execute create_study (jsonb)'
 );
 
 select ok(
-  has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, jsonb, timestamp, text)', 'execute')
-  and has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, text[], timestamp, text)', 'execute'),
-  'authenticated can execute both update_study_draft signatures'
+  has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, jsonb, timestamp, text)', 'execute'),
+  'authenticated can execute update_study_draft (jsonb)'
+);
+
+-- The temporary text[] wrappers are gone (dropped after S-08 was deployed).
+select is(
+  to_regprocedure('public.create_study(text, integer, text[], timestamp, text)'),
+  null,
+  'the create_study text[] signature no longer exists'
+);
+
+select is(
+  to_regprocedure('public.update_study_draft(uuid, text, integer, text[], timestamp, text)'),
+  null,
+  'the update_study_draft text[] signature no longer exists'
 );
 
 set local role anon;
@@ -134,20 +145,6 @@ select throws_ok(
   '42501',
   null,
   'anon: permission denied on update_study_draft (jsonb)'
-);
-
-select throws_ok(
-  $$ select public.create_study('Anon', 2, array['L', 'R']) $$,
-  '42501',
-  null,
-  'anon: permission denied on the create_study text[] wrapper'
-);
-
-select throws_ok(
-  $$ select public.update_study_draft('e1000000-0000-0000-0000-000000000001', 'Anon', 2, array['L', 'R']) $$,
-  '42501',
-  null,
-  'anon: permission denied on the update_study_draft text[] wrapper'
 );
 
 select is(
@@ -280,16 +277,6 @@ select throws_ok(
   '23514',
   null,
   'A: create_study with non-object entries raises 23514'
-);
-
--- The text[] wrapper still creates a text-only study.
-select set_config('test.wrapped', public.create_study('Wrapped', 2, array[' L ', 'R'])::text, true);
-
-select is(
-  (select array_agg(position || '|' || kind || '|' || content || '|' || coalesce(image_path, '-') order by position)
-     from public.variants where study_id = current_setting('test.wrapped')::uuid),
-  array['0|text|L|-', '1|text|R|-'],
-  'A: the create_study text[] wrapper stores text variants'
 );
 
 -- ---------------------------------------------------------------------------
@@ -482,19 +469,6 @@ select is(
      from jsonb_array_elements(public.get_study_results('e1000000-0000-0000-0000-000000000003') -> 'variants') as v),
   array['text|-', 'image|aaaaaaaa-0000-4000-8000-000000000004.webp'],
   'A: get_study_results returns kind and image_path per variant'
-);
-
--- The text[] wrapper still replaces a draft with text variants, freeing its image.
-select lives_ok(
-  $$ select public.update_study_draft('e1000000-0000-0000-0000-000000000001', 'A edit', 2, array['T1', 'T2']) $$,
-  'A: the update_study_draft text[] wrapper replaces the draft'
-);
-
-select is(
-  (select array_agg(position || '|' || kind || '|' || content || '|' || coalesce(image_path, '-') order by position)
-     from public.variants where study_id = 'e1000000-0000-0000-0000-000000000001'),
-  array['0|text|T1|-', '1|text|T2|-'],
-  'A: the text[] wrapper stored text variants without an image'
 );
 
 -- ---------------------------------------------------------------------------

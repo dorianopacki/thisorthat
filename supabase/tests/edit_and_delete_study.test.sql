@@ -7,7 +7,7 @@
 -- as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(62);
+select plan(59);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (uuid prefixes 5555/6666 users, f1 studies, f2 variants, f3 links)
@@ -55,28 +55,32 @@ select set_config(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'Hijacked', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'Hijacked', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   'P0002',
   null,
   'B: update_study_draft on A''s draft raises P0002'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000002', 'Hijacked', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000002', 'Hijacked', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   'P0002',
   null,
   'B: update_study_draft on A''s active study raises P0002'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000003', 'Hijacked', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000003', 'Hijacked', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   'P0002',
   null,
   'B: update_study_draft on A''s closed study raises P0002'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-0000000000ff', 'Hijacked', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-0000000000ff', 'Hijacked', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   'P0002',
   null,
   'B: update_study_draft on an unknown uuid raises P0002'
@@ -86,7 +90,8 @@ select throws_ok(
 select set_config('request.jwt.claims', json_build_object('role', 'authenticated')::text, true);
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'No uid', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'No uid', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   'P0002',
   null,
   'no auth.uid(): update_study_draft raises P0002'
@@ -97,7 +102,8 @@ set local role anon;
 select set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'Anon', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000001', 'Anon', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   '42501',
   null,
   'anon: permission denied on update_study_draft'
@@ -130,11 +136,6 @@ select is(
 );
 
 select ok(
-  has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, text[], timestamp, text)', 'execute'),
-  'authenticated can execute update_study_draft'
-);
-
-select ok(
   has_function_privilege('authenticated', 'public.update_study_draft(uuid, text, integer, jsonb, timestamp, text)', 'execute'),
   'authenticated can execute update_study_draft (jsonb)'
 );
@@ -153,7 +154,8 @@ select set_config(
 select lives_ok(
   $$ select public.update_study_draft(
        'f1000000-0000-0000-0000-000000000001', '  New title  ', 7,
-       array['  Third ', 'First', ' Second']) $$,
+       '[{"kind": "text", "content": "  Third "}, {"kind": "text", "content": "First"},
+         {"kind": "text", "content": " Second"}]'::jsonb) $$,
   'A: update_study_draft on own draft succeeds'
 );
 
@@ -187,7 +189,9 @@ select ok(
 select lives_ok(
   $$ select public.update_study_draft(
        'f1000000-0000-0000-0000-000000000001', 'New title', 7,
-       array['V1', 'V2', 'V3', 'V4', 'V5', 'V6']) $$,
+       '[{"kind": "text", "content": "V1"}, {"kind": "text", "content": "V2"},
+         {"kind": "text", "content": "V3"}, {"kind": "text", "content": "V4"},
+         {"kind": "text", "content": "V5"}, {"kind": "text", "content": "V6"}]'::jsonb) $$,
   'A: a draft can grow to 6 variants'
 );
 
@@ -201,7 +205,7 @@ select is(
 select lives_ok(
   $$ select public.update_study_draft(
        'f1000000-0000-0000-0000-000000000001', 'New title', 7,
-       array['V6', 'V1']) $$,
+       '[{"kind": "text", "content": "V6"}, {"kind": "text", "content": "V1"}]'::jsonb) $$,
   'A: a draft can shrink back to 2 variants'
 );
 
@@ -216,7 +220,8 @@ select is(
 
 select lives_ok(
   $$ select public.update_study_draft(
-       'f1000000-0000-0000-0000-000000000001', 'New title', 7, array['V6', 'V1'],
+       'f1000000-0000-0000-0000-000000000001', 'New title', 7,
+       '[{"kind": "text", "content": "V6"}, {"kind": "text", "content": "V1"}]'::jsonb,
        '2099-06-15 18:00', 'Europe/Warsaw') $$,
   'A: a deadline can be set on a draft'
 );
@@ -230,7 +235,8 @@ select is(
 
 select lives_ok(
   $$ select public.update_study_draft(
-       'f1000000-0000-0000-0000-000000000001', 'New title', 7, array['V6', 'V1'],
+       'f1000000-0000-0000-0000-000000000001', 'New title', 7,
+       '[{"kind": "text", "content": "V6"}, {"kind": "text", "content": "V1"}]'::jsonb,
        '2099-01-10 09:30', 'America/New_York') $$,
   'A: the deadline can be changed'
 );
@@ -244,7 +250,8 @@ select is(
 
 select lives_ok(
   $$ select public.update_study_draft(
-       'f1000000-0000-0000-0000-000000000001', 'New title', 7, array['V6', 'V1'],
+       'f1000000-0000-0000-0000-000000000001', 'New title', 7,
+       '[{"kind": "text", "content": "V6"}, {"kind": "text", "content": "V1"}]'::jsonb,
        null, null) $$,
   'A: the deadline can be cleared (both null)'
 );
@@ -284,33 +291,21 @@ select is(
   'A: jsonb update replaced title, N and deadline'
 );
 
-select lives_ok(
-  $$ select public.update_study_draft(
-       'f1000000-0000-0000-0000-000000000001', 'New title', 7, array['V6', 'V1'],
-       null, null) $$,
-  'A: the text[] wrapper still replaces the draft after a jsonb update'
-);
-
-select is(
-  (select array_agg(position || '|' || kind || '|' || content || '|' || coalesce(image_path, '-') order by position)
-     from public.variants where study_id = 'f1000000-0000-0000-0000-000000000001'),
-  array['0|text|V6|-', '1|text|V1|-'],
-  'A: the text[] wrapper stores text variants without an image'
-);
-
 -- ---------------------------------------------------------------------------
 -- Draft-only: own active and closed studies
 -- ---------------------------------------------------------------------------
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000002', 'Edited', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000002', 'Edited', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   '55000',
   null,
   'A: update_study_draft on own active study raises 55000'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000003', 'Edited', 9, array['X', 'Y']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000003', 'Edited', 9,
+       '[{"kind": "text", "content": "X"}, {"kind": "text", "content": "Y"}]'::jsonb) $$,
   '55000',
   null,
   'A: update_study_draft on own closed study raises 55000'
@@ -321,7 +316,8 @@ select throws_ok(
 -- ---------------------------------------------------------------------------
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Only']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Only"}]'::jsonb) $$,
   '22023',
   null,
   'validation: 1 variant raises 22023'
@@ -329,21 +325,25 @@ select throws_ok(
 
 select throws_ok(
   $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
-       array['1', '2', '3', '4', '5', '6', '7']) $$,
+       '[{"kind": "text", "content": "1"}, {"kind": "text", "content": "2"}, {"kind": "text", "content": "3"},
+         {"kind": "text", "content": "4"}, {"kind": "text", "content": "5"}, {"kind": "text", "content": "6"},
+         {"kind": "text", "content": "7"}]'::jsonb) $$,
   '22023',
   null,
   'validation: 7 variants raises 22023'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', '   ']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "   "}]'::jsonb) $$,
   '22023',
   null,
   'validation: a blank variant raises 22023'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', 'Right'],
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
        '2099-06-15 18:00', null) $$,
   '22023',
   null,
@@ -351,7 +351,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', 'Right'],
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
        null, 'Europe/Warsaw') $$,
   '22023',
   null,
@@ -359,7 +360,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', 'Right'],
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
        '2099-06-15 18:00', 'Mars/Olympus_Mons') $$,
   '22023',
   null,
@@ -367,7 +369,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', 'Right'],
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
        '2099-06-15 18:00', 'posix/Europe/Warsaw') $$,
   '22023',
   null,
@@ -375,7 +378,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5, array['Left', 'Right'],
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb,
        '2000-01-01 12:00', 'Europe/Warsaw') $$,
   '22023',
   null,
@@ -383,28 +387,32 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 0, array['Left', 'Right']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 0,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'validation: N = 0 raises 23514'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 101, array['Left', 'Right']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 101,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'validation: N = 101 raises 23514'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', '   ', 5, array['Left', 'Right']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', '   ', 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'validation: a blank title raises 23514'
 );
 
 select throws_ok(
-  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', repeat('t', 201), 5, array['Left', 'Right']) $$,
+  $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', repeat('t', 201), 5,
+       '[{"kind": "text", "content": "Left"}, {"kind": "text", "content": "Right"}]'::jsonb) $$,
   '23514',
   null,
   'validation: a 201-character title raises 23514'
@@ -412,7 +420,8 @@ select throws_ok(
 
 select throws_ok(
   $$ select public.update_study_draft('f1000000-0000-0000-0000-000000000004', 'Edited', 5,
-       array['Left', repeat('v', 2001)]) $$,
+       jsonb_build_array(jsonb_build_object('kind', 'text', 'content', 'Left'),
+                         jsonb_build_object('kind', 'text', 'content', repeat('v', 2001)))) $$,
   '23514',
   null,
   'validation: a 2001-character variant raises 23514'
