@@ -7,7 +7,7 @@ import type { createClient } from "@/lib/supabase";
 import { IMAGE_CONTENT_TYPES, sniffImageType } from "@/lib/image-file";
 
 export const VARIANT_IMAGES_BUCKET = "variant-images";
-/** Signed URL lifetime for author views (draft, edit). */
+/** Signed URL lifetime for author views (draft, edit, results). */
 export const AUTHOR_IMAGE_URL_TTL_SECONDS = 3600;
 
 type Client = NonNullable<ReturnType<typeof createClient>>;

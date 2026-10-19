@@ -1,12 +1,17 @@
 import type { Database } from "@/lib/database.types";
 
 type StudyStatus = Database["public"]["Enums"]["study_status"];
+type VariantKind = Database["public"]["Enums"]["variant_kind"];
 
 /** One variant of get_study_results (docs/reference/contract-surfaces.md#get_study_results). */
 export interface ResultVariant {
   variant_id: string;
   position: number;
+  kind: VariantKind;
+  /** The text, or for an image variant its description. */
   content: string;
+  /** Object name of an image variant (null for text). Not rendered: the page signs it once, in SSR. */
+  image_path: string | null;
   vote_count: number;
   /** Sorted by body by the database (anonymity rule) — render in the order received. */
   comments: string[];
@@ -42,7 +47,7 @@ export function parseStudyResults(value: unknown): StudyResults | null {
   const parsed: ResultVariant[] = [];
   for (const item of variants as unknown[]) {
     if (typeof item !== "object" || item === null) return null;
-    const { variant_id, position, content, vote_count, comments } = item as Record<string, unknown>;
+    const { variant_id, position, kind, content, image_path, vote_count, comments } = item as Record<string, unknown>;
     if (
       typeof variant_id !== "string" ||
       typeof position !== "number" ||
@@ -53,7 +58,15 @@ export function parseStudyResults(value: unknown): StudyResults | null {
     ) {
       return null;
     }
-    parsed.push({ variant_id, position, content, vote_count, comments: comments as string[] });
+    // A text variant carries no path; an image variant always has one.
+    const shape =
+      kind === "text" && image_path === null
+        ? { kind: "text" as const, image_path }
+        : kind === "image" && typeof image_path === "string"
+          ? { kind: "image" as const, image_path }
+          : null;
+    if (!shape) return null;
+    parsed.push({ variant_id, position, ...shape, content, vote_count, comments: comments as string[] });
   }
   return { status: status as StudyStatus, responded, total, variants: parsed };
 }

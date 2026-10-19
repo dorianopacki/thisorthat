@@ -1,13 +1,16 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
+import { signParticipantImagePaths } from "@/lib/supabase-admin";
 import { VOTED_COOKIE } from "@/lib/study-links";
 import { orderForToken } from "@/lib/ballot-order";
 import BallotForm from "@/components/voting/BallotForm";
 
+type VariantKind = "text" | "image";
+
 interface Ballot {
   title: string;
-  variants: { variant_id: string; content: string }[];
+  variants: { variant_id: string; kind: VariantKind; content: string; image_path: string | null }[];
 }
 
 /** Narrows get_ballot's jsonb to the contract shape (docs/reference/contract-surfaces.md#get_ballot). */
@@ -18,9 +21,15 @@ function parseBallot(value: unknown): Ballot | null {
   const parsed: Ballot["variants"] = [];
   for (const item of variants as unknown[]) {
     if (typeof item !== "object" || item === null) return null;
-    const { variant_id, content } = item as Record<string, unknown>;
+    const { variant_id, kind, content, image_path } = item as Record<string, unknown>;
     if (typeof variant_id !== "string" || typeof content !== "string") return null;
-    parsed.push({ variant_id, content });
+    if (kind === "text" && image_path === null) {
+      parsed.push({ variant_id, kind, content, image_path });
+    } else if (kind === "image" && typeof image_path === "string") {
+      parsed.push({ variant_id, kind, content, image_path });
+    } else {
+      return null;
+    }
   }
   return { title, variants: parsed };
 }
@@ -41,6 +50,8 @@ const error = Astro.url.searchParams.get("error");
 type Screen = "thanks" | "ended" | "used" | "ballot" | "error";
 let screen: Screen;
 let ballot: Ballot | null = null;
+// Ballot image URLs by object path; filled only for the ballot screen.
+let imageUrls = new Map<string, string>();
 
 if (status === "accepted") {
   screen = "thanks";
@@ -68,6 +79,22 @@ if (status === "accepted") {
   }
 }
 
+// Secret-key ordering rule (docs/reference/contract-surfaces.md#storage-variant-images): image URLs are
+// signed only here, after get_ballot accepted the token, and only for a ballot that is about to render.
+// Any signing failure is the error screen: a ballot missing one image would skew the vote.
+if (screen === "ballot" && ballot) {
+  const paths = ballot.variants.flatMap((v) => (v.kind === "image" && v.image_path ? [v.image_path] : []));
+  if (paths.length) {
+    try {
+      imageUrls = await signParticipantImagePaths(paths);
+    } catch (e) {
+      // eslint-disable-next-line no-console -- the 500 screen carries no detail; the log is the trace.
+      console.error(`ballot: ${e instanceof Error ? e.message : String(e)}`);
+      screen = "error";
+    }
+  }
+}
+
 // A failed load is a server fault: surface it to monitoring. „ended” stays 200 so an unknown token
 // and a closed study remain indistinguishable.
 if (screen === "error") Astro.response.status = 500;
@@ -90,7 +117,17 @@ const TITLES: Record<Screen, string> = {
             {ballot.title}
           </h1>
           <p class="mb-6 text-center text-sm text-blue-100/80">Wybierz jeden wariant. Komentarze są opcjonalne.</p>
-          <BallotForm token={token} variants={orderForToken(ballot.variants, token)} serverError={error} client:load />
+          <BallotForm
+            token={token}
+            variants={orderForToken(ballot.variants, token).map(({ variant_id, kind, content, image_path }) => ({
+              variant_id,
+              kind,
+              content,
+              image_url: image_path ? imageUrls.get(image_path) : undefined,
+            }))}
+            serverError={error}
+            client:load
+          />
         </>
       ) : (
         <>

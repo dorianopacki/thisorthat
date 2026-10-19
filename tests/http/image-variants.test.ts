@@ -1,13 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  createStartedStudy,
   createStudy,
   describeResponse,
   newAuthor,
+  newClient,
   redirectTarget,
   uniqueSuffix,
   variantFields,
   type Author,
+  type StartedStudy,
   type VariantInput,
 } from "./client";
 import { BUCKET, WEBP_1PX, exists, signedImages, storageAs, webpFile } from "./storage";
@@ -162,5 +165,103 @@ describe("image variants (author)", () => {
     const response = await owner.request(`/api/studies/${id}/delete`, { method: "POST" });
     expect(redirectTarget(response)).toBe("/dashboard?deleted=1");
     for (const { path } of images) expect(await exists(storage, path)).toBe(false);
+  });
+});
+
+// Participant side: ballot images are signed with the secret key only after get_ballot accepted the
+// token (docs/reference/contract-surfaces.md#storage-variant-images). A closed study and an unknown token
+// get no signed URL at all.
+const SIGNED = "/object/sign/";
+
+/** What a ballot offers: radio values, image alt texts and the distinct signed object paths. */
+function ballotVariants(html: string) {
+  return {
+    ids: [...html.matchAll(/name="variant_id" value="([0-9a-f-]{36})"/g)].map((m) => m[1]).sort(),
+    alts: [...new Set([...html.matchAll(/<img[^>]*\balt="([^"]*)"/g)].map((m) => m[1]))].sort(),
+    paths: [...new Set(signedImages(html).map((i) => i.path))].sort(),
+  };
+}
+
+describe("image variants (participant ballot)", () => {
+  let owner: Author;
+  let study: StartedStudy;
+  const run = uniqueSuffix();
+  const descriptions = [`Obraz A ${run}`, `Obraz B ${run}`];
+
+  beforeAll(async () => {
+    owner = await newAuthor();
+    study = await createStartedStudy(owner, `Image ballot ${run}`, [
+      "Tekst",
+      { description: descriptions[0], image: webpFile() },
+      { description: descriptions[1], image: webpFile() },
+    ]);
+  });
+
+  afterAll(async () => {
+    // Deleting the study removes its objects (proven above).
+    await owner.request(`/api/studies/${study.id}/delete`, { method: "POST" });
+  });
+
+  it("an active study's ballot shows each image through a signed URL that answers 200 with an image type", async () => {
+    const response = await newClient().request(`/v/${study.tokens[0] ?? ""}`);
+    expect(response.status, describeResponse(response)).toBe(200);
+    for (const description of descriptions) expect(response.body).toContain(`alt="${description}"`);
+
+    const images = [...new Map(signedImages(response.body).map((i) => [i.path, i])).values()];
+    expect(images).toHaveLength(2);
+    for (const image of images) {
+      const file = await fetch(image.url);
+      expect(file.status).toBe(200);
+      expect(file.headers.get("content-type")).toMatch(/^image\//);
+    }
+  });
+
+  it("a used and an unused link of the same study render the same variant set", async () => {
+    const [usedToken = "", unusedToken = ""] = study.tokens;
+    const voter = newClient();
+    const ballot = await voter.request(`/v/${usedToken}`);
+    const [variantId] = ballotVariants(ballot.body).ids;
+    expect(variantId).toBeDefined();
+    const vote = await voter.request(`/api/v/${usedToken}`, { method: "POST", form: { variant_id: variantId } });
+    expect(redirectTarget(vote), describeResponse(vote)).toBe(`/v/${usedToken}?status=accepted`);
+
+    // Fresh clients: no „voted” cookie, so the page shows what get_ballot returns for each link.
+    const used = await newClient().request(`/v/${usedToken}`);
+    const unused = await newClient().request(`/v/${unusedToken}`);
+    expect(used.status, describeResponse(used)).toBe(200);
+    expect(unused.status, describeResponse(unused)).toBe(200);
+    const usedSet = ballotVariants(used.body);
+    expect(usedSet.ids).toHaveLength(3);
+    expect(usedSet.paths).toHaveLength(2);
+    expect(usedSet.alts).toEqual([...descriptions].sort());
+    expect(ballotVariants(unused.body)).toEqual(usedSet);
+  });
+
+  it("after a manual close the ballot shows „Badanie jest zakończone” and signs nothing", async () => {
+    const closed = await createStartedStudy(owner, `Image closed ${run}`, [
+      "Tekst",
+      { description: `Zamknięty ${run}`, image: webpFile() },
+    ]);
+    try {
+      const before = await newClient().request(`/v/${closed.tokens[0] ?? ""}`);
+      expect(before.body).toContain(SIGNED);
+
+      const close = await owner.request(`/api/studies/${closed.id}/close`, { method: "POST" });
+      expect(redirectTarget(close), describeResponse(close)).toBe(`/studies/${closed.id}`);
+
+      const response = await newClient().request(`/v/${closed.tokens[0] ?? ""}`);
+      expect(response.status, describeResponse(response)).toBe(200);
+      expect(response.body).toContain("Badanie jest zakończone");
+      expect(response.body).not.toContain(SIGNED);
+    } finally {
+      await owner.request(`/api/studies/${closed.id}/delete`, { method: "POST" });
+    }
+  });
+
+  it("an unknown token shows „Badanie jest zakończone” and signs nothing", async () => {
+    const response = await newClient().request(`/v/unknown-${uniqueSuffix()}`);
+    expect(response.status, describeResponse(response)).toBe(200);
+    expect(response.body).toContain("Badanie jest zakończone");
+    expect(response.body).not.toContain(SIGNED);
   });
 });

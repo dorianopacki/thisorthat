@@ -457,30 +457,30 @@ Images are served by the Supabase CDN, not the Worker. The Worker only parses mu
 
 #### Automated
 
-- [x] 2.1 Unit tests pass, including form and file-sniff tests
-- [x] 2.2 HTTP tests pass, including image-variants.test.ts
-- [x] 2.3 pgTAP suite still passes
-- [x] 2.4 Static checks pass
+- [x] 2.1 Unit tests pass, including form and file-sniff tests — 06cf369
+- [x] 2.2 HTTP tests pass, including image-variants.test.ts — 06cf369
+- [x] 2.3 pgTAP suite still passes — 06cf369
+- [x] 2.4 Static checks pass — 06cf369
 
 #### Manual
 
-- [x] 2.5 Large phone photo is resized to ≤ 1 MiB, 1600 px, correct orientation
-- [x] 2.6 Mixed variants create/edit (keep, replace, switch kind) with matching previews
-- [x] 2.7 Deleting a study removes its storage objects
+- [x] 2.5 Large phone photo is resized to ≤ 1 MiB, 1600 px, correct orientation — 06cf369
+- [x] 2.6 Mixed variants create/edit (keep, replace, switch kind) with matching previews — 06cf369
+- [x] 2.7 Deleting a study removes its storage objects — 06cf369
 
 ### Phase 3: Participant ballot and results
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass, including the admin-import guard
-- [ ] 3.2 HTTP tests pass, including ballot-signing and closed-study cases
-- [ ] 3.3 Static checks pass
+- [x] 3.1 Unit tests pass, including the admin-import guard
+- [x] 3.2 HTTP tests pass, including ballot-signing and closed-study cases
+- [x] 3.3 Static checks pass
 
 #### Manual
 
-- [ ] 3.4 Phone ballot shows full-width images, no horizontal scroll, voting works
-- [ ] 3.5 Closed study shows the closed message and old image URL expires
-- [ ] 3.6 Results thumbnails stay stable across 10 s polls
+- [x] 3.4 Phone ballot shows full-width images, no horizontal scroll, voting works
+- [x] 3.5 Closed study shows the closed message and old image URL expires
+- [x] 3.6 Results thumbnails stay stable across 10 s polls
 
 ### Phase 4: E2E on a phone
 

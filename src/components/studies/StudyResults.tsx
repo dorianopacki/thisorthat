@@ -17,11 +17,17 @@ type Notice = keyof typeof NOTICES;
 interface Props {
   studyId: string;
   initial: Results;
+  /**
+   * Signed image URLs by variant_id, created once by the page (variants cannot change after start). Polls
+   * never re-sign and their image_path is ignored here, so thumbnails do not reload; a URL expires after
+   * 3600 s until the page is reloaded. A variant missing here shows its description only.
+   */
+  imageUrls?: Record<string, string>;
 }
 
 // No change cues (docs/reference/contract-surfaces.md#anonymity-rule): each refresh replaces the
 // whole state, comments render in the order get_study_results returns them, nothing marks what changed.
-export default function StudyResults({ studyId, initial }: Props) {
+export default function StudyResults({ studyId, initial, imageUrls = {} }: Props) {
   const [results, setResults] = useState(initial);
   // A study loaded already closed gets the final notice from the first render.
   const [notice, setNotice] = useState<Notice | null>(initial.status === "closed" ? "final" : null);
@@ -158,7 +164,19 @@ export default function StudyResults({ studyId, initial }: Props) {
             >
               <div className="flex items-start gap-2">
                 <span className="w-6 shrink-0 font-semibold text-blue-100">{variant.place}.</span>
-                <span className="min-w-0 flex-1 break-words whitespace-pre-wrap">{variant.content}</span>
+                <span className="min-w-0 flex-1">
+                  {variant.kind === "image" && imageUrls[variant.variant_id] && (
+                    <img
+                      src={imageUrls[variant.variant_id]}
+                      alt={variant.content}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                      className="mb-1 block h-auto w-full max-w-full rounded"
+                    />
+                  )}
+                  <span className="block break-words whitespace-pre-wrap">{variant.content}</span>
+                </span>
                 <span className="shrink-0 text-xs whitespace-nowrap text-blue-100/80">
                   {formatVotes(variant.vote_count)}
                 </span>

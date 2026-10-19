@@ -198,8 +198,12 @@ export async function createStudy(author: Client, title: string, variants: reado
 }
 
 /** Creates and starts a study as `author`, then reads its participant tokens from the owner's page. */
-export async function createStartedStudy(author: Client, title = `Started ${uniqueSuffix()}`): Promise<StartedStudy> {
-  const id = await createStudy(author, title);
+export async function createStartedStudy(
+  author: Client,
+  title = `Started ${uniqueSuffix()}`,
+  variants: readonly VariantInput[] = ["A", "B"],
+): Promise<StartedStudy> {
+  const id = await createStudy(author, title, variants);
 
   const start = await author.request(`/api/studies/${id}/start`, { method: "POST" });
   if (start.status !== 302 || redirectTarget(start) !== `/studies/${id}`) {

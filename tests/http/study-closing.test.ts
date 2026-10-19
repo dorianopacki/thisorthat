@@ -57,6 +57,8 @@ describe("manual close (owner)", () => {
     const response = await newClient().request(`/v/${study.tokens[0] ?? ""}`);
     expect(response.status, describeResponse(response)).toBe(200);
     expect(response.body).toContain("Badanie jest zakończone");
+    // No signed image URL leaves the server once get_ballot answers null.
+    expect(response.body).not.toContain("/object/sign/");
   });
 
   it("closing again redirects to the study page without ?error=", async () => {

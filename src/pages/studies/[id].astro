@@ -47,6 +47,8 @@ let variants: { id: string; position: number; kind: "text" | "image"; content: s
 // Draft image variants, signed with the author's own session (Storage RLS: own objects only).
 let imageUrls = new Map<string, string>();
 let results: StudyResultsData | null = null;
+// Results image URLs by variant_id, signed once per page load; the island's polls never re-sign.
+let resultImageUrls: Record<string, string> = {};
 let urls: string[] = [];
 if (study?.status === "draft") {
   const { data, error: variantsError } = await supabase
@@ -74,6 +76,17 @@ if (study?.status === "draft") {
     if (!results) {
       throw new Error("Nie udało się odczytać wyników badania.");
     }
+    // Author session, like the draft view; a path that fails to sign leaves that variant text-only.
+    const signed = await signVariantImages(
+      supabase,
+      results.variants.flatMap((v) => (v.kind === "image" && v.image_path ? [v.image_path] : [])),
+    );
+    resultImageUrls = Object.fromEntries(
+      results.variants.flatMap((v) => {
+        const url = v.image_path ? signed.get(v.image_path) : undefined;
+        return url ? [[v.variant_id, url]] : [];
+      }),
+    );
   }
 
   // Links exist once the study has started, numbered by `position` (added links come last). Select only
@@ -142,7 +155,7 @@ const linksLeft = MAX_PARTICIPANTS - urls.length;
             </p>
           )}
           {results ? (
-            <StudyResults studyId={shown.id} initial={results} client:load />
+            <StudyResults studyId={shown.id} initial={results} imageUrls={resultImageUrls} client:load />
           ) : (
             <>
               <h2 class="mb-2 text-sm text-blue-100/80">Warianty</h2>
