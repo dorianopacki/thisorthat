@@ -42,7 +42,15 @@ describe("image variants (author)", () => {
   });
 
   afterAll(async () => {
-    if (leftovers.length) await storage.storage.from(BUCKET).remove(leftovers);
+    // A referenced object cannot be removed (contract-surfaces.md#storage-variant-images), so drop this
+    // run's studies first. owner is a fresh author: RLS limits the delete to their own studies.
+    const { error: studiesError } = await storage.from("studies").delete().not("id", "is", null);
+    expect(studiesError).toBeNull();
+    if (leftovers.length) {
+      const { error } = await storage.storage.from(BUCKET).remove(leftovers);
+      expect(error).toBeNull();
+      for (const path of leftovers) expect(await exists(storage, path)).toBe(false);
+    }
   });
 
   it("create with a WebP shows it on the draft page through a signed URL that answers 200", async () => {
@@ -71,6 +79,21 @@ describe("image variants (author)", () => {
     expect(redirectTarget(response)).toBe(`/studies/new?error=${encodeURIComponent(IMAGE_MESSAGE)}`);
     const after = await storage.storage.from(BUCKET).list();
     expect(after.data?.length).toBe(before.data?.length);
+  });
+
+  it("a body over the form size limit is refused before it is parsed", async () => {
+    // The study itself is valid; only the extra 8 MiB field (which validation would ignore) is too much.
+    const response = await owner.request("/api/studies", {
+      method: "POST",
+      form: {
+        title: `Image body ${run}`,
+        participant_target: "2",
+        ...variantFields(["A", "B"]),
+        junk: new File([new Uint8Array(8 * 1_048_576)], "junk.bin"),
+      },
+    });
+    expect(response.status, describeResponse(response)).toBe(302);
+    expect(redirectTarget(response)).toBe(`/studies/new?error=${encodeURIComponent(IMAGE_MESSAGE)}`);
   });
 
   it("a file of 1 MiB + 1 byte is refused", async () => {

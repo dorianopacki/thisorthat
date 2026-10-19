@@ -202,6 +202,8 @@ The only bucket. Created by migration (`insert into storage.buckets`), not by `c
 - **Private** (`public = false`): no public URL. Files are served only through signed URLs.
 - `file_size_limit = 1048576` (1 MiB), `allowed_mime_types = {image/webp, image/jpeg}`.
 - **Naming:** `<uuid>.webp` or `<uuid>.jpg` at the bucket root (`^[0-9a-f-]{36}\.(webp|jpg)$`). The name appears in participant-visible signed URLs, so it never contains the author id or any study data. Ownership is `storage.objects.owner_id`, set by the Storage API to the uploader's `auth.uid()`.
+- **Variant → object ownership:** on every write path, not only the RPCs, a variant's `image_path` must name an object owned by its study's author. The trigger `variants_image_owner_check` (BEFORE INSERT / UPDATE OF image_path, study_id; security definer) raises `23514` otherwise. `authenticated` may insert `kind`/`image_path` (create_study is security invoker) but has no direct UPDATE on them.
+- **Referenced objects are immutable:** the insert and delete policies also require `not private.variant_image_in_use(name)` (security definer, in the non-exposed `private` schema). While a variant references an object, nobody can delete it or create another object under its name. App cleanup removes only objects that are no longer referenced.
 - **Policies on `storage.objects`**, all `to authenticated` and scoped to `bucket_id = 'variant-images'`:
   - insert: only with a name matching the pattern;
   - select and delete: only own objects (`owner_id = auth.uid()::text`);

@@ -5,6 +5,7 @@ import {
   keptImagePaths,
   newImageFiles,
   readStudyForm,
+  studyFormTooLarge,
   studyRpcArgs,
   studyRpcErrorMessage,
   validateStudyForm,
@@ -24,6 +25,8 @@ export const POST: APIRoute = async (context) => {
   const id = context.params.id ?? "";
   const studyUrl = `/studies/${encodeURIComponent(id)}`;
   const fail = (message: string) => context.redirect(`${studyUrl}/edit?error=${encodeURIComponent(message)}`);
+
+  if (studyFormTooLarge(context.request)) return fail(IMAGE_MESSAGE);
 
   // A non-form or truncated body throws; answer it like any other failed save, not with a 500.
   let form: FormData;

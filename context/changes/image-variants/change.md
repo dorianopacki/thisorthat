@@ -1,7 +1,7 @@
 ---
 change_id: image-variants
 title: Autor używa wariantów graficznych w badaniu
-status: implemented
+status: impl_reviewed
 created: 2026-10-16
 updated: 2026-10-19
 archived_at: null

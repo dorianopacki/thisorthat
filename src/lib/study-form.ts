@@ -6,6 +6,7 @@ import { sniffImageFile } from "@/lib/image-file";
 import {
   MAX_IMAGE_BYTES,
   MAX_IMAGE_DESCRIPTION_LENGTH,
+  MAX_STUDY_FORM_BYTES,
   MAX_PARTICIPANTS,
   MAX_TITLE_LENGTH,
   MAX_VARIANT_LENGTH,
@@ -56,6 +57,15 @@ function asString(value: FormDataEntryValue | null): string {
 }
 
 const VARIANT_FIELD = /^variant\.(\d+)\.(kind|content|image|image_path)$/;
+
+/**
+ * True when the body must not be parsed: no Content-Length (browsers always send one for a form post)
+ * or more than MAX_STUDY_FORM_BYTES. formData() buffers the whole body, so this runs first.
+ */
+export function studyFormTooLarge(request: Request): boolean {
+  const length = Number(request.headers.get("content-length") ?? NaN);
+  return !Number.isFinite(length) || length > MAX_STUDY_FORM_BYTES;
+}
 
 /**
  * Reads the wizard's fields: `title`, `participant_target`, per position i `variant.<i>.kind`,

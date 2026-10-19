@@ -6,7 +6,7 @@
 -- inserted as the test superuser; assertions run as the real roles.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(47);
+select plan(53);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (uuid prefixes 7777/8888 users, e1 studies, e2 variants)
@@ -495,6 +495,83 @@ select is(
      from public.variants where study_id = 'e1000000-0000-0000-0000-000000000001'),
   array['0|text|T1|-', '1|text|T2|-'],
   'A: the text[] wrapper stored text variants without an image'
+);
+
+-- ---------------------------------------------------------------------------
+-- Direct writes (PostgREST, no RPC): the owner check holds there too
+-- ---------------------------------------------------------------------------
+
+-- Two more of A's objects, added only now so the earlier object counts stay
+-- exact. Fixtures go in as the superuser; the checks below run as A, then B.
+reset role;
+insert into storage.objects (bucket_id, name, owner_id) values
+  ('variant-images', 'aaaaaaaa-0000-4000-8000-000000000005.webp', '77777777-7777-7777-7777-777777777777'),
+  ('variant-images', 'aaaaaaaa-0000-4000-8000-000000000006.webp', '77777777-7777-7777-7777-777777777777');
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '77777777-7777-7777-7777-777777777777', 'role', 'authenticated')::text,
+  true
+);
+
+select lives_ok(
+  $$ insert into public.variants (study_id, position, kind, content, image_path)
+     values ('e1000000-0000-0000-0000-000000000002', 10, 'image', 'Own', 'aaaaaaaa-0000-4000-8000-000000000006.webp') $$,
+  'A: a direct insert may reference A''s own object in A''s draft'
+);
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '88888888-8888-8888-8888-888888888888', 'role', 'authenticated')::text,
+  true
+);
+
+select throws_ok(
+  $$ insert into public.variants (study_id, position, kind, content, image_path)
+     values ('e1000000-0000-0000-0000-000000000004', 10, 'image', 'A''s', 'aaaaaaaa-0000-4000-8000-000000000005.webp') $$,
+  '23514',
+  null,
+  'B: a direct insert cannot reference A''s unreferenced object in B''s draft'
+);
+
+select throws_ok(
+  $$ update public.variants set kind = 'image', image_path = 'bbbbbbbb-0000-4000-8000-000000000001.webp'
+      where id = 'e2000000-0000-0000-0000-000000000007' $$,
+  '42501',
+  null,
+  'B: kind and image_path cannot be updated directly, even to B''s own object'
+);
+
+-- An object a variant references is immutable for its owner too
+-- (storage.allow_delete_query is still lifted for this transaction).
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '77777777-7777-7777-7777-777777777777', 'role', 'authenticated')::text,
+  true
+);
+
+with deleted as (
+  delete from storage.objects
+   where bucket_id = 'variant-images'
+     and name = 'aaaaaaaa-0000-4000-8000-000000000004.webp'
+  returning 1
+)
+select is(count(*)::int, 0, 'A: delete of A''s object referenced by an active study affects 0 rows') from deleted;
+
+with deleted as (
+  delete from storage.objects
+   where bucket_id = 'variant-images'
+     and name = 'aaaaaaaa-0000-4000-8000-000000000005.webp'
+  returning 1
+)
+select is(count(*)::int, 1, 'A: delete of A''s unreferenced object still works') from deleted;
+
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner_id)
+     values ('variant-images', 'aaaaaaaa-0000-4000-8000-000000000004.webp', '77777777-7777-7777-7777-777777777777') $$,
+  '42501',
+  null,
+  'A: insert under a name a variant references is refused'
 );
 
 reset role;

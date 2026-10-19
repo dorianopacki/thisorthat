@@ -73,7 +73,7 @@ test.describe("S-08: image ballot on a phone", () => {
     for (const description of [red, blue]) {
       const image = participant.getByRole("img", { name: description });
       await expect(image).toBeVisible();
-      // The images are lazy-loaded: bring each into view so the browser fetches it.
+      // Bring each image into view, as a participant scrolling the ballot would.
       await image.scrollIntoViewIfNeeded();
       await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
       const box = await image.boundingBox();

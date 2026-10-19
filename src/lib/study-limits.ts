@@ -26,6 +26,11 @@ export const MAX_IMAGE_DESCRIPTION_LENGTH = 200;
 export const ACCEPTED_IMAGE_INPUT_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 /** What the bucket stores (allowed_mime_types). */
 export const STORED_IMAGE_TYPES = ["image/webp", "image/jpeg"] as const;
+/**
+ * Largest study form body the server parses: MAX_VARIANTS images at MAX_IMAGE_BYTES plus text and
+ * multipart overhead. Checked against Content-Length before formData() buffers the body.
+ */
+export const MAX_STUDY_FORM_BYTES = 7 * 1_048_576;
 
 /** Character count as Postgres `char_length` sees it (code points, not UTF-16 units). */
 export function charLength(value: string): number {

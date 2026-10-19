@@ -5,6 +5,7 @@ import {
   newImageFiles,
   readStudyForm,
   studyRpcArgs,
+  studyFormTooLarge,
   studyRpcErrorMessage,
   validateStudyForm,
 } from "@/lib/study-form";
@@ -18,6 +19,8 @@ const UPLOAD_MESSAGE = "Nie udało się przesłać grafiki. Spróbuj ponownie.";
 // objects behind.
 export const POST: APIRoute = async (context) => {
   const fail = (message: string) => context.redirect(`/studies/new?error=${encodeURIComponent(message)}`);
+
+  if (studyFormTooLarge(context.request)) return fail(IMAGE_MESSAGE);
 
   // A non-form or truncated body throws; answer it like any other failed save, not with a 500.
   let form: FormData;

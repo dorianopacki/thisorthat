@@ -119,7 +119,7 @@ export default function BallotForm({ token, variants, serverError }: Props) {
                   <img
                     src={variant.image_url}
                     alt={variant.content}
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
                     referrerPolicy="no-referrer"
                     className="block h-auto w-full max-w-full basis-full rounded-md"

@@ -4,7 +4,7 @@
 // Storage API; SQL deletes on storage.objects are blocked.
 import type { createClient } from "@/lib/supabase";
 
-import { IMAGE_CONTENT_TYPES, sniffImageType } from "@/lib/image-file";
+import { IMAGE_CONTENT_TYPES, sniffImageFile } from "@/lib/image-file";
 
 export const VARIANT_IMAGES_BUCKET = "variant-images";
 /** Signed URL lifetime for author views (draft, edit, results). */
@@ -39,13 +39,13 @@ export async function removeVariantImages(supabase: Client, paths: readonly stri
 export async function uploadVariantImages(supabase: Client, files: readonly File[]): Promise<UploadResult> {
   const uploads = await Promise.all(
     files.map(async (file): Promise<{ path: string; ok: boolean; invalid?: boolean }> => {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const type = sniffImageType(bytes);
+      // Only the first bytes are read; the File itself goes to Storage without another copy.
+      const type = await sniffImageFile(file);
       if (!type) return { path: "", ok: false, invalid: true };
       const path = `${crypto.randomUUID()}.${type}`;
       const { error } = await supabase.storage
         .from(VARIANT_IMAGES_BUCKET)
-        .upload(path, bytes, { contentType: IMAGE_CONTENT_TYPES[type], upsert: false });
+        .upload(path, file, { contentType: IMAGE_CONTENT_TYPES[type], upsert: false });
       return { path, ok: !error };
     }),
   );
