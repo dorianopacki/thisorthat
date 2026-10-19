@@ -486,10 +486,10 @@ Images are served by the Supabase CDN, not the Worker. The Worker only parses mu
 
 #### Automated
 
-- [x] 4.1 Mobile spec passes on mobile-chrome
-- [x] 4.2 Full E2E suite passes
-- [x] 4.3 Deliberate break: removing img alt fails the spec
+- [x] 4.1 Mobile spec passes on mobile-chrome — ecec22f
+- [x] 4.2 Full E2E suite passes — ecec22f
+- [x] 4.3 Deliberate break: removing img alt fails the spec — ecec22f
 
 #### Manual
 
-- [x] 4.4 Mobile trace shows images rendered at phone width
+- [x] 4.4 Mobile trace shows images rendered at phone width — ecec22f
