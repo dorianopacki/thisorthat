@@ -351,8 +351,8 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [x] 2.1 Lint, typy, build przechodzą
-- [x] 2.2 Skan literałów na `Topbar.astro` = 0
+- [x] 2.1 Lint, typy, build przechodzą — 4753151
+- [x] 2.2 Skan literałów na `Topbar.astro` = 0 — 4753151
 - [ ] 2.3 e2e seed przechodzi
 
 #### Manual
@@ -365,8 +365,8 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [ ] 3.1 Lint, typy, build przechodzą
-- [ ] 3.2 Skan literałów na `dashboard.astro` = 0
+- [x] 3.1 Lint, typy, build przechodzą
+- [x] 3.2 Skan literałów na `dashboard.astro` = 0
 - [ ] 3.3 Testy HTTP i smoke przechodzą na preview
 - [ ] 3.4 e2e seed przechodzi
 
