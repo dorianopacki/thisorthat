@@ -379,9 +379,9 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [x] 4.1 Lint, typy, build przechodzą
-- [x] 4.2 Testy jednostkowe przechodzą, w tym `design-tokens.test.ts`
-- [x] 4.3 Kontrola celowego zepsucia: `text-purple-300` w `Topbar.astro` czerwieni test
+- [x] 4.1 Lint, typy, build przechodzą — e546c79
+- [x] 4.2 Testy jednostkowe przechodzą, w tym `design-tokens.test.ts` — e546c79
+- [x] 4.3 Kontrola celowego zepsucia: `text-purple-300` w `Topbar.astro` czerwieni test — e546c79
 - [ ] 4.4 Testy HTTP i smoke przechodzą na preview
 - [ ] 4.5 e2e seed przechodzi
 
