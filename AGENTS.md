@@ -37,6 +37,15 @@ ThisOrThat is a preference-testing MVP (A/B studies with per-voter invite links)
 - Use the `@/*` alias for imports from `src/`.
 - React components are PascalCase `.tsx`: default export for page-level islands (`SignInForm`), named exports for building blocks (`FormField`). Hydrate islands explicitly, e.g. `client:load`.
 
+## UI / Design Tokens
+
+- The app has one dark theme. Tokens live in `src/styles/global.css` (`:root` + `@theme inline`); values and contrast ratios are documented in `context/changes/brand-palette-dashboard/palette.md` (after archiving: `context/archive/…-brand-palette-dashboard/palette.md`).
+- Components live in `src/components/ui/` (shadcn/ui). Check that folder before building a new one; add missing ones with `npx shadcn@latest add <name>`.
+- In `.astro` files style links and badges with `buttonVariants` / `badgeVariants` (from `@/components/ui/button` and `@/components/ui/badge`) instead of hand-written classes.
+- No colour literals (hex, `rgb(`, `oklch(`, `text-purple-300`, `bg-white/10`) or arbitrary values (`-[3px]`) in views; use roles such as `bg-primary`, `bg-card`, `text-muted-foreground`, `border-border`, `ring-ring`.
+- Links on the dark background use `text-link`; `brand-1/2/3` are for gradients and decoration only, never for text.
+- `tests/unit/design-tokens.test.ts` scans the cleaned views; add every view you move to tokens to its `CLEANED_FILES` list.
+
 ## Testing
 
 Database guarantees (author isolation, vote anonymity, `cast_vote` behaviour) are pgTAP suites in `supabase/tests/`, run with `npx supabase test db` (Docker required); CI runs them in @.github/workflows/ci.yml. CI's `ci-passed` job aggregates all checks and gates deploys; merge a PR only when `gh pr checks` shows `ci-passed` passing (branch protection is unavailable on this plan). Any schema change ships as a new forward-fix migration (`npx supabase migration new`) with matching tests and an update to @docs/reference/contract-surfaces.md. Route access (anonymous matrix, encoded paths, author B against author A's ids) is covered by the Vitest suites `tests/unit/` and `tests/http/`; how to add a case for a new route: @context/foundation/test-plan.md §6.2. There is no e2e suite yet. Before finishing a change, run `npm run lint`, `npx astro check` and `npm run build`. Run `npm run smoke` after touching auth or dependencies.

@@ -1,10 +1,10 @@
 ---
 change_id: landing-capabilities-grid
 title: Strona główna jako grid (bento) prezentujący możliwości aplikacji
-status: implementing
+status: archived
 created: 2026-10-20
 updated: 2026-10-20
-archived_at: null
+archived_at: 2026-10-20T10:30:21Z
 ---
 
 ## Notes

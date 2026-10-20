@@ -1,8 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
+import { CircleAlert } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { badgeVariants } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase";
-import { STATUS_LABELS } from "@/lib/study-status";
+import { STATUS_LABELS, type StudyStatus } from "@/lib/study-status";
 import { progressLabel } from "@/lib/study-progress";
 
 // list_author_studies is scoped to the caller in the database and returns the effective status
@@ -14,51 +17,67 @@ const { data: studies, error: studiesError } = supabase
 
 // Set by POST /api/studies/<id>/delete. Only the flag is read; nothing from the URL is rendered.
 const deleted = Astro.url.searchParams.get("deleted") === "1";
+
+// Each status gets its own badge look; the text label from STATUS_LABELS stays the primary signal.
+const STATUS_BADGE_VARIANTS: Readonly<Record<StudyStatus, "secondary" | "default" | "outline">> = {
+  draft: "secondary",
+  active: "default",
+  closed: "outline",
+};
 ---
 
 <Layout title="Twoje badania">
   <div class="bg-cosmic min-h-screen p-4 sm:p-8">
     <Topbar />
 
-    <main class="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl sm:p-8">
+    <main class="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-6 text-card-foreground backdrop-blur-xl sm:p-8">
       <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+        <h1 class="bg-linear-to-r from-brand-1 to-brand-3 bg-clip-text text-3xl font-bold text-transparent">
           Twoje badania
         </h1>
-        <a
-          href="/studies/new"
-          class="inline-block rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
-        >
+        <a href="/studies/new" class:list={buttonVariants()}>
           Nowe badanie
         </a>
       </div>
 
       {deleted && (
-        <p class="mb-4 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-blue-100/90" role="status">
+        <p class="mb-4 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground" role="status">
           Badanie zostało usunięte.
         </p>
       )}
 
       {studiesError ? (
-        <p class="text-sm text-red-300">Nie udało się wczytać badań.</p>
+        <p class="flex items-center gap-2 text-sm text-destructive" role="alert">
+          <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+          Nie udało się wczytać badań.
+        </p>
       ) : studies.length > 0 ? (
         <ul class="space-y-2">
           {studies.map((study) => (
             <li>
               <a
                 href={`/studies/${study.id}`}
-                class="flex flex-col gap-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm transition-colors hover:bg-white/10 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                class="flex flex-col gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors outline-none hover:bg-accent/20 focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <span class="truncate">{study.title}</span>
-                <span class="shrink-0 text-xs text-blue-100/60">
-                  {STATUS_LABELS[study.status]} · {progressLabel(study)}
+                <span class="flex shrink-0 items-center gap-2 text-xs">
+                  <span class:list={badgeVariants({ variant: STATUS_BADGE_VARIANTS[study.status] })}>
+                    {STATUS_LABELS[study.status]}
+                  </span>
+                  <span class="text-muted-foreground">{progressLabel(study)}</span>
                 </span>
               </a>
             </li>
           ))}
         </ul>
       ) : (
-        <p class="text-sm text-blue-100/50">Nie masz jeszcze żadnych badań.</p>
+        <div class="flex flex-col items-start gap-3 rounded-lg border border-dashed border-border bg-muted px-4 py-6">
+          <p class="text-sm text-muted-foreground">Nie masz jeszcze żadnych badań.</p>
+          <p class="text-sm text-foreground">Przygotuj dwa warianty i sprawdź, który wybiorą uczestnicy.</p>
+          <a href="/studies/new" class:list={buttonVariants()}>
+            Utwórz pierwsze badanie
+          </a>
+        </div>
       )}
     </main>
   </div>
