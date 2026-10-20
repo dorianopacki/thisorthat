@@ -365,8 +365,8 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [x] 3.1 Lint, typy, build przechodzą
-- [x] 3.2 Skan literałów na `dashboard.astro` = 0
+- [x] 3.1 Lint, typy, build przechodzą — 29e9656
+- [x] 3.2 Skan literałów na `dashboard.astro` = 0 — 29e9656
 - [ ] 3.3 Testy HTTP i smoke przechodzą na preview
 - [ ] 3.4 e2e seed przechodzi
 
@@ -379,9 +379,9 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [ ] 4.1 Lint, typy, build przechodzą
-- [ ] 4.2 Testy jednostkowe przechodzą, w tym `design-tokens.test.ts`
-- [ ] 4.3 Kontrola celowego zepsucia: `text-purple-300` w `Topbar.astro` czerwieni test
+- [x] 4.1 Lint, typy, build przechodzą
+- [x] 4.2 Testy jednostkowe przechodzą, w tym `design-tokens.test.ts`
+- [x] 4.3 Kontrola celowego zepsucia: `text-purple-300` w `Topbar.astro` czerwieni test
 - [ ] 4.4 Testy HTTP i smoke przechodzą na preview
 - [ ] 4.5 e2e seed przechodzi
 

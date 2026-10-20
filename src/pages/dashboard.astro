@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
+import { CircleAlert } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { badgeVariants } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase";
@@ -46,14 +47,17 @@ const STATUS_BADGE_VARIANTS: Readonly<Record<StudyStatus, "secondary" | "default
       )}
 
       {studiesError ? (
-        <p class="text-sm text-destructive">Nie udało się wczytać badań.</p>
+        <p class="flex items-center gap-2 text-sm text-destructive" role="alert">
+          <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+          Nie udało się wczytać badań.
+        </p>
       ) : studies.length > 0 ? (
         <ul class="space-y-2">
           {studies.map((study) => (
             <li>
               <a
                 href={`/studies/${study.id}`}
-                class="flex flex-col gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent/20 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                class="flex flex-col gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors outline-none hover:bg-accent/20 focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <span class="truncate">{study.title}</span>
                 <span class="flex shrink-0 items-center gap-2 text-xs">
@@ -67,7 +71,13 @@ const STATUS_BADGE_VARIANTS: Readonly<Record<StudyStatus, "secondary" | "default
           ))}
         </ul>
       ) : (
-        <p class="text-sm text-muted-foreground">Nie masz jeszcze żadnych badań.</p>
+        <div class="flex flex-col items-start gap-3 rounded-lg border border-dashed border-border bg-muted px-4 py-6">
+          <p class="text-sm text-muted-foreground">Nie masz jeszcze żadnych badań.</p>
+          <p class="text-sm text-foreground">Przygotuj dwa warianty i sprawdź, który wybiorą uczestnicy.</p>
+          <a href="/studies/new" class:list={buttonVariants()}>
+            Utwórz pierwsze badanie
+          </a>
+        </div>
       )}
     </main>
   </div>
