@@ -335,24 +335,24 @@ Zmiana `:root` i `bg-cosmic` działa natychmiast na wszystkich 9 stronach. Wycof
 
 #### Automated
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Typy przechodzą: `npx astro check`
-- [x] 1.3 Build przechodzi: `npm run build`
-- [x] 1.4 Testy jednostkowe przechodzą: `npm run test:unit`
-- [x] 1.5 `global.css` bez `.dark {`, `bg-cosmic` bez hexów
-- [x] 1.6 `src/components/ui/badge.tsx` istnieje i eksportuje `badgeVariants`
+- [x] 1.1 Lint przechodzi: `npm run lint` — 858dfde
+- [x] 1.2 Typy przechodzą: `npx astro check` — 858dfde
+- [x] 1.3 Build przechodzi: `npm run build` — 858dfde
+- [x] 1.4 Testy jednostkowe przechodzą: `npm run test:unit` — 858dfde
+- [x] 1.5 `global.css` bez `.dark {`, `bg-cosmic` bez hexów — 858dfde
+- [x] 1.6 `src/components/ui/badge.tsx` istnieje i eksportuje `badgeVariants` — 858dfde
 
 #### Manual
 
-- [x] 1.7 Fioletowe tło na `/`, `/auth/signin`, `/dashboard`, `/studies/new`; przyciski formularzy w kolorze `primary`, czytelne
-- [x] 1.8 Nic nieczytelnego na stronach poza zakresem
+- [x] 1.7 Fioletowe tło na `/`, `/auth/signin`, `/dashboard`, `/studies/new`; przyciski formularzy w kolorze `primary`, czytelne — 858dfde
+- [x] 1.8 Nic nieczytelnego na stronach poza zakresem — 858dfde
 
 ### Phase 2: Nowy Topbar
 
 #### Automated
 
-- [ ] 2.1 Lint, typy, build przechodzą
-- [ ] 2.2 Skan literałów na `Topbar.astro` = 0
+- [x] 2.1 Lint, typy, build przechodzą
+- [x] 2.2 Skan literałów na `Topbar.astro` = 0
 - [ ] 2.3 e2e seed przechodzi
 
 #### Manual
