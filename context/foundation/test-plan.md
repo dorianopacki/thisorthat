@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-06
+> Last updated: 2026-10-20 (status reconciled with the repo; see §3.1)
 
 ## 1. Strategy
 
@@ -69,29 +69,40 @@ Each row is a discrete rollout phase that will open its own change folder
 via `/10x-new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
-| #   | Phase name                               | Goal (one line)                                                                                               | Risks covered              | Test types                                            | Status        | Change folder                                           |
-| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------- | ------------- | ------------------------------------------------------- |
-| 1   | Access boundaries                        | Bootstrap the app test runner and prove every route answers correctly for anonymous, owner and foreign author | #1, #2                     | Vitest + HTTP integration against preview, pgTAP gaps | complete      | `context/archive/2026-10-06-testing-access-boundaries/` |
-| 2   | Database guarantees and migration safety | Close pgTAP gaps for one vote per link, anonymity and lifecycle, and lock migrations in CI                    | #3, #4, #5, #6             | pgTAP + CI gate (reset, lint, type drift)             | change opened | `context/changes/testing-db-guarantees-migrations/`     |
-| 3   | Results and screen logic                 | Prove ranking, wording, progress and participant screen precedence from independent oracles                   | #7, #6 (app side)          | Vitest unit                                           | not started   | —                                                       |
-| 4   | Critical loop and gates                  | One end-to-end run of create → vote → results at phone width, plus a local post-edit check on migrations      | cross-cutting (#1, #3, #4) | Playwright e2e (one flow), post-edit hook, CI gates   | not started   | —                                                       |
+| #   | Phase name                               | Goal (one line)                                                                                               | Risks covered              | Test types                                            | Status      | Change folder                                           |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------- |
+| 1   | Access boundaries                        | Bootstrap the app test runner and prove every route answers correctly for anonymous, owner and foreign author | #1, #2                     | Vitest + HTTP integration against preview, pgTAP gaps | complete    | `context/archive/2026-10-06-testing-access-boundaries/` |
+| 2   | Database guarantees and migration safety | Close pgTAP gaps for one vote per link, anonymity and lifecycle, and lock migrations in CI                    | #3, #4, #5, #6             | pgTAP + CI gate (reset, lint, type drift)             | not started | —                                                       |
+| 3   | Results and screen logic                 | Prove ranking, wording, progress and participant screen precedence from independent oracles                   | #7, #6 (app side)          | Vitest unit                                           | not started | —                                                       |
+| 4   | Critical loop and gates                  | One end-to-end run of create → vote → results at phone width, plus a local post-edit check on migrations      | cross-cutting (#1, #3, #4) | Playwright e2e (one flow), post-edit hook, CI gates   | not started | —                                                       |
 
 Order rationale: #1 is the only High × High risk and needs the app runner that later phases reuse; database guarantees come next because S-04 and S-07 will change the vote path; unit logic is cheap and follows; one e2e flow closes the loop last.
+
+### 3.1 Coverage landed outside the rollout (reconciled 2026-10-20)
+
+Phases 2–4 never opened their own change folders. The Phase 2 row used to say `change opened` for `context/changes/testing-db-guarantees-migrations/`, but that folder was never created. Most of their scope then shipped with the roadmap slices (S-03…S-08) and the M3 lessons (quality-gate hooks, Playwright setup). The statuses above stay `not started` because each phase still has open scope. A future change for a phase should cover only the **Remaining** column.
+
+| Phase | Already in the repo (source)                                                                                                                                                                                                                                                                                                  | Remaining                                                                                                                                                                                                                   |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2     | 14 pgTAP suites, all run in CI. They cover one vote per link and anonymity (`study-data-model`), the vote/close race and the deadline (`study_closing_race`, `study_deadline` from S-04), the add-links race (`generate_extra_links_race` from S-07) and delete (`edit_and_delete_study` from S-06)                           | **Migration-safety CI gate:** fresh `db reset`, `db lint`, and a type-drift check of `src/lib/database.types.ts` against the migrations (risk #5). Nothing guards this today                                                |
+| 3     | Unit tests for progress „X z N” (`study-progress`, S-05), deadline and time zone (`study-deadline`, S-04), and link count after additions (`link-count`, S-07)                                                                                                                                                                | **Ranking and vote wording have no unit tests:** places for 5,5,2,0 → 1,1,3,4, and Polish wording at 1/2/5/12/22 (risk #7). e2e only asserts „0 głosów” and „1 głos”. Participant screen precedence is also not unit-tested |
+| 4     | Playwright e2e (`one-link-one-vote` runs the loop create → start → vote → results; `close-study`; `image-variants` on a Pixel 7; `seed`), set up in M3L4. Agent hooks (per edit: ESLint; end of turn: ESLint + unit suite + `astro check`) and a pre-commit gate (`lint-staged`: ESLint + related unit tests), set up in M3L2 | **e2e does not run in CI.** **No post-edit hook runs `supabase test db` on migration edits**                                                                                                                                |
 
 ## 4. Stack
 
 The classic test base for this project. AI-native tools (if any) carry a
 `checked:` date so future readers can see which lines need re-verification.
 
-| Layer                   | Tool                                                                           | Version            | Notes                                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| database (integration)  | pgTAP via `supabase test db`                                                   | Supabase CLI 2.117 | 5 suites; runs in CI; the main guarantee layer                                                                               |
-| HTTP smoke              | `scripts/smoke.mjs` (no dependencies)                                          | n/a                | auth + dashboard redirect against the built preview in CI                                                                    |
-| unit + HTTP integration | Vitest (plain Node config, no `getViteConfig()`) — projects `unit` and `http`  | 5.0.3              | HTTP tests run against the built preview via `node:http` (paths sent verbatim); Astro Container API is still `experimental_` |
-| e2e                     | none yet — see Phase 4 (Playwright)                                            | —                  | one critical flow only                                                                                                       |
-| (optional) AI-native    | post-edit hook running database tests on migration edits — checked: 2026-10-06 | n/a                | When NOT to use: edits outside `supabase/`; never as a substitute for the CI gate                                            |
+| Layer                   | Tool                                                                                                | Version            | Notes                                                                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| database (integration)  | pgTAP via `supabase test db`                                                                        | Supabase CLI 2.117 | 14 suites; runs in CI; the main guarantee layer                                                                              |
+| HTTP smoke              | `scripts/smoke.mjs` (no dependencies)                                                               | n/a                | auth + dashboard redirect against the built preview in CI                                                                    |
+| unit + HTTP integration | Vitest (plain Node config, no `getViteConfig()`) — projects `unit` and `http`                       | 5.0.3              | HTTP tests run against the built preview via `node:http` (paths sent verbatim); Astro Container API is still `experimental_` |
+| e2e                     | Playwright Test (projects: Desktop Chrome, Pixel 7) — details in `context/foundation/test-stack.md` | 1.63.0             | 4 specs in `tests/e2e/`, local only (not in CI); one spec per browser-level risk                                             |
+| agent hooks             | Claude Code hooks in `.claude/settings.json` + `lint-staged` pre-commit — checked: 2026-10-20       | n/a                | Per edit: ESLint. End of turn: ESLint, unit suite, `astro check`. Pre-commit: ESLint + related unit tests                    |
+| (optional) AI-native    | post-edit hook running database tests on migration edits — checked: 2026-10-06                      | n/a                | Not wired yet (§3.1). When NOT to use: edits outside `supabase/`; never as a substitute for the CI gate                      |
 
-Test-base profile: `sparse` — database layer covered by pgTAP; app code has only the HTTP smoke test.
+Test-base profile: `meaningful` (2026-10-20). That is 14 pgTAP suites, 9 unit files, 6 HTTP integration files and 4 e2e specs.
 
 **Stack grounding tools (current session):**
 
@@ -102,15 +113,16 @@ Test-base profile: `sparse` — database layer covered by pgTAP; app code has on
 
 ## 5. Quality Gates
 
-| Gate                                                | Where                        | Required?                    | Catches                                   |
-| --------------------------------------------------- | ---------------------------- | ---------------------------- | ----------------------------------------- |
-| lint + typecheck + build                            | local + CI (`ci.yml` static) | required                     | syntactic / type drift                    |
-| database tests (pgTAP)                              | local + CI (`ci.yml` tests)  | required                     | broken DB guarantees                      |
-| HTTP smoke against preview                          | CI (`ci.yml` tests)          | required                     | broken auth / adapter wiring              |
-| unit + HTTP integration                             | local + CI (`ci.yml` tests)  | required                     | route protection, IDOR, logic regressions |
-| migration safety (fresh reset, db lint, type drift) | CI on PR                     | required after §3 Phase 2    | contract and ordering breaks              |
-| e2e on the critical loop                            | CI on PR                     | required after §3 Phase 4    | broken end-to-end study loop              |
-| post-edit hook on migrations                        | local (agent loop)           | recommended after §3 Phase 4 | DB regressions at edit time               |
+| Gate                                                | Where                        | Required?                               | Catches                                      |
+| --------------------------------------------------- | ---------------------------- | --------------------------------------- | -------------------------------------------- |
+| lint + typecheck + build                            | local + CI (`ci.yml` static) | required                                | syntactic / type drift                       |
+| database tests (pgTAP)                              | local + CI (`ci.yml` tests)  | required                                | broken DB guarantees                         |
+| HTTP smoke against preview                          | CI (`ci.yml` tests)          | required                                | broken auth / adapter wiring                 |
+| unit + HTTP integration                             | local + CI (`ci.yml` tests)  | required                                | route protection, IDOR, logic regressions    |
+| agent hooks (per edit, end of turn) + pre-commit    | local (agent loop, git)      | wired (M3L2)                            | lint, type and unit regressions at edit time |
+| migration safety (fresh reset, db lint, type drift) | CI on PR                     | not wired — §3 Phase 2                  | contract and ordering breaks                 |
+| e2e on the critical loop                            | local today; CI on PR        | runs locally; CI not wired — §3 Phase 4 | broken end-to-end study loop                 |
+| post-edit hook on migrations                        | local (agent loop)           | not wired — §3 Phase 4                  | DB regressions at edit time                  |
 
 ## 6. Cookbook Patterns
 
@@ -154,7 +166,9 @@ Gotchas:
 
 ### 6.5 Adding an e2e test
 
-- TBD — see §3 Phase 4; reserved for the full study loop, not per feature.
+- Use e2e only for a risk that genuinely needs a browser. Drive it with `/10x-e2e`; the runner, config and commands are in `context/foundation/test-stack.md`.
+- Pattern to copy is `tests/e2e/one-link-one-vote.spec.ts`. Its header names the risk from §2. Its title is unique per run (`Date.now()` + random suffix) and cleaned up in `afterEach` (`support/cleanup.ts`). Each participant gets a fresh anonymous context (`storageState: { cookies: [], origins: [] }`). It waits for islands with `support/hydration.ts` and uses role and label locators only.
+- Phone width: use the `Pixel 7` project or `devices["Pixel 7"]` (see `image-variants.spec.ts`).
 
 ### 6.6 Per-rollout-phase notes
 
@@ -174,8 +188,9 @@ Gotchas:
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-10-06
-- Stack versions last verified: 2026-10-06
+- Strategy (§1–§2) last reviewed: 2026-10-06
+- §3 status, §4 Stack and §5 Gates reconciled with the repo: 2026-10-20 (§3.1)
+- Stack versions last verified: 2026-10-20
 - AI-native tool references last verified: 2026-10-06
 
 Refresh (`/10x-test-plan --refresh`) when:
