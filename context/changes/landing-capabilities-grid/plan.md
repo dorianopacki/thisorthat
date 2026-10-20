@@ -226,31 +226,31 @@ Nie dotyczy — brak zmian danych i tras.
 
 #### Automated
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Build przechodzi: `npm run build`
-- [x] 1.3 Testy jednostkowe przechodzą: `npm run test:unit`
-- [x] 1.4 W `src/` nie ma stringów „10x Astro Starter”, „Not signed in” ani `lang="en"` (poza `Welcome.astro`)
+- [x] 1.1 Lint przechodzi: `npm run lint` — d939d2a
+- [x] 1.2 Build przechodzi: `npm run build` — d939d2a
+- [x] 1.3 Testy jednostkowe przechodzą: `npm run test:unit` — d939d2a
+- [x] 1.4 W `src/` nie ma stringów „10x Astro Starter”, „Not signed in” ani `lang="en"` (poza `Welcome.astro`) — d939d2a
 
 #### Manual
 
-- [x] 1.5 Anonimowy pasek pokazuje „Nie zalogowano · Zaloguj się · Załóż konto” z działającymi linkami
-- [x] 1.6 Zakładka na `/` pokazuje tytuł „ThisOrThat”
+- [x] 1.5 Anonimowy pasek pokazuje „Nie zalogowano · Zaloguj się · Załóż konto” z działającymi linkami — d939d2a
+- [x] 1.6 Zakładka na `/` pokazuje tytuł „ThisOrThat” — d939d2a
 
 ### Phase 2: Landing bento-grid
 
 #### Automated
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Build przechodzi: `npm run build`
-- [ ] 2.3 Testy jednostkowe przechodzą (w tym klasyfikacja tras): `npm run test:unit`
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Build przechodzi: `npm run build`
+- [x] 2.3 Testy jednostkowe przechodzą (w tym klasyfikacja tras): `npm run test:unit`
 - [ ] 2.4 Testy HTTP i smoke przechodzą na preview (`/` → 200, signin → `/`)
-- [ ] 2.5 `Welcome.astro` i `LibBadge.astro` usunięte, brak odwołań w `src/`
+- [x] 2.5 `Welcome.astro` i `LibBadge.astro` usunięte, brak odwołań w `src/`
 
 #### Manual
 
-- [ ] 2.6 Anonim widzi hero, CTA „Załóż konto” / „Zaloguj się” i 7 kafelków z działającymi linkami
+- [x] 2.6 Anonim widzi hero, CTA „Załóż konto” / „Zaloguj się” i 7 kafelków z działającymi linkami
 - [ ] 2.7 Zalogowany widzi CTA „Twoje badania” / „Nowe badanie” z działającymi linkami
-- [ ] 2.8 Na ~375 px jedna kolumna, brak poziomego scrolla, makieta mieści się w kafelku
-- [ ] 2.9 Na desktopie grid 3 kolumn domyka się bez pustych pól (2×2 + 6)
-- [ ] 2.10 Treść zgodna z aplikacją i PRD, bez obietnic Non-Goals
-- [ ] 2.11 Widoczny focus na CTA i linkach, makieta ukryta przed czytnikiem ekranu
+- [x] 2.8 Na ~375 px jedna kolumna, brak poziomego scrolla, makieta mieści się w kafelku
+- [x] 2.9 Na desktopie grid 3 kolumn domyka się bez pustych pól (2×2 + 6)
+- [x] 2.10 Treść zgodna z aplikacją i PRD, bez obietnic Non-Goals
+- [x] 2.11 Widoczny focus na CTA i linkach, makieta ukryta przed czytnikiem ekranu

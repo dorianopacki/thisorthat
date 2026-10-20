@@ -1,0 +1,41 @@
+---
+const { user } = Astro.locals;
+
+const linkBase =
+  "inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300";
+const primaryClass = [linkBase, "bg-purple-600 hover:bg-purple-500"];
+const secondaryClass = [linkBase, "border border-white/20 hover:bg-white/10"];
+---
+
+<section class="flex flex-col items-center px-4 py-16 text-center sm:py-24">
+  <h1 class="mb-6 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-5xl leading-tight font-bold text-transparent sm:text-6xl">
+    ThisOrThat
+  </h1>
+  <p class="mb-4 max-w-2xl text-lg text-blue-100/80 sm:text-xl">
+    Sprawdź, który wariant treści wygrywa — zanim wydasz budżet na test A/B.
+  </p>
+  <p class="mb-10 max-w-2xl text-sm text-blue-100/60 sm:text-base">
+    Dodajesz warianty, przekazujesz uczestnikom jednorazowe linki, a wyniki widzisz na żywo.
+  </p>
+  <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
+    {user ? (
+      <>
+        <a href="/dashboard" class:list={primaryClass}>
+          Twoje badania
+        </a>
+        <a href="/studies/new" class:list={secondaryClass}>
+          Nowe badanie
+        </a>
+      </>
+    ) : (
+      <>
+        <a href="/auth/signup" class:list={primaryClass}>
+          Załóż konto
+        </a>
+        <a href="/auth/signin" class:list={secondaryClass}>
+          Zaloguj się
+        </a>
+      </>
+    )}
+  </div>
+</section>

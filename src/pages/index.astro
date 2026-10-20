@@ -1,8 +1,68 @@
 ---
-import Welcome from "@/components/Welcome.astro";
+import { ChartColumn, LayoutDashboard, Link2, ListPlus, ShieldCheck, Smartphone, TimerOff } from "lucide-react";
 import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+import Hero from "@/components/landing/Hero.astro";
+import FeatureTile from "@/components/landing/FeatureTile.astro";
+import ResultsMockup from "@/components/landing/ResultsMockup.astro";
+import { MAX_PARTICIPANTS, MAX_VARIANTS, MIN_PARTICIPANTS, MIN_VARIANTS } from "@/lib/study-limits";
+
+const studyStepsDescription = `${String(MIN_VARIANTS)}–${String(MAX_VARIANTS)} wariantów tekstowych lub obrazkowych i liczba uczestników od ${String(MIN_PARTICIPANTS)} do ${String(MAX_PARTICIPANTS)}. Szkic możesz edytować aż do startu.`;
 ---
 
-<Layout>
-  <Welcome />
+<Layout
+  title="ThisOrThat — porównaj warianty treści"
+  description="Porównaj warianty tekstu lub grafiki z prawdziwymi odbiorcami: jednorazowe linki, anonimowe głosy i wyniki na żywo."
+>
+  <div class="bg-cosmic min-h-screen p-4 sm:p-8">
+    <Topbar />
+
+    <main class="mx-auto max-w-5xl">
+      <Hero />
+
+      <section aria-labelledby="features-heading" class="pb-16">
+        <h2 id="features-heading" class="sr-only">
+          Co potrafi ThisOrThat
+        </h2>
+        {/* At md+ the 2×2 results tile plus six tiles leave two cells over; the last tile spans the full row. */}
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <FeatureTile
+            title="Wyniki na żywo"
+            description="Ranking wariantów według głosów, z remisami na wspólnym miejscu, anonimowe komentarze przy wariantach i licznik, ile osób już odpowiedziało."
+            icon={ChartColumn}
+            class="md:col-span-2 md:row-span-2"
+          >
+            <ResultsMockup />
+          </FeatureTile>
+          <FeatureTile title="Badanie w kilka kroków" description={studyStepsDescription} icon={ListPlus} />
+          <FeatureTile
+            title="Jeden link = jeden głos"
+            description="„Rozpocznij” tworzy jednorazowe linki do skopiowania, po jednym na uczestnika. W trakcie badania możesz dogenerować kolejne."
+            icon={Link2}
+          />
+          <FeatureTile
+            title="Bez konta, na telefonie"
+            description="Uczestnik otwiera link, wybiera wariant i opcjonalnie dodaje komentarz. Nie musi niczego instalować ani się rejestrować."
+            icon={Smartphone}
+          />
+          <FeatureTile
+            title="Pełna anonimowość"
+            description="Głosu ani komentarza nie da się powiązać z osobą ani linkiem. Warianty widzi tylko autor i posiadacz ważnego linku."
+            icon={ShieldCheck}
+          />
+          <FeatureTile
+            title="Kończy się samo"
+            description="Badanie zamyka się po wykorzystaniu wszystkich linków, o wybranym terminie albo ręcznie, kiedy zechcesz."
+            icon={TimerOff}
+          />
+          <FeatureTile
+            title="Wszystkie badania w jednym miejscu"
+            description="Pulpit pokazuje każde badanie ze statusem (szkic / trwa / zakończone) i postępem odpowiedzi „X z N”."
+            icon={LayoutDashboard}
+            class="md:col-span-3"
+          />
+        </div>
+      </section>
+    </main>
+  </div>
 </Layout>
