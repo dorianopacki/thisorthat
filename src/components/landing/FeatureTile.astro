@@ -1,0 +1,20 @@
+---
+import type { LucideIcon } from "lucide-react";
+
+interface Props {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  /** Grid placement from the page, e.g. `md:col-span-2 md:row-span-2`. */
+  class?: string;
+}
+
+const { title, description, icon: Icon, class: className } = Astro.props;
+---
+
+<article class:list={["min-w-0 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl", className]}>
+  <Icon className="mb-4 size-6 text-purple-300" aria-hidden="true" />
+  <h3 class="mb-2 text-lg font-semibold text-white">{title}</h3>
+  <p class="text-sm leading-relaxed text-blue-100/70">{description}</p>
+  <slot />
+</article>

@@ -5,17 +5,19 @@ import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
   title?: string;
+  description?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "ThisOrThat", description } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    {description && <meta name="description" content={description} />}
     <title>{title}</title>
   </head>
   <body>

@@ -1,0 +1,38 @@
+---
+// Static picture of the results view (StudyResults). The numbers must stay consistent: votes add up to
+// the responded count, and tied variants share a place the way rankVariants assigns it (FR-011).
+const variants = [
+  { place: 1, content: "Zacznij za darmo już dziś", votes: "3 głosy", width: "43%", comment: "Krótko i konkretnie." },
+  { place: 2, content: "Wypróbuj bez zobowiązań", votes: "2 głosy", width: "29%" },
+  { place: 2, content: "Dołącz do tysięcy zespołów", votes: "2 głosy", width: "29%" },
+];
+---
+
+<div class="mt-6 space-y-4 rounded-xl border border-white/10 bg-white/5 p-4" aria-hidden="true">
+  <div>
+    <p class="mb-2 text-sm text-blue-100/80">
+      Odpowiedziało <span class="font-semibold text-white">7</span> z <span class="font-semibold text-white">10</span>
+    </p>
+    <div class="h-2 w-full overflow-hidden rounded-full bg-white/10">
+      <div class="h-full w-[70%] rounded-full bg-purple-500"></div>
+    </div>
+  </div>
+
+  <ol class="space-y-2">
+    {variants.map((variant) => (
+      <li class="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white">
+        <div class="flex items-start gap-2">
+          <span class="w-6 shrink-0 font-semibold text-blue-100">{variant.place}.</span>
+          <span class="min-w-0 flex-1 break-words">{variant.content}</span>
+          <span class="shrink-0 text-xs whitespace-nowrap text-blue-100/80">{variant.votes}</span>
+        </div>
+        <div class="mt-2 ml-8 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div class="h-full rounded-full bg-purple-400" style={`width: ${variant.width}`}></div>
+        </div>
+        {variant.comment && (
+          <p class="mt-2 ml-8 rounded-md bg-white/5 px-2 py-1 text-xs text-blue-100/80">„{variant.comment}”</p>
+        )}
+      </li>
+    ))}
+  </ol>
+</div>
